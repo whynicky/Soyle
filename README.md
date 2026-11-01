@@ -606,3 +606,14 @@ new Azure environment variables. The current platform's Russian-only exercise
 publication policy is unchanged; Kazakh audio review and manual replacements are
 available in the shared catalogue without pretending that KK exercises were published.
 Tests use synthetic fixtures and never constitute clinical approval of real content.
+
+### Домашняя жизнь Rive-питомца
+
+Существующий риг `soyle-mascot-rive/scene.rml` дополнен семью клипами: `Home • Sit idle`, `Read book`, `Stand idle`, `Sleepy`, `Wake stretch`, `Look around`, `Small happy` (у всех префикс `Home •`). Текстуры персонажа и каналы шести исходных анимаций сохранены; книжка — отдельная скрываемая группа с растровой 3D-текстурой `assets/home-book-3d.png` в том же риге.
+
+- Главная: `ExercisePetProvider presentation="home"` выбирает state machine **HomeCompanion**. Число `SoylePet.homeState` принимает 10–16 для домашних поз; 0–5 зарезервированы под существующие интерактивные реакции. В упражнениях остаются **Companion** и `SoylePet.mood` 0–5.
+- `frontend/lib/homePet.ts` задаёт вероятности и допустимые цепочки. После 10–25 секунд бездействия: сидение → чтение / осматривание / стояние / редкая радость; чтение и осматривание возвращаются к сидению; стояние → сидение или дремота стоя → потягивание → стояние → сидение. Потягивание и короткая радость завершаются через 3,6 и 3,2 секунды. Переходы внутри Rive смешиваются за 850 мс, реакции пользователя — за 500 мс.
+- `useHomePetIdle` сбрасывает интервал при движении указателя, нажатии, прокрутке и касании. При реакции, перетаскивании, скрытой вкладке, выключенной анимации или уходе с главной таймер очищается. Автоматические позы не создают реплик и TTS. Уменьшенное движение исключает дремоту; полное отключение сохраняет статичный кадр.
+- Генератор: `python3 soyle-mascot-rive/tools/build_scene.py`; добавленные позы находятся в `tools/home_idle.py`. После проверки `rive soyle-mascot-rive --verify` и `rive inspect soyle-mascot-rive --summary` соберите `rive soyle-mascot-rive --once` и скопируйте `.riv` из `build` в `frontend/public/mascot/soyle-mascot.riv`. При изменении ассета обновите его версию в URL загрузки.
+- Живой просмотр: `rive soyle-mascot-rive --artboard='Home life preview'`; все позы рядом: `--artboard='Home motion review'`. Для визуальной проверки маленького размера есть `Home states • 64px` и `Home states • 100px`.
+- Проверки: `node --test tests/home-pet.test.mjs` и `npx playwright test e2e/soyle-home-idle.spec.ts --project=desktop --project=mobile-320` из `frontend`. Для production-сборки используйте `SOYLE_E2E_BUILD=true npm run build` и `SOYLE_TEST_PRODUCTION=true` перед Playwright.

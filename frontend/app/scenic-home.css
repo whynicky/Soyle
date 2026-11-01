@@ -1,49 +1,121 @@
-.room-home-active:has(.scenic-child-home) { background: #d3baa0 url('/app-illustrations/home-room.png') center / cover fixed; }
-.room-home-active:has(.scenic-child-home) .main { background: transparent; }
-.room-home-active:has(.scenic-child-home) .sidebar { background: #fffaf0df; backdrop-filter: blur(18px); border-inline-end: 1px solid #ffffff80; }
-.room-home-active .scenic-child-home { width: 100%; max-width: 1480px; min-height: 100dvh; padding: 112px 36px 32px; gap: 24px; display: flex; flex-direction: column; background: linear-gradient(90deg,#fff5e1b3,transparent 75%); }
-.scenic-child-home .home-next-step { flex: 1; min-height: 420px; padding: 32px 16px; grid-template-columns: minmax(0,1fr) minmax(300px,1fr); border: 0; border-radius: 0; background: transparent; gap: 24px; }
+/* One viewport: reading area above, three destinations anchored below. */
+html:has(.scenic-child-home), body:has(.scenic-child-home) { height: 100%; overflow: hidden; }
+.soyle-unified.room-home-active:has(.scenic-child-home) { height: 100dvh; min-height: 0; overflow: hidden; background: #dcc4a3 url('/app-illustrations/home-room.png') center / cover no-repeat; }
+.room-home-active:has(.scenic-child-home) .main { height: 100dvh; min-height: 0; overflow: hidden; background: transparent; }
+.room-home-active:has(.scenic-child-home) .main > .page { height: 100%; min-height: 0; padding: 0 !important; overflow: hidden; }
+.room-home-active:has(.scenic-child-home) .sidebar { background: #fffaf0e6; backdrop-filter: blur(18px); border-inline-end: 1px solid #ffffff80; }
+.room-home-active .scenic-child-home { box-sizing: border-box; width: 100%; max-width: none; height: 100%; min-height: 0; margin: 0; padding: 76px clamp(24px,3vw,56px) 28px; display: grid; grid-template-rows: minmax(0,1fr) clamp(210px,29vh,290px); gap: 20px; background: linear-gradient(90deg,#fff5e1b3,transparent 72%); overflow: hidden; }
+.scenic-child-home .home-next-step { min-height: 0; padding: 0; display: grid; grid-template-columns: minmax(0,1fr) minmax(0,1fr); gap: 24px; align-items: center; border: 0; border-radius: 0; background: transparent; }
 .scenic-child-home .home-next-copy { align-self: center; max-width: 490px; }
-.home-greeting { color: #103b66; font-size: 18px; font-weight: 800; }
-.scenic-child-home .home-next-copy h1 { font-size: clamp(44px,5.2vw,76px); line-height: 1.04; letter-spacing: -.035em; margin: 20px 0; color: #103b66; }
+.home-greeting { color: #103b66; font-size: 17px; font-weight: 800; }
+.scenic-child-home .home-next-copy h1 { font-size: clamp(42px,min(5vw,8vh),76px); line-height: 1.04; letter-spacing: -.035em; margin: 18px 0; color: #103b66; }
 .scenic-child-home .home-next-copy h1 > span { color: #2165cf; }
-.scenic-child-home .home-next-copy p { color: #163f65; text-shadow: 0 1px 12px #fff8e8; font-size: 20px; }
-.scenic-child-home .home-next-copy .home-start-action { background: #1e63c8; color: #fff; border: 1px solid #6ea9ff; border-radius: 36px; padding: 18px 24px; box-shadow: 0 8px 24px #1458ad30; }
-.scenic-child-home .home-reassurance { color: #294e66; background: #fff9edc9; border-radius: 12px; padding: 6px 12px; width: fit-content; }
-.scenic-child-home .home-companion { position: relative; display: flex; justify-content: flex-end; align-items: center; align-self: stretch; min-height: 380px; padding-top: 70px; }
-.scenic-child-home .home-companion .exercise-pet { position: relative; width: min(100%,380px); max-width: 100%; height: auto; margin: 0; inset: auto; filter: drop-shadow(0 18px 14px #573a2c35); }
-.home-pet-bubble { position: absolute; top: 0; right: 0; max-width: 270px; padding: 20px 24px; border-radius: 28px 28px 28px 4px; background: #fffaf0f5; color: #163f65; font-size: 20px; line-height: 1.5; box-shadow: 0 4px 20px #573a2c12; margin: 0; }
-.scenic-child-home .home-listen { background: #fffaf0ed; color: #163f65; border-color: #fff; border-radius: 24px; }
-.home-activities { background: #3b281c52; padding: 20px; border-radius: 24px; backdrop-filter: blur(8px); }
-.home-activities-heading { display: flex; justify-content: space-between; gap: 16px; align-items: center; margin-bottom: 16px; color: #fff; }
-.home-activities-heading h2 { font-size: 22px; margin: 0; }
-.home-activities-heading button { color: #fff; background: #322419b3; border: 1px solid #ffffff80; border-radius: 24px; min-height: 44px; padding: 10px 14px; display: flex; gap: 8px; align-items: center; font-size: 16px; }
-.scenic-child-home .home-activity-links { gap: 20px; }
-.scenic-child-home .home-activity-links > button { position: relative; display: flex; flex-direction: row; flex-wrap: nowrap; align-items: flex-end; min-height: 230px; padding: 24px 20px; overflow: hidden; isolation: isolate; border: 1px solid #ffffff90; border-radius: 22px; background: #513f2f; color: #fff; }
-.scenic-child-home .home-activity-links > button::after { content: ''; position: absolute; inset: 0; z-index: -1; background: linear-gradient(180deg,transparent 15%,#221a12e8 100%); }
+.scenic-child-home .home-next-copy p { color: #163f65; font-size: clamp(16px,2vh,20px); line-height: 1.5; margin: 12px 0; max-width: 34ch; }
+.scenic-child-home .home-next-copy .home-start-action { min-height: 54px; margin-top: 16px; padding: 14px 24px; font-size: 17px; gap: 12px; border: 1px solid #6ea9ff; border-radius: 32px; background: #1e63c8; color: #fff; box-shadow: 0 6px 20px #1458ad26; white-space: normal; }
+.scenic-child-home .home-reassurance { display: block; margin-top: 10px; font-size: 13px; color: #294e66; }
+.scenic-child-home .home-companion { position: relative; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; height: 100%; min-height: 0; padding: 60px 0 0; box-sizing: border-box; }
+.scenic-child-home .home-companion .exercise-pet { position: relative; inset: auto; margin: 0; width: min(100%,36vh); max-width: 400px; min-height: 0; justify-content: center; filter: drop-shadow(0 12px 10px #573a2c30); }
+.scenic-child-home .home-companion .pet-button { width: 100%; height: auto; aspect-ratio: 561 / 630; max-width: none; padding: 0; }
+.home-pet-bubble { position: absolute; top: 4%; right: 0; max-width: 220px; padding: 16px 20px; border-radius: 24px 24px 24px 4px; background: #fffaf0f5; color: #163f65; font-size: 18px; line-height: 1.4; margin: 0; }
+.scenic-child-home .home-listen { min-height: 44px; padding: 8px 14px; background: #fffaf0eb; color: #163f65; border: 1px solid #fff; border-radius: 24px; font-size: 15px; }
+.home-activities { min-height: 0; display: grid; grid-template-rows: 36px minmax(0,1fr); gap: 12px; background: transparent; padding: 0; }
+.home-activities-heading { display: flex; justify-content: space-between; gap: 16px; align-items: center; color: #fff; }
+.home-activities-heading h2 { color: #fff; font-size: 20px; margin: 0; text-shadow: 0 2px 6px #24160c; }
+.home-activities-heading button { color: #fff; background: #3b281cbf; border: 1px solid #ffffff80; border-radius: 24px; min-height: 36px; padding: 6px 14px; display: flex; gap: 8px; align-items: center; font-size: 14px; }
+.scenic-child-home .home-activity-links { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); min-height: 0; gap: 20px; }
+.scenic-child-home .home-activity-links > button { position: relative; min-height: 0; height: 100%; display: flex; flex-direction: row; flex-wrap: nowrap; align-items: flex-end; gap: 12px; padding: 20px; overflow: hidden; isolation: isolate; border: 1px solid #ffffff90; border-radius: 20px; background: #513f2f; color: #fff; text-align: start; }
+.scenic-child-home .home-activity-links > button::after { content: ''; position: absolute; inset: 0; z-index: -1; background: linear-gradient(180deg,transparent 5%,#221a12ed 100%); }
 .scenic-child-home .home-activity-links > button > img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; z-index: -2; }
 .scenic-child-home .home-activity-links > button > span { flex: 1; min-width: 0; }
-.scenic-child-home .home-activity-links strong { font-size: 24px; line-height: 1.3; }
-.scenic-child-home .home-activity-links small { color: #fff; font-size: 16px; line-height: 1.5; max-width: 25ch; }
-.scenic-child-home .home-activity-links > button > svg { flex-shrink: 0; width: 44px; height: 44px; padding: 10px; background: #ffffff30; border: 1px solid #ffffffb3; border-radius: 50%; }
-.scenic-child-home button:focus-visible { outline: 3px solid #103b66; outline-offset: 4px; box-shadow: 0 0 0 7px #fff; }
-@media(min-width:1500px) { .scenic-child-home .home-companion .exercise-pet { width: 440px; } }
-@media(max-width:1050px) { .room-home-active .scenic-child-home { padding: 100px 24px 24px; } }
-@media(max-width:760px) {
- .room-home-active .scenic-child-home { padding: 100px 16px 24px; }
- .scenic-child-home .home-next-step { grid-template-columns: 1fr; padding: 16px 8px; gap: 24px; }
- .scenic-child-home .home-next-copy h1 { font-size: 48px; }
- .scenic-child-home .home-companion { min-height: 330px; padding-top: 64px; }
- .scenic-child-home .home-companion .exercise-pet { width: 280px; }
- .home-pet-bubble { font-size: 16px; max-width: 220px; }
- .home-activities { padding: 16px; }
- .home-activities-heading { flex-wrap: wrap; }
- .scenic-child-home .home-activity-links { grid-template-columns: 1fr; }
- .scenic-child-home .home-activity-links > button { min-height: 220px; }
+.scenic-child-home .home-activity-links strong { display: block; font-size: clamp(18px,1.8vw,24px); line-height: 1.25; }
+.scenic-child-home .home-activity-links small { display: block; margin-top: 6px; color: #fff; font-size: 15px; line-height: 1.4; max-width: 24ch; }
+.scenic-child-home .home-activity-links > button > svg { flex-shrink: 0; width: 36px; height: 36px; padding: 8px; background: #ffffff30; border: 1px solid #ffffffb3; border-radius: 50%; }
+.scenic-child-home button:focus-visible { outline: 3px solid #103b66; outline-offset: 2px; box-shadow: 0 0 0 5px #fff; }
+.scenic-child-home > .room-notice { position: absolute; z-index: 5; inset: 65px 24px auto; }
+@media(max-width:1050px) { .room-home-active .scenic-child-home { padding: 84px 24px 24px; } }
+@media(max-width:600px) {
+ .room-home-active .scenic-child-home { padding: 88px 16px 16px; grid-template-rows: minmax(0,1fr) minmax(150px,27%); gap: 20px; }
+ .scenic-child-home .home-next-step { grid-template-columns: minmax(0,1fr) 38%; gap: 4px; position: relative; }
+ .home-greeting { font-size: 14px; }
+ .scenic-child-home .home-next-copy h1 { font-size: clamp(28px,7vw,42px); margin: 14px 0; }
+ .scenic-child-home .home-next-copy p { font-size: 14px; }
+ .scenic-child-home .home-next-copy .home-start-action { min-height: 48px; padding: 10px 12px; font-size: 14px; gap: 6px; width: auto; }
+ .scenic-child-home .home-start-action > svg:last-child { display: none; }
+ .scenic-child-home .home-reassurance { font-size: 11px; }
+ .scenic-child-home .home-companion { justify-content: center; padding-top: 60px; }
+ .scenic-child-home .home-companion .exercise-pet { width: 100%; max-width: 190px; }
+ .home-pet-bubble { top: 6%; right: 0; padding: 10px 12px; font-size: 13px; width: 100%; box-sizing: border-box; }
+ .scenic-child-home .home-listen { width: 44px; height: 44px; font-size: 0; padding: 10px; justify-content: center; }
+ .home-activities { grid-template-rows: 32px minmax(0,1fr); gap: 8px; }
+ .home-activities-heading h2 { font-size: 16px; }
+ .home-activities-heading button { font-size: 0; width: 36px; padding: 8px; }
+ .scenic-child-home .home-activity-links { gap: 8px; }
+ .scenic-child-home .home-activity-links > button { padding: 12px 8px; border-radius: 14px; }
+ .scenic-child-home .home-activity-links strong { font-size: 14px; overflow-wrap: anywhere; }
+ .scenic-child-home .home-activity-links small, .scenic-child-home .home-activity-links > button > svg { display: none; }
 }
-.scenic-child-home .home-companion .pet-button { width: 100%; height: auto; aspect-ratio: 561 / 630; max-width: none; padding: 0; }
-.scenic-child-home .home-companion .exercise-pet { justify-content: center; }
-.room-home-active .scenic-child-home { background: linear-gradient(90deg,#fff5e1b3,transparent 75%), url('/app-illustrations/home-room.png') center / cover fixed; }
-.home-activities-heading h2 { color: #fff; text-shadow: 0 2px 6px #24160c; }
-@media(min-width:761px) and (max-width:1499px) { .scenic-child-home .home-companion .exercise-pet { width: 320px; } .scenic-child-home .home-companion { padding-top: 48px; } }
-@media(max-width:760px) { .room-home-active .scenic-child-home { background-attachment: scroll; background-size: auto 100%; } }
+@media(max-height:650px) and (min-width:601px) {
+ .room-home-active .scenic-child-home { padding-top: 60px; padding-bottom: 16px; grid-template-rows: minmax(0,1fr) 180px; gap: 12px; }
+ .scenic-child-home .home-next-copy h1 { font-size: 38px; margin: 10px 0; }
+ .scenic-child-home .home-next-copy p { font-size: 15px; margin: 8px 0; }
+ .scenic-child-home .home-reassurance { display: none; }
+ .scenic-child-home .home-companion .exercise-pet { width: 27vh; }
+ .home-pet-bubble { font-size: 14px; padding: 10px; top: 0; }
+}
+/* Light image cards with a cream reading surface. */
+.soyle-unified.room-home-active:has(.scenic-child-home) { background-image: url('/app-illustrations/home-room-bright.png'); }
+.room-home-active .scenic-child-home { background: linear-gradient(90deg,#fffdf5a6,transparent 75%); }
+.scenic-child-home .home-activities-heading h2 { color: #173e66; text-shadow: none; }
+.scenic-child-home .home-activities-heading button { background: #fffdf3ed; border-color: #c4d2d7; color: #173e66; }
+.scenic-child-home .home-activity-links > button { background: #fffaf0; border-color: #fff; box-shadow: 0 4px 16px #284b5918; }
+.scenic-child-home .home-activity-links > button::after { background: linear-gradient(180deg,transparent 25%,#fffaf0b3 52%,#fffaf0 76%); }
+.scenic-child-home .home-activity-links strong, .scenic-child-home .home-activity-links small { color: #173e66; }
+.scenic-child-home .home-activity-links > button > svg { background: #fff; border-color: #aebfc8; color: #173e66; }
+.scenic-child-home .home-companion .pet-button { cursor: grab; touch-action: none; }
+.scenic-child-home .home-companion .exercise-pet[data-dragging=true] .pet-button { cursor: grabbing; }
+/* Crisp illustration above a separate caption, without fading the artwork. */
+.soyle-unified.room-home-active:has(.scenic-child-home) { background-image: url('/app-illustrations/home-room-city.png'); }
+.scenic-child-home .home-activity-links > button { display: grid; grid-template-columns: minmax(0,1fr) 50px; grid-template-rows: minmax(0,1fr) auto; align-items: center; gap: 0; padding: 0; background: #fffaf0; }
+.scenic-child-home .home-activity-links > button::after { display: none; }
+.scenic-child-home .home-activity-links > button > img { position: relative; inset: auto; grid-column: 1 / -1; width: 100%; height: 100%; min-height: 0; z-index: auto; object-fit: cover; }
+.scenic-child-home .home-activity-links > button > span { padding: 12px 8px 14px 18px; }
+.scenic-child-home .home-activity-links > button > svg { width: 32px; height: 32px; margin: 0 14px 0 0; }
+.scenic-child-home .home-activity-links strong { font-size: clamp(18px,1.7vw,23px); }
+.scenic-child-home .home-activity-links small { font-size: 14px; margin-top: 4px; }
+@media(max-width:600px) {
+ .scenic-child-home .home-activity-links > button { grid-template-columns: minmax(0,1fr); }
+ .scenic-child-home .home-activity-links > button > span { padding: 10px 7px; min-height: 42px; display: flex; align-items: center; }
+ .scenic-child-home .home-activity-links strong { font-size: 13px; }
+}
+.soyle-unified.room-home-active:has(.scenic-child-home) { background-image: url('/app-illustrations/home-room-sunset.png'); }
+.scenic-child-home .exercise-pet > .home-pet-bubble { position: absolute; top: auto; bottom: calc(100% + 8px); right: 0; left: auto; width: max-content; max-width: min(240px,100%); min-width: 0; padding: 14px 18px; margin: 0; opacity: 1; transform: none; animation: none; pointer-events: none; background: #fffaf0f5; color: #163f65; border-radius: 24px 24px 4px 24px; font-size: 17px; line-height: 1.4; box-sizing: border-box; }
+@media(max-width:600px) { .scenic-child-home .exercise-pet > .home-pet-bubble { font-size: 13px; padding: 10px; } }
+/* Keep the caption visually attached to the actual head, inside the draggable group. */
+.scenic-child-home .exercise-pet > .home-pet-bubble { bottom: auto; top: 5%; right: 0; width: 210px; max-width: 85%; font-size: 16px; font-weight: 600; padding: 12px 16px; border: 1px solid #d8e1df; border-radius: 20px; z-index: 2; }
+.scenic-child-home .exercise-pet > .home-pet-bubble::after { content: ''; position: absolute; bottom: -8px; left: 30%; width: 14px; height: 14px; background: #fffaf0; border-right: 1px solid #d8e1df; border-bottom: 1px solid #d8e1df; transform: rotate(45deg); }
+.soyle-unified.room-home-active .topbar, .soyle-unified.room-home-active .topbar .top-actions { background: transparent; box-shadow: none; backdrop-filter: none; border: 0; }
+.soyle-unified.room-home-active .star-vault { min-height: 44px; padding: 6px 12px 6px 8px; gap: 8px; background: #fffaf0e6; border: 1px solid #ffffffb3; box-shadow: none; }
+.soyle-unified.room-home-active .star-vault img { width: 30px; height: 30px; }
+.soyle-unified.room-home-active .star-vault strong { font-size: 15px; font-weight: 700; }
+.soyle-unified.room-home-active .star-vault small { display: none; }
+.soyle-unified.room-home-active .star-vault > span:last-child { font-size: 22px; }
+.scenic-child-home .home-next-copy h1 { font-size: clamp(36px,min(4.3vw,6.5vh),62px); line-height: 1.08; margin: 14px 0 22px; }
+.home-session-detail { max-width: 380px; padding: 14px 18px; border-left: 3px solid #4689c9; background: #fffaf0b8; border-radius: 0 14px 14px 0; }
+.home-next-label { display: block; font-size: 13px; line-height: 1.4; color: #49617a; margin-bottom: 6px; }
+.home-session-detail > strong { display: block; font-size: 18px; line-height: 1.4; color: #173e66; font-weight: 650; }
+.scenic-child-home .home-session-detail > p { font-size: 16px; margin: 0; }
+.home-session-meter { display: grid; gap: 6px; margin-top: 12px; }
+.home-session-meter progress { appearance: none; width: 100%; height: 5px; border: 0; border-radius: 8px; overflow: hidden; background: #dce6ed; }
+.home-session-meter progress::-webkit-progress-bar { background: #dce6ed; border-radius: 8px; }
+.home-session-meter progress::-webkit-progress-value { background: #2672c8; border-radius: 8px; }
+.home-session-meter progress::-moz-progress-bar { background: #2672c8; }
+.home-session-meter > span { font-size: 12px; color: #49617a; }
+@media(max-width:600px) {
+ .scenic-child-home .home-next-copy h1 { font-size: 28px; margin: 12px 0; }
+ .home-session-detail { padding: 10px; }
+ .home-session-detail > strong, .scenic-child-home .home-session-detail > p { font-size: 13px; }
+ .home-next-label, .home-session-meter > span { font-size: 11px; }
+ .scenic-child-home .exercise-pet > .home-pet-bubble { top: 0; width: 115px; max-width: 100%; padding: 8px 10px; font-size: 12px; }
+}
+.soyle-unified.room-home-active .topbar { border-radius: 28px; overflow: hidden; isolation: isolate; }
+.soyle-unified.room-home-active .topbar::before, .soyle-unified.room-home-active .topbar::after { display: none; }

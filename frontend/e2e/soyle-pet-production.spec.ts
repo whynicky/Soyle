@@ -8,7 +8,7 @@ for(const mode of ['animated','reduced','load-error'] as const){
   // Keep real application rendering and CSP, using only the isolated test database.
   await page.route('**/api/**',async r=>r.fulfill({response:await r.fetch({url:'http://localhost:8011'+new URL(r.request().url()).pathname,headers:{...r.request().headers(),origin:'http://localhost:3003'}})}));
   let failedAsset=false;
-  if(mode==='load-error')await page.route('**/mascot/soyle-mascot.riv',r=>{failedAsset=true;return r.fulfill({status:503,body:''});});
+  if(mode==='load-error')await page.route('**/mascot/soyle-mascot.riv*',r=>{failedAsset=true;return r.fulfill({status:503,body:''});});
   await page.goto('/app');await page.getByRole('button',{name:'Ребёнок',exact:true}).click();
   await page.getByLabel('Логин ребёнка',{exact:true}).fill('alikhan');await page.getByLabel('PIN-код',{exact:true}).fill('1234');
   await page.getByRole('button',{name:'Начать заниматься',exact:true}).click();

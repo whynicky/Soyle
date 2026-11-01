@@ -2696,5 +2696,8 @@
   "scenic.friend": "друг",
   "scenic.lets": "Давай",
   "scenic.play": "поиграем!",
-  "scenic.all": "Все занятия"
+  "scenic.all": "Все занятия",
+  "scenic.continueTitle": "Продолжим",
+  "scenic.continueAccent": "занятие?",
+  "scenic.nextLabel": "Следующее задание"
 }

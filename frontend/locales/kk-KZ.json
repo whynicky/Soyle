@@ -2696,5 +2696,8 @@
   "scenic.friend": "досым",
   "scenic.lets": "Кел, бірге",
   "scenic.play": "ойнайық!",
-  "scenic.all": "Барлық жаттығулар"
+  "scenic.all": "Барлық жаттығулар",
+  "scenic.continueTitle": "Жаттығуды",
+  "scenic.continueAccent": "жалғастырайық!",
+  "scenic.nextLabel": "Келесі тапсырма"
 }

@@ -274,6 +274,9 @@ for size,title in [(180,'Motion review'),(64,'All states • 64px'),(76,'All sta
   fill=el(sty,'Fill');el(fill,'SolidColor',colorValue='FFF5F1E7')
   el(label,'TextValueRun',styleId=ref(sty),text=name)
 
+from home_idle import add_home
+add_home(globals())
+
 E.indent(r)
 tmp=ROOT/'scene.rml.tmp';E.ElementTree(r).write(tmp,encoding='unicode');tmp.replace(ROOT/'scene.rml')
-print('Generated refined pet: 4 beak expressions, traveling eyelids, flexible wings, 6 animations, 18 artboards.')
+print(f'Generated existing pet plus home life: {len(ab.findall("LinearAnimation"))} animations, {len(r.findall("Artboard"))} artboards.')
