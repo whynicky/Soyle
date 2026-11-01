@@ -1,0 +1,21 @@
+{
+  "method": "Built-in image_gen",
+  "prompts": [
+    [
+      "room",
+      "High quality warm cinematic children's storybook 3D illustration, tactile soft materials, golden afternoon sunlight, teal blue and warm cream colors. No text, letters, logos, flags, national symbols, ornaments or traditional clothing. No penguins anywhere. Wide landscape cozy child's reading room matching a sunlit large window on left, sheer curtains, wooden desk across foreground, leafy plant near center right, bookshelves and small lamp on far right, an open picture book in foreground. Empty desk space in center-right for a separately rendered virtual pet. No characters, no people, no animals. Left half softly lit cream with low detail for dark heading overlay. Full environment, no UI. 16:9 composition."
+    ],
+    [
+      "games",
+      "High quality warm cinematic children's storybook 3D illustration, tactile soft materials, golden afternoon sunlight, teal blue and warm cream colors. No text, letters, logos, flags, national symbols, ornaments or traditional clothing. No penguins anywhere. Landscape card illustration, a shiny red apple and colorful wooden shape blocks on a cozy wooden table by a sunlit window. Clear large central objects. No people. No UI."
+    ],
+    [
+      "stories",
+      "High quality warm cinematic children's storybook 3D illustration, tactile soft materials, golden afternoon sunlight, teal blue and warm cream colors. No text, letters, logos, flags, national symbols, ornaments or traditional clothing. No penguins anywhere. Landscape card illustration, a friendly small fox looking at an open picture book in a magical sunlit woodland, warm autumn leaves, storybook fairy tale scene. No clothes. No UI."
+    ],
+    [
+      "words",
+      "High quality warm cinematic children's storybook 3D illustration, tactile soft materials, golden afternoon sunlight, teal blue and warm cream colors. No text, letters, logos, flags, national symbols, ornaments or traditional clothing. No penguins anywhere. Landscape card illustration, three large communication picture cards on a pale green table showing a friendly panda face, a cup of water and a toy ball. No writing, no sound symbols. Warm cozy nursery, clear centered composition. No UI."
+    ]
+  ]
+}

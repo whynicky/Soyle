@@ -59,7 +59,8 @@ test('child settings switch both ways and keep saved progress', async ({ page })
   });
   const menu = page.getByRole('button',{name:/^(Открыть меню|Мәзірді ашу)$/});
   if ((page.viewportSize()?.width || 1440) <= 760) { await expect(menu).toBeVisible(); await menu.click(); }
-  await page.getByRole('button',{name:/^(Настройки|Баптаулар)$/}).click();
+  await page.locator('.sidebar-account').getByRole('button',{name:/^(Меню аккаунта|Аккаунт мәзірі)$/}).click();
+  await page.locator('.account-menu-panel').getByRole('button',{name:/^(Настройки|Баптаулар)$/}).click();
   await page.getByRole('button',{name:'Қазақша',exact:true}).click();
   await expect(page.getByRole('heading',{name:'Саған қалай ыңғайлы?'})).toBeVisible();
   await expect.poll(async () => page.evaluate(async () => (await (await fetch('/api/settings')).json()).language)).toBe('kk');
@@ -139,6 +140,7 @@ test('Kazakh book preview displays translated scenes and requests matching speec
   await page.getByRole('button',{name:'Кіру',exact:true}).click();
   await expect(page.locator('.parent-shell')).toBeVisible();
   await page.goto('/app?cabinet=parent&section=materials');
+  await page.locator('summary').filter({hasText:kk['journey.previewStories']}).click();
   await page.getByRole('button',{name:'Ойындары бар кітапты ашу',exact:true}).click();
   await expect(page.getByRole('heading',{name:'Сүйікті ойыншық',exact:true})).toBeVisible();
   const request=page.waitForRequest(request => request.url().endsWith('/api/tts') && request.method()==='POST');
@@ -164,6 +166,7 @@ test('Kazakh picnic preview keeps translated choices and Kazakh narration', asyn
   const csrf=(await page.context().cookies()).find(cookie=>cookie.name==='soyle_csrf')?.value || '';
   expect((await page.request.post(bookUrl+'/events',{headers:{'X-CSRF-Token':csrf},data:{version:saved.definition.version,expected_revision:saved.revision,scene_id:saved.definition.scenes[saved.state.scene_index].id,event_id:crypto.randomUUID(),action:'restart'}})).ok()).toBeTruthy();
   await page.goto('/app?cabinet=parent&section=materials');
+  await page.locator('summary').filter({hasText:kk['journey.previewStories']}).click();
   await page.getByRole('button',{name:'Комиксті ашу',exact:true}).click();
   await expect(page.getByRole('heading',{name:'Қонжыққа арналған пикник',exact:true})).toBeVisible();
   const request=page.waitForRequest(request => request.url().endsWith('/api/tts') && request.method()==='POST');
@@ -188,7 +191,9 @@ test('parent previews the Kazakh AAC library without saving a child result', asy
   await page.getByRole('button',{name:'Кіру',exact:true}).click();
   await expect(page.locator('.parent-shell')).toBeVisible();
   await page.goto('/app?cabinet=parent&section=materials');
-  await page.getByRole('button',{name:'AAC карточкалары',exact:true}).click();
+  const menu = page.getByRole('button',{name:/^(Открыть меню|Мәзірді ашу)$/});
+  if ((page.viewportSize()?.width || 1440) <= 760) { await expect(menu).toBeVisible(); await menu.click(); }
+  await page.locator('#primary-navigation nav').getByRole('button',{name:kk['navigation.communication'],exact:true}).click();
   await expect(page.getByText(/Карточка аудармаларын алдын ала қарау/)).toBeVisible();
   await page.locator('.aac-card-main').filter({has:page.getByText('Қалаймын',{exact:true})}).click();
   await page.getByRole('button',{name:/^Тағы/}).first().click();

@@ -27,6 +27,7 @@ from .aac_grammar import compose_aac_phrase
 from .ai_assistant import DISCLAIMER as LOCAL_ASSISTANT_DISCLAIMER, answer_parent
 from .exercise_engine import create_draft, preview_version, publish_version, published_exercise, published_exercise_rows, review_capabilities, review_workspace, submit_content_review, needs_admin_confirmation
 from .family_practice import descriptive_results, home_library, save_home_observation, skill_map, upsert_skill_observation
+from .progress_period import summarize_period
 from .practice_localization import practice_text, localize_plan_message
 from .adaptive_planner import create_plan as create_adaptive_plan, get_plan as get_adaptive_plan, plan_history as adaptive_plan_history
 from .practice_goals import create_goal as create_practice_goal, get_preferences, list_goals as list_practice_goals, list_templates as list_practice_goal_templates, save_observation as save_practice_goal_observation, save_preferences, update_goal as update_practice_goal
@@ -1444,7 +1445,7 @@ def build_skill_progress(rows, exercise_rows) -> list[dict]:
     return results
 
 
-def progress_data(child_id: int, user: dict) -> dict:
+def progress_data(child_id: int, user: dict, days: int = 0) -> dict:
     child = ensure_child_access(child_id, user)
     with connect() as db:
         rows = db.execute(
@@ -1501,6 +1502,7 @@ def progress_data(child_id: int, user: dict) -> dict:
         plain_language = localize_plan_message(f"В последних {len(current_home)} домашних ситуациях ребёнок справился самостоятельно {independent_now} раз. В предыдущих {len(previous_home)} — {independent_before} раз.")
     return {
         "child": child, "overall": overall, "total_sessions": len(rows), "skills": skills,
+        "period": summarize_period(rows, days),
         "skill_progress": skill_progress, "module_completion": completion, "module_completed": completed,
         "recent": rows[-8:][::-1],
         "support_metrics": {
@@ -1524,8 +1526,10 @@ def progress_data(child_id: int, user: dict) -> dict:
 
 
 @app.get("/api/progress/{child_id}")
-def progress(child_id: int, user: dict = Depends(require_roles("admin", "parent", "student"))) -> dict:
-    return progress_data(child_id, user)
+def progress(child_id: int, days: int = Query(default=0, ge=0, le=30), user: dict = Depends(require_roles("admin", "parent", "student"))) -> dict:
+    if days not in {0, 7, 30}:
+        raise HTTPException(status_code=422, detail="Choose 0, 7 or 30 days")
+    return progress_data(child_id, user, days)
 
 
 @app.get("/api/dashboard/{child_id}")

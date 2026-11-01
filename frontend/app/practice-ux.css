@@ -1,0 +1,123 @@
+/* Main practice paths share a clear action hierarchy and readable controls. */
+.room-home-active:has(.focused-child-home), .room-home-active:has(.focused-child-home) .main { height: auto; min-height: 100dvh; overflow: visible; }
+.room-home-active .focused-child-home { flex: none; width: min(1120px,100%); margin: 0 auto; padding: 100px 32px 40px; background: transparent; display: grid; gap: 24px; }
+.home-next-step { display: grid; grid-template-columns: minmax(0,1fr) 220px; align-items: center; gap: 32px; padding: 32px; background: #edf7f3; border: 1px solid #d7e7df; border-radius: 28px; }
+.home-next-copy h1 { font-size: clamp(28px,3vw,42px); line-height: 1.2; margin: 12px 0; }
+.home-next-copy p { font-size: 18px; line-height: 1.5; color: #496481; max-width: 48ch; }
+.home-next-copy .home-session-progress { font-size: 16px; }
+.home-next-copy .home-start-action { min-height: 56px; margin-top: 20px; font-size: 18px; gap: 12px; white-space: normal; }
+.home-reassurance { display: block; margin-top: 12px; color: #496481; font-size: 14px; }
+.home-companion { display: flex; flex-direction: column; align-items: center; gap: 12px; }
+.home-companion .exercise-pet { position: static; width: 180px; max-width: 100%; }
+.home-listen { display: flex; align-items: center; gap: 8px; min-height: 44px; padding: 10px 14px; border: 1px solid #9bbdb3; border-radius: 12px; background: transparent; color: #195d58; cursor: pointer; font-size: 16px; }
+.home-activity-links { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 16px; }
+.home-activity-links > button { display: flex; align-items: center; flex-wrap: wrap; gap: 16px; padding: 20px; border: 1px solid var(--line); border-radius: 20px; background: var(--paper); color: var(--ink); text-align: start; cursor: pointer; }
+.home-activity-links img { width: 80px; height: 80px; object-fit: contain; }
+.home-activity-links strong, .home-activity-links small { display: block; }
+.home-activity-links strong { font-size: 20px; }
+.home-activity-links small { margin-top: 6px; font-size: 16px; line-height: 1.5; color: var(--muted); }
+.home-activity-links > button > svg { margin-inline-start: auto; }
+.parent-next-step { display: grid; grid-template-columns: minmax(0,1fr) 30%; align-items: center; gap: 24px; padding: 32px; border-radius: 24px; background: #edf7f3; border: 1px solid #d7e7df; }
+.parent-next-step h1 { margin: 12px 0; font-size: clamp(28px,3vw,38px); }
+.parent-next-step p { font-size: 16px; line-height: 1.5; color: var(--muted); }
+.parent-next-step > img { width: 100%; height: auto; border-radius: 18px; }
+.parent-next-actions { display: flex; flex-wrap: wrap; gap: 12px; margin-block: 20px; }
+.parent-next-actions button { min-height: 48px; font-size: 16px; }
+.parent-next-step .parent-last-session { font-size: 14px; margin-bottom: 0; }
+.exercise-catalog-page .exercise-catalog-hero { min-height: 0; padding: 24px; }
+.exercise-catalog-page .exercise-catalog-hero > img { display: none; }
+.exercise-catalog-page .exercise-catalog-hero-copy { width: 100%; max-width: none; }
+.exercise-catalog-page .exercise-catalog-hero h1 { font-size: clamp(28px,3vw,38px); }
+.exercise-catalog-page .exercise-catalog-hero p { font-size: 16px; max-width: 65ch; }
+.exercise-catalog-page > .child-aac-entry { display: none; }
+.catalog-filters { display: grid; grid-template-columns: minmax(0,2fr) minmax(0,1fr) minmax(0,1fr); gap: 16px; }
+.catalog-filters label { display: flex; flex-direction: column; gap: 8px; font-size: 14px; font-weight: 750; }
+.catalog-filters input, .catalog-filters select { width: 100%; min-width: 0; min-height: 48px; border: 1px solid #aabbbc; border-radius: 12px; background: var(--paper); color: var(--ink); padding: 12px; font: inherit; font-size: 16px; }
+.catalog-search > span { position: relative; }
+.catalog-search svg { position: absolute; inset-inline-start: 12px; top: 14px; color: var(--muted); }
+.catalog-search input { padding-inline-start: 40px; }
+.catalog-estimate-note { font-size: 14px; line-height: 1.5; color: var(--muted); margin-block: 12px 24px; }
+.focused-catalog .section-heading { flex-wrap: wrap; gap: 12px; }
+.focused-catalog .exercise-card { min-width: 0; }
+.focused-catalog .exercise-card-copy strong { font-size: 20px; line-height: 1.3; }
+.focused-catalog .exercise-card-copy p { font-size: 16px; line-height: 1.5; }
+.focused-catalog .exercise-card-meta { display: flex; flex-wrap: wrap; gap: 12px; margin: 16px 0; color: var(--muted); font-size: 14px; }
+.exercise-card-meta > span { display: inline-flex; align-items: center; gap: 6px; }
+/* Keep the sentence and speech action available while browsing cards. */
+.soyle-unified:has(.aac-free) .main, .soyle-unified:has(.aac-free) .page { overflow: visible; }
+.soyle-unified:has(.aac-free) .topbar { position: relative; top: auto; }
+.aac-free .aac-composer-top { position: sticky; top: 8px; z-index: 20; background: var(--paper); padding: 20px; box-shadow: 0 6px 24px #17365618; }
+.aac-free .aac-composer-head { gap: 16px; }
+.aac-free .aac-composer-head strong { font-size: 22px; line-height: 1.3; }
+.aac-free .aac-composer-head small { font-size: 14px; line-height: 1.4; }
+.aac-free .aac-composer-actions { flex-wrap: wrap; gap: 8px; }
+.aac-free .aac-composer-actions button { min-height: 44px; font-size: 14px; display: inline-flex; align-items: center; justify-content: center; gap: 6px; }
+.aac-free .aac-composer-actions .speak-button { min-height: 48px; font-size: 18px; }
+.aac-free .aac-sentence { display: flex; flex-wrap: nowrap; overflow-x: auto; max-height: 112px; margin-top: 12px; }
+.aac-free .aac-sentence > button { flex-shrink: 0; }
+.aac-free .aac-remove-hint { display: none; }
+.aac-free .aac-toolbar { align-items: start; flex-wrap: wrap; gap: 16px; }
+.aac-free .aac-tools { flex-wrap: wrap; min-width: 0; }
+.aac-free .aac-search { min-width: 0; width: 100%; min-height: 48px; }
+.aac-free .aac-search input { min-width: 0; width: 100%; font-size: 16px; }
+.aac-free .aac-card-main { min-height: 152px; }
+.aac-free .aac-card-main strong { font-size: 18px; }
+.aac-free .aac-favorite { width: 44px; height: 44px; min-height: 44px; }
+.aac-free button, .focused-catalog button { scroll-margin-block-start: 300px; }
+.focused-child-home button:focus-visible, .parent-next-step button:focus-visible, .focused-catalog :is(button,input,select):focus-visible, .aac-free button:focus-visible { outline: 3px solid var(--forest); outline-offset: 3px; }
+@media (max-width: 900px) {
+  .catalog-filters { grid-template-columns: 1fr 1fr; }
+  .catalog-search { grid-column: 1 / -1; }
+  .home-next-step { grid-template-columns: minmax(0,1fr) 140px; padding: 24px; gap: 16px; }
+  .home-activity-links { grid-template-columns: 1fr; }
+  .home-activity-links > button { flex-wrap: nowrap; }
+  .home-activity-links > button > span { flex: 1; }
+}
+@media (max-width: 600px) {
+  .room-home-active .focused-child-home { padding: 88px 16px 24px; gap: 20px; }
+  .home-next-step { grid-template-columns: 1fr; padding: 20px; }
+  .home-next-copy p { font-size: 16px; }
+  .home-next-copy .home-start-action { width: 100%; font-size: 16px; }
+  .home-companion { display: none; }
+  .home-activity-links > button { padding: 16px; gap: 12px; }
+  .home-activity-links img { width: 56px; height: 56px; }
+  .home-activity-links strong { font-size: 18px; }
+  .home-activity-links small { font-size: 14px; }
+  .parent-next-step { grid-template-columns: 1fr; padding: 20px; }
+  .parent-next-step > img { display: none; }
+  .parent-next-actions button { width: 100%; justify-content: center; }
+  .catalog-filters { grid-template-columns: 1fr; }
+  .aac-free .aac-composer-top { padding: 12px; top: 4px; border-radius: 16px; max-height: 48svh; overflow-y: auto; }
+  .aac-free .aac-composer-head { display: flex; flex-direction: column; align-items: stretch; gap: 8px; }
+  .aac-free .aac-composer-head strong { font-size: 18px; }
+  .aac-free .aac-composer-head .kicker { display: none; }
+  .aac-free .aac-composer-actions button { flex: 1; }
+  .aac-free .aac-composer-actions .speak-button { flex-basis: 100%; }
+  .aac-free .aac-sentence { max-height: 90px; }
+  .aac-free .aac-empty-message { padding: 4px; }
+  .aac-free .aac-empty-message > svg, .aac-free .aac-empty-message span { display: none; }
+  .aac-free .aac-empty-message strong { font-size: 14px; }
+  .aac-free .aac-tools { width: 100%; }
+  .aac-free .aac-card-grid { grid-template-columns: repeat(2,minmax(0,1fr)); }
+}
+.home-activity-links > button { display: grid; grid-template-columns: minmax(0,1fr) auto; align-content: start; }
+.home-activity-links > button > img { grid-column: 1 / -1; }
+.home-activity-links > button > span { min-width: 0; }
+.exercise-catalog-page .exercise-catalog-hero-copy { padding: 0; }
+@media (max-width: 900px) {
+  .home-activity-links > button { grid-template-columns: 64px minmax(0,1fr) auto; align-items: center; }
+  .home-activity-links > button > img { grid-column: auto; width: 64px; height: 64px; }
+}
+@media (max-width: 600px) {
+  .home-activity-links > button { grid-template-columns: 56px minmax(0,1fr) auto; }
+  .home-activity-links > button > img { width: 56px; height: 56px; }
+  .soyle-unified .aac-free .aac-composer-top { top: 72px; max-height: 40svh; }
+  .soyle-unified .aac-free .aac-composer-actions { display: grid; grid-template-columns: minmax(0,1fr) minmax(0,1fr); }
+  .soyle-unified .aac-free .aac-composer-actions button { min-width: 0; padding: 8px; white-space: normal; font-size: 13px; }
+  .soyle-unified .aac-free .aac-composer-actions .speak-button { grid-column: 1 / -1; font-size: 16px; }
+  .soyle-unified .aac-free .aac-sentence { min-height: 0; max-height: 76px; padding: 8px; }
+  .aac-free .aac-sentence .aac-card-order { display: none; }
+  .aac-free .aac-sentence .aac-visual { width: 32px; height: 32px; }
+  .aac-free button { scroll-margin-block-start: calc(40svh + 88px); }
+}
+.home-next-copy .home-start-action, .parent-next-actions .primary-button, .aac-free .aac-composer-actions .speak-button { background: #087f7d; color: #fff; }

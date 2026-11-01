@@ -1,0 +1,13 @@
+{
+  "method": "Built-in image_gen",
+  "prompts": [
+    [
+      "stories",
+      "Square children's storybook illustration for a calm child communication app. Soft tactile clay and painted picture book look. Warm ivory background, teal mint peach and muted gold palette, gentle daylight, simple composition with generous margins. No text, no lettering, no numbers, no watermarks. No nationality cues, no national symbols, no flags, no traditional clothing, no ethnic ornaments, no cultural motifs. A friendly small turquoise penguin sitting beside an open illustrated book with a simple tree, toy ball and yellow sun on its pages. A cozy reading pillow. No humans. A welcoming invitation to choose a story."
+    ],
+    [
+      "world",
+      "Square children's storybook illustration for a calm child communication app. Soft tactile clay and painted picture book look. Warm ivory background, teal mint peach and muted gold palette, gentle daylight, simple composition with generous margins. No text, no lettering, no numbers, no watermarks. No nationality cues, no national symbols, no flags, no traditional clothing, no ethnic ornaments, no cultural motifs. A young child in an ordinary plain teal t-shirt and plain trousers sits on a rug arranging three large photo cards showing a teddy bear, an apple and a playground slide. The child has no nationality assigned. A small plush penguin nearby. Everyday toys and a plain modern home background. All subjects fully visible, warm friendly expression."
+    ]
+  ]
+}

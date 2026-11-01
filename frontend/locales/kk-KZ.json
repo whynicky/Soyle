@@ -2691,5 +2691,10 @@
   "app.description": "Қолдаулы қарым-қатынас, ойын тапсырмалары және Söyle жеке бейімделген жоспарлары",
   "localization.profileOpen": "Профильді ашу",
   "localization.saveResultError": "Нәтижені сақтау мүмкін болмады",
-  "localization.childFallback": "бала"
+  "localization.childFallback": "бала",
+  "scenic.greeting": "Сәлем, {name}!",
+  "scenic.friend": "досым",
+  "scenic.lets": "Кел, бірге",
+  "scenic.play": "ойнайық!",
+  "scenic.all": "Барлық жаттығулар"
 }

@@ -44,7 +44,6 @@ import {
   Check,
   ChevronRight,
   Circle,
-  CircleEllipsis,
   CircleAlert,
   CircleCheck,
   CircleX,
@@ -81,7 +80,6 @@ import {
   LampDesk,
   Laugh,
   LayoutDashboard,
-  Languages,
   LockKeyhole,
   LogOut,
   Menu,
@@ -129,6 +127,7 @@ import {
   UserRound,
   UserRoundCheck,
   Volleyball,
+  Undo2,
   Volume2,
   X,
   type LucideIcon,
@@ -153,7 +152,7 @@ import { VariedExerciseRunner } from "@/components/VariedExerciseRunner";
 import { variedMechanics, type VariedMechanic } from "@/lib/variedRuntime";
 import { PublishedInstructionRunner, type DraftExerciseVersion } from "@/components/P1ExerciseRunners";
 import { ContentReviewWorkspace, HomeActivityReviewPreview, type ContentReviewWorkspaceData, type HomeActivityDraft } from "@/components/ContentReviewWorkspace";
-import { FunctionalSkillMap, HomePracticeLibrary, P1ResultsSummary } from "@/components/FamilyPractice";
+import { FunctionalSkillMap, HomePracticeLibrary } from "@/components/FamilyPractice";
 import { GoalsAndPractice } from "@/components/GoalsAndPractice";
 import { AdminShell, ChildShell, ExerciseFocusShell, ParentShell } from "@/components/AppShells";
 import { AchievementsExperience } from "@/components/AchievementsExperience";
@@ -163,10 +162,12 @@ import { StoryExperience } from "@/components/StoryExperience";
 import { WorldExperience } from "@/components/WorldExperience";
 import {
   GuidesExperience,
-  SkillsExperience,
 } from "@/components/ProductExperience";
 
+import { AccountMenu, SectionNavigation, familyNavigation, familySection } from "./AppNavigation";
 
+import { ParentProgress } from "./ParentProgress";
+import { ParentCabinetOverview } from "./ParentCabinetOverview";
 
 type Screen = "learn" | "my-world" | "success" | "comic-preview" | "story-preview" | "home" | "stories" | "world" | "skills" | "achievements" | "guides" | "games" | "session" | "exercise-complete" | "motor" | "sensory" | "mixed" | "aac" | "ai" | "progress" | "goals" | "parent" | "profile" | "settings" | "more" | "admin";
 type ModuleName = "motor" | "sensory" | "mixed";
@@ -425,35 +426,20 @@ function AuthenticatedApp({ user, onLogout, externalError, onDismissExternalErro
       if (value.language_configured) window.dispatchEvent(new Event("soyle-profile-locale"));
     }).catch((cause) => {
       setSettings({ ...defaultSettings, language: languageOf(getLocale()) });
-      setRequestError(cause instanceof Error ? t("shell.template2", {v0: cause.message}) : t("screen.AuthenticatedApp.ui4"));
+      setRequestError(cause instanceof Error ? t("shell.template2", { v0: cause.message }) : t("screen.AuthenticatedApp.ui4"));
     });
   }, []);
   const loadNotifications = useCallback(() => {
     if (user.role === "parent") api<NotificationsData>("/api/notifications").then(setNotifications).catch((cause) => {
-      setRequestError(cause instanceof Error ? t("shell.template3", {v0: cause.message}) : t("screen.AuthenticatedApp.ui5"));
+      setRequestError(cause instanceof Error ? t("shell.template3", { v0: cause.message }) : t("screen.AuthenticatedApp.ui5"));
     });
   }, [user.role]);
   useEffect(loadNotifications, [loadNotifications]);
 
-  const navigation: { id: Screen; label: string; icon: typeof Home }[] = user.role === "admin"
-    ? [{ id: "admin", label: t("nav.admin"), icon: LayoutDashboard }, { id: "settings", label: t("nav.settings"), icon: Settings }]
-    : user.role === "student"
-        ? [
-          { id: "home", label: t("nav.home"), icon: Home },
-          { id: "stories", label: t("nav.stories"), icon: BookOpen },
-          { id: "games", label: t("nav.lessons"), icon: Gamepad2 },
-          { id: "aac", label: t("nav.words"), icon: MessageCircle },
-          { id: "more", label: t("nav.more"), icon: CircleEllipsis },
-          { id: "world", label: t("nav.world"), icon: ImageIcon },
-          { id: "skills", label: t("navigation.skills"), icon: BarChart3 },
-          { id: "achievements", label: t("nav.achievements"), icon: Trophy },
-          { id: "settings", label: t("nav.settings"), icon: Settings },
-        ]
-      : [
-          { id: "home", label: t("nav.home"), icon: Home },
-          { id: "parent", label: t("nav.parent"), icon: UserRound },
-          { id: "guides", label: t("nav.guides"), icon: BookOpen },
-        ];
+  const familyRole = user.role === "student" || user.role === "parent";
+  const navigation: { id: Screen; label: string; icon: typeof Home }[] = familyRole
+    ? familyNavigation(user.role)
+    : [{ id: "admin", label: t("nav.admin"), icon: LayoutDashboard }];
 
   const child = children.find((item) => item.id === selectedChildId) || children[0];
   const petPreferences = usePetPreferences(["student", "parent"].includes(user.role) ? child?.id : undefined);
@@ -466,7 +452,7 @@ function AuthenticatedApp({ user, onLogout, externalError, onDismissExternalErro
     api<Exercise[]>(path).then(value => { if (active) setExercises(value); }).catch((cause) => {
       if (!active) return;
       setExercises([]);
-      setRequestError(cause instanceof Error ? t("shell.template4", {v0: cause.message}) : t("screen.AuthenticatedApp.ui6"));
+      setRequestError(cause instanceof Error ? t("shell.template4", { v0: cause.message }) : t("screen.AuthenticatedApp.ui6"));
     });
     return () => { active = false; };
   }, [selectedChildId, user.role, catalogRevision, interfaceLocale]);
@@ -480,7 +466,7 @@ function AuthenticatedApp({ user, onLogout, externalError, onDismissExternalErro
     api<ChildConsent>(`/api/children/${child.id}/consent`).then(value => { if (active) setConsent(value); }).catch((cause) => {
       if (!active) return;
       setConsent(null);
-      setRequestError(cause instanceof Error ? t("shell.template5", {v0: cause.message}) : t("screen.AuthenticatedApp.ui7"));
+      setRequestError(cause instanceof Error ? t("shell.template5", { v0: cause.message }) : t("screen.AuthenticatedApp.ui7"));
     });
     return () => { active = false; };
   }, [child?.id, user.role, catalogRevision]);
@@ -494,14 +480,14 @@ function AuthenticatedApp({ user, onLogout, externalError, onDismissExternalErro
       if (session && session.status !== "completed") setDailyMinutes(session.target_minutes);
     }).catch((cause) => {
       if (cancelled) return;
-      setRequestError(cause instanceof Error ? t("shell.template6", {v0: cause.message}) : t("screen.AuthenticatedApp.ui8"));
+      setRequestError(cause instanceof Error ? t("shell.template6", { v0: cause.message }) : t("screen.AuthenticatedApp.ui8"));
     }).finally(() => { if (!cancelled) setActiveSessionLoading(false); });
     return () => { cancelled = true; };
   }, [child?.id, screen, catalogRevision]);
 
   const refreshDashboard = useCallback(() => {
     if (child?.id) api<Dashboard>(`/api/dashboard/${child.id}`).then(setDashboard).catch((cause) => {
-      setRequestError(cause instanceof Error ? t("shell.template7", {v0: cause.message}) : t("screen.AuthenticatedApp.ui9"));
+      setRequestError(cause instanceof Error ? t("shell.template7", { v0: cause.message }) : t("screen.AuthenticatedApp.ui9"));
     });
   }, [child]);
   useEffect(refreshDashboard, [refreshDashboard]);
@@ -570,7 +556,7 @@ function AuthenticatedApp({ user, onLogout, externalError, onDismissExternalErro
         setSessionError(`${cause.message}. ${refreshed ? t("screen.AuthenticatedApp.ui15") : t("screen.AuthenticatedApp.ui16")}`);
         return null;
       }
-      setSessionError(t("shell.template8", {v0: cause instanceof Error ? cause.message : t("localization.saveResultError")}));
+      setSessionError(t("shell.template8", { v0: cause instanceof Error ? cause.message : t("screen.AuthenticatedApp.ui17") }));
       return null;
     }).finally(() => { savingAttemptRef.current = false; });
     if (result) {
@@ -717,7 +703,7 @@ function AuthenticatedApp({ user, onLogout, externalError, onDismissExternalErro
       await api(`/api/notifications/${id}/read`, { method: "PATCH" });
       setNotifications((current) => ({ unread: Math.max(0, current.unread - (current.items.find((item) => item.id === id && !item.is_read) ? 1 : 0)), items: current.items.map((item) => item.id === id ? { ...item, is_read: true } : item) }));
     } catch (cause) {
-      setRequestError(cause instanceof Error ? t("shell.template9", {v0: cause.message}) : t("screen.AuthenticatedApp.ui37"));
+      setRequestError(cause instanceof Error ? t("shell.template9", { v0: cause.message }) : t("screen.AuthenticatedApp.ui37"));
     }
   };
   const markAllNotificationsRead = async () => {
@@ -726,7 +712,7 @@ function AuthenticatedApp({ user, onLogout, externalError, onDismissExternalErro
       await api("/api/notifications/actions/read-all", { method: "PATCH" });
       setNotifications((current) => ({ unread: 0, items: current.items.map((item) => ({ ...item, is_read: true })) }));
     } catch (cause) {
-      setRequestError(cause instanceof Error ? t("shell.template10", {v0: cause.message}) : t("screen.AuthenticatedApp.ui38"));
+      setRequestError(cause instanceof Error ? t("shell.template10", { v0: cause.message }) : t("screen.AuthenticatedApp.ui38"));
     }
   };
 
@@ -750,7 +736,7 @@ function AuthenticatedApp({ user, onLogout, externalError, onDismissExternalErro
           settingsRef.current = persistedSettingsRef.current;
           setSettings(persistedSettingsRef.current);
           setLocale(persistedSettingsRef.current.language);
-          setRequestError(cause instanceof Error ? t("shell.template11", {v0: cause.message}) : t("screen.AuthenticatedApp.ui39"));
+          setRequestError(cause instanceof Error ? t("shell.template11", { v0: cause.message }) : t("screen.AuthenticatedApp.ui39"));
         }
       } finally {
         if (version === settingsSaveVersionRef.current) setSettingsSaving(false);
@@ -765,7 +751,7 @@ function AuthenticatedApp({ user, onLogout, externalError, onDismissExternalErro
   });
 
   if (user.role === "parent" && childrenLoading) return <div className="auth-loading"><div className="brand-mark"><BrandIcon /></div><span>{t("screen.AuthenticatedApp.ui40")}</span></div>;
-  if (["parent", "student"].includes(user.role) && childrenError) return <div className="auth-loading" role="alert"><ShieldAlert size={30}/><span>{childrenError}</span><button className="primary-button" onClick={loadChildren}>{t("parentAdvice.ui6")}</button></div>;
+  if (["parent", "student"].includes(user.role) && childrenError) return <div className="auth-loading" role="alert"><ShieldAlert size={30}/><span>{childrenError}</span><button className="primary-button" onClick={loadChildren}>{t("screen.AuthenticatedApp.ui41")}</button></div>;
   if (user.role === "parent" && !children.length) return <ChildOnboarding user={user} onCreated={(newChild) => { setChildren([newChild]); setSelectedChildId(newChild.id); }} onLogout={onLogout} />;
 
   const openScreen = (next: Screen, cabinetSection = "overview") => {
@@ -792,11 +778,11 @@ function AuthenticatedApp({ user, onLogout, externalError, onDismissExternalErro
     event.preventDefault();
     const query = globalSearch.trim().toLocaleLowerCase("ru");
     if (!query) return;
-    if (/истор|сюжет/.test(query)) openScreen("stories");
-    else if (/фото|мир|люд|мест|вещ/.test(query)) openScreen("world");
-    else if (/навык|прогресс|карт/.test(query)) openScreen("skills");
-    else if (/гайд|родител|совет|помощ/.test(query)) openScreen("guides");
-    else if (/слово|aac|общен|сказать/.test(query)) openScreen("aac");
+    if (/истор|сюжет|оқиға|ертегі/.test(query)) openScreen("stories");
+    else if (/фото|мир|люд|мест|вещ|әлем|адам|орын|зат/.test(query)) openScreen("world");
+    else if (/навык|прогресс|карт|дағды|ілгері/.test(query)) openScreen("skills");
+    else if (/гайд|родител|совет|помощ|нұсқаулық|ата-ана|кеңес|көмек/.test(query)) openScreen("guides");
+    else if (/слово|aac|общен|сказать|сөз|қарым|айту/.test(query)) openScreen("aac");
     else openScreen("games");
   };
 
@@ -881,7 +867,7 @@ function AuthenticatedApp({ user, onLogout, externalError, onDismissExternalErro
 
   if (isChildExerciseFocus) {
     const progress = sessionExerciseActive && activeSession
-      ? t("shell.template12", {v0: Math.min(activeSession.current_index + 1, activeSession.exercises.length), v1: activeSession.exercises.length})
+      ? t("shell.template12", { v0: Math.min(activeSession.current_index + 1, activeSession.exercises.length), v1: activeSession.exercises.length })
       : t("screen.AuthenticatedApp.ui43");
     return <ExercisePetProvider key={`${child?.id}:${focusExercise?.id}`} preferences={{ ...petPreferences.value, visible: petPreferences.ready && petPreferences.value.visible }} soundEnabled={settings.sound_enabled} calmMode={settings.calm_mode}><ExerciseFocusShell
       instruction={focusExercise?.engine?.content.presentation === "picture_description" ? t("screen.AuthenticatedApp.ui44") : focusExercise?.instruction?.split(/(?<=[.!?])\s+/)[0]}
@@ -916,7 +902,7 @@ function AuthenticatedApp({ user, onLogout, externalError, onDismissExternalErro
         {!childRail && <button ref={sidebarCloseRef} type="button" className="sidebar-close" onClick={user.role === "student" && !compactNavigation ? () => { setChildNavigationCollapsed(true); window.requestAnimationFrame(() => sidebarBrandRef.current?.focus()); } : closeSidebar} aria-label={user.role === "student" && !compactNavigation ? t("screen.AuthenticatedApp.ui53") : t("landing.copy045")} aria-expanded={user.role === "student" && !compactNavigation ? true : undefined} aria-controls="primary-navigation">{user.role === "student" && !compactNavigation ? <PanelLeftClose/> : <X/>}</button>}
         <nav aria-label={t("screen.AuthenticatedApp.ui54")}>
           {navigation.map((item) => {
-            const active = screen === item.id || (item.id === "games" && ["session", "exercise-complete", "motor", "sensory", "mixed"].includes(screen));
+            const active = familyRole ? familySection(screen, user.role) === item.id : screen === item.id;
             const Icon = item.icon;
             return (
               <button key={item.id} aria-current={active ? "page" : undefined} className={`${active ? "active " : ""}${item.id === "more" ? "mobile-more-link" : ""}`} onClick={() => openScreen(item.id)}>
@@ -928,13 +914,10 @@ function AuthenticatedApp({ user, onLogout, externalError, onDismissExternalErro
         <div className="sidebar-note">
           <span className="note-spark">{user.role === "student" ? "‖" : "✦"}</span>
           <strong>{user.role === "student" ? t("screen.AuthenticatedApp.ui55") : t("auth.history")}</strong>
-          <span>{user.role === "student" ? t("screen.AuthenticatedApp.ui56") : t("shell.template13", {v0: dashboard?.week_sessions || 0})}</span>
+          <span>{user.role === "student" ? t("screen.AuthenticatedApp.ui56") : t("shell.template13", { v0: dashboard?.week_sessions || 0 })}</span>
         </div>
-        <button type="button" className="sidebar-logout" onClick={onLogout}><LogOut size={20} aria-hidden="true"/><span>{t("common.logoutAccount")}</span></button>
-        <div className="profile-mini">
-          <button className="avatar avatar-button" onClick={() => openScreen("profile")} aria-label={t("localization.profileOpen")}>{user.full_name[0]}</button>
-          <button className="profile-mini-info" onClick={() => openScreen("profile")}><strong>{user.full_name}</strong><span>{roleLabel(user.role)}</span></button>
-          <button className="logout-mini" onClick={onLogout} aria-label={t("common.logout")}><LogOut size={17} /></button>
+        <div className="sidebar-account">
+          <AccountMenu key={String(sidebarOpen)} name={user.full_name} onExpand={() => setChildNavigationCollapsed(false)} onOpen={next => { openScreen(next); if (sidebarIsDialog) window.requestAnimationFrame(() => menuButtonRef.current?.focus()); }} onLogout={onLogout}/>
         </div>
       </aside>
 
@@ -946,14 +929,10 @@ function AuthenticatedApp({ user, onLogout, externalError, onDismissExternalErro
           <div className="mobile-logo"><BrandLogo variant="compact" width={116} /></div>
           {user.role === "parent" && <form className="v2-global-search" role="search" onSubmit={submitGlobalSearch}><Search/><input value={globalSearch} onChange={(event) => setGlobalSearch(event.target.value)} placeholder={t("screen.AuthenticatedApp.ui57")} aria-label={t("screen.AuthenticatedApp.ui58")}/><button aria-label={t("screen.AuthenticatedApp.ui59")}><ArrowRight/></button></form>}
           <div className="top-actions v2-top-actions">
-            {user.role !== "student" && user.role !== "parent" && <button className="language" data-i18n-native onClick={() => openScreen("settings")} aria-label={{ ru: "Язык интерфейса: русский", en: "Interface language: English", kk: "Интерфейс тілі: қазақша" }[settings.language]}><Languages size={17} /> {{ ru: "RU", en: "EN", kk: "ҚАЗ" }[settings.language]}</button>}
-            {user.role !== "student" && user.role !== "parent" && <div className="stars"><Star size={18} fill="currentColor" /> {dashboard?.stars || 0}</div>}
-            <button className="v2-icon-button" onClick={() => openScreen("settings")} aria-label={t("nav.settings")}><Settings size={21}/></button>
-            {user.role === "parent" && <div className="notification-wrap"><button className="notification-button" onClick={() => setNotificationsOpen((value) => !value)} aria-label={t("nav.notifications")}><Bell size={19}/>{notifications.unread > 0 && <i>{notifications.unread}</i>}</button>{notificationsOpen && <div className="notification-panel"><div className="notification-head"><div><span className="kicker">{t("screen.AuthenticatedApp.ui60")}</span><strong>{t("screen.AuthenticatedApp.ui61")}</strong></div>{notifications.unread > 0 && <button onClick={markAllNotificationsRead}>{t("screen.AuthenticatedApp.ui62")}</button>}</div><div className="notification-list">{notifications.items.length ? notifications.items.map((item) => <button key={item.id} className={item.is_read ? "read" : "unread"} onClick={() => markNotificationRead(item.id)}><span className="notification-symbol"><Trophy size={18}/></span><div><strong>{item.title}</strong><p>{item.message}</p><small>{new Date(item.created_at).toLocaleDateString("ru-RU", { day: "numeric", month: "long" })}</small></div>{!item.is_read && <i/>}</button>) : <div className="notification-empty"><Bell size={24}/><strong>{t("screen.AuthenticatedApp.ui63")}</strong><span>{t("screen.AuthenticatedApp.ui64")}</span></div>}</div></div>}</div>}
+            {user.role === "parent" && <div className="notification-wrap"><button className="notification-button" onClick={() => setNotificationsOpen((value) => !value)} aria-label={t("nav.notifications")}><Bell size={19}/>{notifications.unread > 0 && <i>{notifications.unread}</i>}</button>{notificationsOpen && <div className="notification-panel"><div className="notification-head"><div><span className="kicker">{t("screen.AuthenticatedApp.ui60")}</span><strong>{t("screen.AuthenticatedApp.ui61")}</strong></div>{notifications.unread > 0 && <button onClick={markAllNotificationsRead}>{t("screen.AuthenticatedApp.ui62")}</button>}</div><div className="notification-list">{notifications.items.length ? notifications.items.map((item) => <button key={item.id} className={item.is_read ? "read" : "unread"} onClick={() => markNotificationRead(item.id)}><span className="notification-symbol"><Trophy size={18}/></span><div><strong>{item.title}</strong><p>{item.message}</p><small>{formatDate(item.created_at, {day: "numeric", month: "long"})}</small></div>{!item.is_read && <i/>}</button>) : <div className="notification-empty"><Bell size={24}/><strong>{t("screen.AuthenticatedApp.ui63")}</strong><span>{t("screen.AuthenticatedApp.ui64")}</span></div>}</div></div>}</div>}
             {user.role === "parent" && <span className="v2-top-divider"/>}
-            {user.role === "parent" && <button className="v2-user-greeting" onClick={() => openScreen("profile")}><span>{t("screen.ProfileScreen.ui4")}</span><strong>{user.full_name.split(" ")[0]}!</strong></button>}
+            {user.role === "parent" && <span className="v2-user-greeting"><span>{t("screen.AuthenticatedApp.ui65")}</span><strong>{user.full_name.split(" ")[0]}!</strong></span>}
             {user.role === "student" && <StarVault total={dashboard?.stars || 0} onOpen={() => openScreen("achievements")}/>}
-            <button className="avatar small avatar-button" onClick={() => openScreen("profile")} aria-label={t("localization.profileOpen")}>{user.full_name[0]}</button>
           </div>
         </header>
 
@@ -962,13 +941,13 @@ function AuthenticatedApp({ user, onLogout, externalError, onDismissExternalErro
         {requestError && <div className="game-error global-request-error" role="alert"><ShieldAlert size={18}/><span>{requestError}</span><button type="button" className="small-button" onClick={() => setRequestError("")}>{t("common.close")}</button></div>}
 
         <div className="page">
+          {familyRole && <SectionNavigation screen={screen} role={user.role} onOpen={openScreen}/>}
 
           {screen === "home" && <ExercisePetProvider presentation="home" key={`home-${child?.id}`} preferences={{ ...petPreferences.value, visible: user.role === "student" && petPreferences.ready && petPreferences.value.visible }} soundEnabled={settings.sound_enabled} calmMode={settings.calm_mode}><HomeScreen onStartPlan={startPreparedPlan} onOpenSpecialist={() => openScreen("parent", "specialist")} onOpen={openScreen} onExercise={exercise => { if (user.role === "parent") setParentPracticeMode("adult_preview"); openExercise(exercise); }} onStartSession={startDailySession} onResume={resumeSession} onPauseSession={pauseSession} soundEnabled={settings.sound_enabled} activeSession={activeSession} activeSessionLoading={activeSessionLoading} dailyMinutes={dailyMinutes} onMinutesChange={setDailyMinutes} sessionLoading={sessionLoading} sessionError={sessionError} child={child} dashboard={dashboard} consent={consent} userRole={user.role} exercises={exercises} /></ExercisePetProvider>}
           {screen === "stories" && user.role === "student" && <StoryExperience childId={child?.id} calmMode={settings.calm_mode}/>}
           {(screen === "world" || screen === "my-world") && ["student", "parent"].includes(user.role) && <WorldExperience key={child?.id} childId={child?.id} canManage={user.role === "parent"} onWords={() => openScreen("aac")} onSpeak={(text) => speak(text, .82, true)}/>}
 
-          {screen === "skills" && user.role === "student" && <SkillsExperience child={child} dashboard={dashboard} exercises={exercises} onNavigate={openScreen} onExercise={openExercise}/>}
-          {["success", "achievements", "progress"].includes(screen) && user.role === "student" && <AchievementsExperience childId={child?.id} dashboard={dashboard} onStories={() => openScreen("stories")} onGames={() => openScreen("games")}/>}
+          {["success", "achievements", "progress", "skills"].includes(screen) && user.role === "student" && <AchievementsExperience childId={child?.id} dashboard={dashboard} onStories={() => openScreen("stories")} onGames={() => openScreen("games")}/>}
           {screen === "guides" && user.role === "parent" && <GuidesExperience child={child} dashboard={dashboard} exercises={exercises} onNavigate={openScreen} onExercise={openExercise}/>}
           {(screen === "games" || screen === "learn") && <GamesScreen onOpen={openScreen} onExercise={openExercise} dashboard={dashboard} exercises={exercises} childMode={user.role === "student"} parentPracticeMode={user.role === "parent" ? parentPracticeMode : undefined} onParentPracticeModeChange={setParentPracticeMode} />}
           {screen === "session" && sessionError && <div className="v2-inline-alert" role="alert">{sessionError}</div>}
@@ -979,7 +958,7 @@ function AuthenticatedApp({ user, onLogout, externalError, onDismissExternalErro
           {activeExerciseContent}
           {screen === "aac" && <PhraseGame key="free-aac" childId={child?.id} canManage={user.role === "parent"} freeMode soundEnabled={settings.sound_enabled} onBack={() => openScreen("home")} />}
           {screen === "ai" && user.role === "parent" && <AIParentScreen child={child} />}
-          {screen === "progress" && user.role !== "student" && <ProgressScreen childId={child?.id} dashboard={dashboard} onStartPractice={() => openScreen("games")} />}
+          {screen === "progress" && user.role !== "student" && <ParentProgress key={child?.id} childId={child?.id} onStartPractice={() => openScreen("games")} onObservations={() => openScreen("parent", "practice")} />}
           {screen === "goals" && user.role === "parent" && <GoalsAndPractice key={child?.id} child={child} targetMinutes={dailyMinutes} onStartPlan={startPreparedPlan} onPracticeChanged={() => { setExercises([]); setCatalogRevision(value => value + 1); refreshDashboard(); }}/>}
           {screen === "parent" && <ParentScreen key={child?.id} child={child} childProfiles={children} onSelectChild={setSelectedChildId} onDeleted={(id) => { const remaining = children.filter((item) => item.id !== id); setChildren(remaining); setSelectedChildId(remaining[0]?.id || null); setScreen("home"); }} dashboard={dashboard} onConsentChange={setConsent} onNavigate={openScreen} onStartPlan={startPreparedPlan} />}
           {screen === "more" && user.role === "student" && <ChildMoreScreen onOpen={openScreen}/>}
@@ -1063,7 +1042,7 @@ type HomeScreenProps = { onPauseSession: () => void; soundEnabled: boolean; onSt
 function HomeScreen(props: HomeScreenProps) {
   if (props.userRole === "student") return <ChildHomeScreen {...props}/>;
   if (props.userRole !== "parent") return null;
-  return <>{props.sessionError && <div className="v2-inline-alert" role="alert">{props.sessionError}</div>}<ParentOverview onStartPlan={props.onStartPlan} exercises={props.exercises} onExercise={props.onExercise} onOpenSpecialist={props.onOpenSpecialist} child={props.child} dashboard={props.dashboard} activeSession={props.activeSession} onStartSession={props.onStartSession} onResume={props.onResume} onNavigate={props.onOpen}/></>;
+  return <>{props.sessionError && <div className="v2-inline-alert" role="alert">{props.sessionError}</div>}<ParentOverview busy={props.sessionLoading || props.activeSessionLoading} onStartPlan={props.onStartPlan} exercises={props.exercises} onExercise={props.onExercise} onOpenSpecialist={props.onOpenSpecialist} child={props.child} dashboard={props.dashboard} activeSession={props.activeSession} onStartSession={props.onStartSession} onResume={props.onResume} onNavigate={props.onOpen}/></>;
 }
 
 function ChildHomeScreen({ onOpen, onExercise, onStartSession, onResume, soundEnabled, activeSession, activeSessionLoading, sessionLoading, sessionError, child, dashboard, consent, exercises }: HomeScreenProps) {
@@ -1125,15 +1104,13 @@ function GamesScreen({ onOpen, onExercise, dashboard, exercises, childMode, pare
   return (
     <div className={`page-enter stack-xl exercise-catalog-page ${childMode ? "child-games" : ""}`}>
       <section className="exercise-catalog-hero">
-        <div className="exercise-catalog-hero-copy"><span className="kicker">{t("screen.GamesScreen.ui1")} {exercises.length}</span><h1>{childMode ? t("screen.GamesScreen.ui2") : t("product.ui31")}</h1><p>{childMode ? t("screen.GamesScreen.ui4") : t("screen.GamesScreen.ui5")}</p></div>
+        <div className="exercise-catalog-hero-copy"><span className="kicker">{t("screen.GamesScreen.ui1")} {exercises.length}</span><h1>{childMode ? t("screen.GamesScreen.ui2") : t("screen.GamesScreen.ui3")}</h1><p>{childMode ? t("screen.GamesScreen.ui4") : t("screen.GamesScreen.ui5")}</p></div>
         <Image src="/app-illustrations/exercise-library-hero.webp" width={768} height={512} alt={t("screen.GamesScreen.ui6")} priority />
       </section>
       {!childMode && exercises.some((item) => item.engine?.review_gate.demo_only) && <div className="unreviewed-demo-banner" role="status"><ShieldAlert size={20}/><div><strong>{childMode ? t("screen.GamesScreen.ui7") : t("screen.GamesScreen.ui8")}</strong><span>{childMode ? t("screen.GamesScreen.ui9") : t("screen.GamesScreen.ui10")}</span></div></div>}
-      <button className="child-aac-entry" onClick={() => onOpen("aac")}><Image src="/app-illustrations/aac-help.webp" width={78} height={78} alt={t("screen.GamesScreen.ui11")}/><div><strong>{t("screen.ProfileScreen.ui15")}</strong><small>{t("screen.GamesScreen.ui13")}</small></div><ChevronRight size={24}/></button>
-      {parentPracticeMode && <section className="practice-mode-card" aria-labelledby="practice-mode-title"><div><Eye size={22}/><span><strong id="practice-mode-title">{t("screen.GamesScreen.ui14")}</strong><small>{t("screen.GamesScreen.ui15")}</small></span></div><div className="practice-mode-options"><button type="button" className={parentPracticeMode === "adult_preview" ? "active" : ""} aria-pressed={parentPracticeMode === "adult_preview"} onClick={() => onParentPracticeModeChange?.("adult_preview")}><Eye size={17}/>  {t("book.copy033")}</button><button type="button" className={parentPracticeMode === "child_practice" ? "active" : ""} aria-pressed={parentPracticeMode === "child_practice"} onClick={() => onParentPracticeModeChange?.("child_practice")}><Baby size={17}/>  {t("screen.GamesScreen.ui17")}</button></div></section>}
-      {exercises.some(e=>e.engine?.mechanic==='scene_search')&&<section aria-label={t("screen.GamesScreen.ui18")}><div className="section-heading"><div><span className="kicker">{t("screen.GamesScreen.ui19")}</span><h2>{t("screen.GamesScreen.ui18")}</h2></div></div><div className="explore-location-grid">{exercises.filter(e=>e.engine?.mechanic==='scene_search').map(e=><button className="explore-location" key={e.id} onClick={()=>onExercise(e)}><Image src={e.engine!.content.exploration!.image.media_ref} alt="" width={640} height={360}/><span><strong>{e.engine!.content.exploration!.title}</strong><small>{t("screen.GamesScreen.ui20")}</small></span></button>)}</div></section>}
-      {!exercises.length && <p role="status">{t("content.empty")}</p>}
-      {(exercises.some(e=>e.engine?.mechanic!=='scene_search'))&&<ExerciseLibrary items={exercises.filter(e=>e.engine?.mechanic!=='scene_search')} completedIds={dashboard?.completed_exercise_ids || []} onExercise={onExercise} />}
+      <button className="child-aac-entry" onClick={() => onOpen("aac")}><Image src="/app-illustrations/aac-help.webp" width={78} height={78} alt={t("screen.GamesScreen.ui11")}/><div><strong>{t("screen.GamesScreen.ui12")}</strong><small>{t("screen.GamesScreen.ui13")}</small></div><ChevronRight size={24}/></button>
+      {parentPracticeMode && <section className="practice-mode-card" aria-labelledby="practice-mode-title"><div><Eye size={22}/><span><strong id="practice-mode-title">{t("screen.GamesScreen.ui14")}</strong><small>{t("screen.GamesScreen.ui15")}</small></span></div><div className="practice-mode-options"><button type="button" className={parentPracticeMode === "adult_preview" ? "active" : ""} aria-pressed={parentPracticeMode === "adult_preview"} onClick={() => onParentPracticeModeChange?.("adult_preview")}><Eye size={17}/>  {t("screen.GamesScreen.ui16")}</button><button type="button" className={parentPracticeMode === "child_practice" ? "active" : ""} aria-pressed={parentPracticeMode === "child_practice"} onClick={() => onParentPracticeModeChange?.("child_practice")}><Baby size={17}/>  {t("screen.GamesScreen.ui17")}</button></div></section>}
+      <ExerciseLibrary items={exercises.filter(item => item.module !== "motor")} completedIds={dashboard?.completed_exercise_ids || []} onExercise={onExercise} />
       {!childMode && <div className="tip-banner"><div className="tip-icon"><Sparkles/></div><div><strong>{t("screen.GamesScreen.ui21")}</strong><p>{t("screen.GamesScreen.ui22")}</p></div></div>}
     </div>
   );
@@ -1145,10 +1122,32 @@ const exerciseImages: Record<string, string> = {
 };
 
 function ExerciseLibrary({ items, completedIds, onExercise }: { items: Exercise[]; completedIds: number[]; onExercise: (exercise: Exercise) => void }) {
-  useLocale();
+  const locale = useLocale();
+  const [query, setQuery] = useState("");
+  const [direction, setDirection] = useState("all");
+  const [duration, setDuration] = useState("all");
   const completed = new Set(completedIds);
   const labels = { motor: t("screen.ExerciseLibrary.ui1"), sensory: t("screen.ExerciseLibrary.ui2"), mixed: t("screen.ExerciseLibrary.ui3") };
-  return <section className="exercise-library" aria-labelledby="all-exercises-title"><div className="section-heading"><div><span className="kicker">{t("screen.ExerciseLibrary.ui4")}</span><h2 id="all-exercises-title">{t("screen.ExerciseLibrary.ui5")} {items.length}</h2></div></div><div className="exercise-grid">{items.map((exercise) => <button key={exercise.id} className={`exercise-card ${exercise.module}`} onClick={() => onExercise(exercise)}><span className="exercise-card-visual"><Image src={exerciseImages[exercise.target] ? `/app-illustrations/${exerciseImages[exercise.target]}` : exercise.icon} width={320} height={230} alt="" /></span><div className="exercise-card-copy"><small>{labels[exercise.module]}{completed.has(exercise.id) ? t("screen.ExerciseLibrary.ui6") : ""}</small><strong>{exercise.title}</strong><p>{exercise.instruction}</p><span className="exercise-card-open">{t("common.start")} <ArrowRight size={18}/></span></div></button>)}</div>{!items.length && <div className="empty-state large"><ShieldAlert size={28}/><strong>{t("screen.ExerciseLibrary.ui8")}</strong><span>{t("screen.ExerciseLibrary.ui9")}</span></div>}</section>;
+  // A planning estimate, not a timer or a measured completion time: about 30 seconds per round.
+  const minutes = (exercise: Exercise) => Math.max(1, Math.ceil((exercise.adaptive?.difficulty_params.round_count || exercise.engine?.content.default_rounds || 6) / 2));
+  const filtered = items.filter(exercise => (direction === "all" || exercise.module === direction) && (duration === "all" || (duration === "short" ? minutes(exercise) <= 3 : minutes(exercise) > 3)) && `${exercise.title} ${exercise.instruction}`.toLocaleLowerCase(locale).includes(query.trim().toLocaleLowerCase(locale)));
+  const reset = () => { setQuery(""); setDirection("all"); setDuration("all"); };
+  return <section className="exercise-library focused-catalog" aria-labelledby="all-exercises-title">
+    <div className="catalog-filters">
+      <label className="catalog-search">{t("ux.searchExercises")}<span><Search size={20}/><input type="search" value={query} onChange={event => setQuery(event.target.value)} placeholder={t("ux.searchExample")}/></span></label>
+      <label>{t("ux.direction")}<select value={direction} onChange={event => setDirection(event.target.value)}><option value="all">{t("ux.allDirections")}</option>{Object.entries(labels).map(([id,label]) => <option key={id} value={id}>{label}</option>)}</select></label>
+      <label>{t("ux.duration")}<select value={duration} onChange={event => setDuration(event.target.value)}><option value="all">{t("ux.anyDuration")}</option><option value="short">{t("ux.shortDuration")}</option><option value="long">{t("ux.longDuration")}</option></select></label>
+    </div>
+    <p className="catalog-estimate-note">{t("ux.estimateHint")}</p>
+    <div className="section-heading"><h2 id="all-exercises-title" aria-live="polite">{t("ux.foundExercises", {count:filtered.length})}</h2>{(query || direction !== "all" || duration !== "all") && <button type="button" className="small-button" onClick={reset}>{t("ux.resetFilters")}</button>}</div>
+    <div className="exercise-grid">{filtered.map(exercise => <button type="button" key={exercise.id} className={`exercise-card ${exercise.module}`} onClick={() => onExercise(exercise)}>
+      <span className="exercise-card-visual"><Image src={exercise.engine?.content.exploration?.image.media_ref || (exerciseImages[exercise.target] ? `/app-illustrations/${exerciseImages[exercise.target]}` : exercise.icon)} width={320} height={230} alt=""/></span>
+      <div className="exercise-card-copy"><small>{labels[exercise.module]}{completed.has(exercise.id) ? t("screen.ExerciseLibrary.ui6") : ""}</small><strong>{exercise.title}</strong><p>{exercise.instruction}</p>
+      <span className="exercise-card-meta"><span><Clock3 size={16}/>{t("ux.aboutMinutes", {count:minutes(exercise)})}</span>{exercise.module === "motor" && <span><UserRound size={16}/>{t("ux.withAdult")}</span>}</span>
+      <span className="exercise-card-open">{t("screen.ExerciseLibrary.ui7")} <ArrowRight size={18}/></span></div>
+    </button>)}</div>
+    {!filtered.length && <div className="empty-state large" role="status"><Search size={28}/><strong>{items.length ? t("ux.noExercises") : t("content.empty")}</strong><span>{items.length ? t("ux.tryFilters") : t("screen.ExerciseLibrary.ui9")}</span>{items.length > 0 && <button type="button" className="small-button" onClick={reset}>{t("ux.resetFilters")}</button>}</div>}
+  </section>;
 }
 
 function PageTitle({ eyebrow, title, subtitle }: { eyebrow: string; title: string; subtitle: string }) {
@@ -1847,6 +1846,9 @@ function PhraseGame({ childId, canManage, exercise, freeMode = false, soundEnabl
   const pet = useExercisePet();
   const aacLocale = useLocale();
   const [cards, setCards] = useState<AACCard[]>([]);
+  const [recentCardIds, setRecentCardIds] = useState<number[]>([]);
+  const [cardsLoading, setCardsLoading] = useState(true);
+  const [boardError, setBoardError] = useState(false);
   const [selected, setSelected] = useState<AACCard[]>([]);
   const [category, setCategory] = useState<string>(() => ({
     help: "help", refusal: "yes_no", need: "needs", desire: "wants", request: "wants", preference: "food", choice: "food",
@@ -1867,17 +1869,18 @@ function PhraseGame({ childId, canManage, exercise, freeMode = false, soundEnabl
   const speechLifetime = useRef(0);
   useEffect(() => () => { speechLifetime.current += 1; stopCurrentSpeech(); }, [childId]);
   const composition = composeAACMessage(selected, freeMode ? "free" : "guided", languageOf(getLocale()));
-  const sentence = composition.valid ? composition.phrase : selected.map(scenarioCardLabel).join(" + ");
+  const sentence = composition.valid ? composition.phrase : selected.map((item) => item.label).join(" + ");
   const boardRequest = useRef(0);
   const loadBoard = useCallback(() => {
     const requestId = ++boardRequest.current;
-    if (!childId) return;
+    if (!childId) { setCardsLoading(false); return; }
+    setCardsLoading(true); setBoardError(false); setRecentCardIds([]);
     setSelected([]);
     api<AACCard[]>(`/api/aac/cards/${childId}${canManage && freeMode ? "?preview=true" : ""}`).then(value => { if (requestId === boardRequest.current) setCards(value); }).catch((cause) => {
       if (requestId !== boardRequest.current) return;
-      setCards([]);
+      setCards([]); setBoardError(true);
       setAacNotice(cause instanceof Error ? t("common.withReason", {message:t("aac.copy080"), reason:cause.message}) : t("aac.copy080"));
-    });
+    }).finally(() => { if (requestId === boardRequest.current) setCardsLoading(false); });
     api<Array<{ id: number; phrase: string }>>(`/api/aac/history/${childId}`).then(value => { if (requestId === boardRequest.current) setHistory(value); }).catch((cause) => {
       if (requestId !== boardRequest.current) return;
       setAacNotice(cause instanceof Error ? t("common.withReason", {message:t("aac.copy081"), reason:cause.message}) : t("aac.copy081"));
@@ -1898,7 +1901,9 @@ function PhraseGame({ childId, canManage, exercise, freeMode = false, soundEnabl
       ? composition.reason
       : scenarioEvaluation.hint;
   const availableCards = scenarioLabels ? cards.filter((card) => scenarioLabels.has(scenarioCardLabel(card))) : cards;
-  const visibleCards = (freeMode ? (category === "favorites" ? availableCards.filter((card) => card.favorite || card.is_core) : availableCards.filter((card) => card.category === category)) : availableCards).filter((card) => !normalizedCardQuery || `${card.label} ${card.speech}`.toLocaleLowerCase(aacLocale).includes(normalizedCardQuery));
+  const categoryCards = category === "recent" ? recentCardIds.flatMap(id => availableCards.find(card => card.id === id) || []) : category === "favorites" ? availableCards.filter(card => card.favorite || card.is_core) : availableCards.filter(card => card.category === category);
+  const visibleCards = (freeMode && !normalizedCardQuery ? categoryCards : availableCards).filter(card => !normalizedCardQuery || `${card.label} ${card.speech}`.toLocaleLowerCase(aacLocale).includes(normalizedCardQuery));
+
   const safetyCards = ["Помоги", "Перерыв", "Стоп", "Не хочу"].flatMap((label) => scenarioLabels?.has(label) ? [] : cards.find((card) => card.label === label || card.concept_key === aacSafetyConcepts[label]) || []);
   const addCard = (card: AACCard) => {
     if (selected.some((item) => item.id === card.id)) {
@@ -1909,6 +1914,7 @@ function PhraseGame({ childId, canManage, exercise, freeMode = false, soundEnabl
       setAacNotice(scenarioEvaluation.complete ? scenarioEvaluation.hint : t("aac.copy002"));
       return;
     }
+    setRecentCardIds(ids => [card.id, ...ids.filter(id => id !== card.id)].slice(0, 12));
     savedRef.current = false;
     setAacNotice("");
     setSelected((items) => [...items, card].slice(-8));
@@ -2008,12 +2014,13 @@ function PhraseGame({ childId, canManage, exercise, freeMode = false, soundEnabl
   };
   const activeCategory = aacCategories.find((item) => item.id === category) || aacCategories[0];
   const quickCards = ["Помоги", "Больно", "Стоп", "Перерыв", "Не хочу", "Да"].flatMap((label) => cards.find((card) => card.label === label || card.concept_key === aacSafetyConcepts[label]) || []);
-  return <div className="page-enter game-page aac-page redesigned">
+  return <div className={`page-enter game-page aac-page redesigned ${freeMode ? "aac-free" : ""}`}>
     {cards.some(card => card.translation_preview) && <p role="status">{t("aac.previewNote")}</p>}
     <GameHeader title={freeMode ? t("nav.words") : exercise?.title || t("aac.copy018")} subtitle={freeMode ? t("aac.copy019") : t("aac.copy020")} step={freeMode ? t("aac.copy021") : scenarioEvaluation.stepLabel} onBack={onBack}/>
-    {freeMode && <section className="aac-quick" aria-label={t("aac.copy022")}><div className="aac-quick-head"><div><span className="kicker">{t("aac.copy023")}</span><strong>{t("aac.copy024")}</strong></div><ShieldCheck size={22}/></div><div>{quickCards.map((card) => <button key={card.id} onClick={() => sendQuickMessage(card)}><AACVisual card={card} compact/><span>{card.label}</span></button>)}</div>{aacNotice && <p role="status">{aacNotice}{(selected[0]?.concept_key === "break" || selected[0]?.label === "Перерыв") && <button onClick={onBack}>{t("game.break")}</button>}</p>}</section>}
+
     {!freeMode && <div className="aac-goal"><div><span className="kicker">{t("aac.copy025")}</span><strong>{scenario?.title || exercise?.instruction || t("aac.copy026")}</strong><p>{scenario?.instruction || exercise?.instruction}</p>{scenario?.steps?.length ? <ol className="aac-task-steps">{scenario.steps.map((step) => <li key={step}>{step}</li>)}</ol> : null}</div><Target size={22}/><p>{scenario?.criterion || t("aac.copy027")}</p>{canManage && <div className="aac-prompt-level" aria-label={t("aac.copy028")}><span>{t("aac.copy029")}</span>{([['independent',t("specialist.copy002")],['minimal',t("aac.copy030")],['full',t("aac.copy031")]] as const).map(([value,label]) => <button key={value} className={promptLevel === value ? "active" : ""} aria-pressed={promptLevel === value} onClick={() => setPromptLevel(value)}>{label}</button>)}</div>}</div>}
-    <section className="aac-composer aac-composer-top"><div className="aac-composer-head"><div><span className="kicker">{freeMode ? t("aac.copy032") : t("aac.copy033")}</span><strong>{sentence || t("aac.copy034")}</strong><small>{composerHint}</small></div><div className="aac-composer-actions"><button className="clear-button" disabled={!selected.length || speechPending} onClick={() => { setSelected([]); setAacNotice(""); savedRef.current = false; }}>{t("aac.copy035")}</button><button className="speak-button" disabled={speechPending || !selected.length || !composition.valid || (!freeMode && !scenarioEvaluation.complete)} onClick={sayPhrase}><Volume2 size={21}/>{speechPending ? t("aac.copy036") : freeMode ? t("aac.copy037") : scenarioEvaluation.actionLabel}</button></div></div><div className={`aac-sentence ${selected.length ? "filled" : ""}`}>{selected.length ? selected.map((card, index) => <button key={`${card.id}-${index}`} disabled={speechPending} aria-label={t("aac.removeCard", {label:card.label})} onClick={() => { savedRef.current = false; setSelected((items) => items.filter((_, itemIndex) => itemIndex !== index)); }}><span className="aac-card-order">{index + 1}</span><AACVisual card={card} compact/><span>{card.label}</span><X size={13}/></button>) : <div className="aac-empty-message"><MessageCircle size={24}/><div><strong>{freeMode ? t("aac.copy039") : scenarioEvaluation.hint}</strong><span>{freeMode ? t("aac.copy040") : t("aac.copy041")}</span></div></div>}</div>{selected.length > 0 && <p className="aac-remove-hint">{t("aac.copy042")}</p>}</section>
+    <section className="aac-composer aac-composer-top"><div className="aac-composer-head"><div><span className="kicker">{freeMode ? t("aac.copy032") : t("aac.copy033")}</span><strong aria-live="polite">{sentence || t("aac.copy034")}</strong><small>{composerHint}</small></div><div className="aac-composer-actions">{freeMode && <button type="button" className="clear-button" disabled={!selected.length || speechPending} onClick={() => { setSelected(items => items.slice(0, -1)); setAacNotice(""); savedRef.current = false; }}><Undo2 size={18}/>{t("ux.undoWord")}</button>}<button className="clear-button" disabled={!selected.length || speechPending} onClick={() => { setSelected([]); setAacNotice(""); savedRef.current = false; }}>{t("aac.copy035")}</button><button className="speak-button" disabled={speechPending || !selected.length || !composition.valid || (!freeMode && !scenarioEvaluation.complete)} onClick={sayPhrase}><Volume2 size={21}/>{speechPending ? t("aac.copy036") : freeMode ? t("aac.copy037") : scenarioEvaluation.actionLabel}</button></div></div><div className={`aac-sentence ${selected.length ? "filled" : ""}`}>{selected.length ? selected.map((card, index) => <button key={`${card.id}-${index}`} disabled={speechPending} aria-label={t("aac.removeCard", {label:card.label})} onClick={() => { savedRef.current = false; setSelected((items) => items.filter((_, itemIndex) => itemIndex !== index)); }}><span className="aac-card-order">{index + 1}</span><AACVisual card={card} compact/><span>{card.label}</span><X size={13}/></button>) : <div className="aac-empty-message"><MessageCircle size={24}/><div><strong>{freeMode ? t("aac.copy039") : scenarioEvaluation.hint}</strong><span>{freeMode ? t("aac.copy040") : t("aac.copy041")}</span></div></div>}</div>{selected.length > 0 && <p className="aac-remove-hint">{t("aac.copy042")}</p>}</section>
+    {freeMode && <section className="aac-quick" aria-label={t("aac.copy022")}><div className="aac-quick-head"><div><span className="kicker">{t("aac.copy023")}</span><strong>{t("aac.copy024")}</strong></div><ShieldCheck size={22}/></div><div>{quickCards.map((card) => <button key={card.id} onClick={() => sendQuickMessage(card)}><AACVisual card={card} compact/><span>{card.label}</span></button>)}</div>{aacNotice && <p role="status">{aacNotice}{(selected[0]?.concept_key === "break" || selected[0]?.label === "Перерыв") && <button onClick={onBack}>{t("game.break")}</button>}</p>}</section>}
     {aacNotice && !freeMode && <div className="aac-notice" role="status"><Volume2 size={18}/><span>{aacNotice}</span>{(selected[0]?.concept_key === "break" || selected[0]?.label === "Перерыв") && <button className="small-button" onClick={onBack}>{t("game.break")}</button>}</div>}
     {!freeMode ? <div className="aac-guided-workspace">
       <section className="aac-board guided"><div className="aac-toolbar"><div><span className="kicker">{scenarioEvaluation.complete ? t("aac.copy043") : t("aac.copy044")}</span><h3>{scenario?.title || t("aac.copy045")}</h3></div><small>{availableCards.length} {availableCards.length === 1 ? t("aac.copy046") : availableCards.length < 5 ? t("aac.copy047") : t("aac.copy048")}</small></div>
@@ -2021,11 +2028,11 @@ function PhraseGame({ childId, canManage, exercise, freeMode = false, soundEnabl
       </section>
       {safetyCards.length > 0 && <section className="aac-guided-safety" aria-label={t("aac.copy049")}><div><span className="kicker">{t("aac.copy050")}</span><strong>{t("aac.copy051")}</strong></div><div>{safetyCards.map((card) => <button key={card.id} onClick={() => sendQuickMessage(card)}><AACVisual card={card} compact/><span>{card.label}</span></button>)}</div></section>}
     </div> : <div className="aac-workspace">
-      <aside className="aac-category-panel"><div><span className="kicker">{t("aac.copy052")}</span><h3>{category === "favorites" ? t("aac.copy053") : activeCategory.label}</h3></div><nav className="aac-tabs primary-aac-tabs" aria-label={t("aac.copy054")}><button className={category === "favorites" ? "active" : ""} aria-pressed={category === "favorites"} onClick={() => { setCategory("favorites"); setCardQuery(""); }}><Star size={19}/><span>{t("aac.copy055")}</span><small>{availableCards.filter((card) => card.favorite || card.is_core).length}</small></button><button className={categoriesOpen ? "active" : ""} aria-expanded={categoriesOpen} aria-controls="more-aac-categories" onClick={() => setCategoriesOpen((value) => !value)}><Plus size={19}/><span>{t("nav.more")}</span><small>{aacCategories.length - 1}</small></button></nav>{categoriesOpen && <nav id="more-aac-categories" className="aac-tabs more-aac-tabs" aria-label={t("aac.copy056")}>{aacCategories.filter((item) => item.id !== "favorites").map((item) => { const Icon = item.icon; const count = availableCards.filter((card) => card.category === item.id).length; return <button key={item.id} className={category === item.id ? "active" : ""} aria-pressed={category === item.id} onClick={() => { setCategory(item.id); setCardQuery(""); }}><Icon size={18}/><span>{item.label}</span><small>{count}</small></button>; })}</nav>}{history.length > 0 && <div className="aac-history"><span className="kicker">{t("aac.copy057")}</span>{history.slice(0,3).map((item) => <button key={item.id} onClick={() => replayHistory(item.phrase)}><RotateCcw size={14}/><span>{item.phrase}</span></button>)}</div>}</aside>
-      <section className="aac-board"><div className="aac-toolbar"><div><span className="kicker">{category === "favorites" ? t("aac.copy058") : t("aac.copy059")}</span><h3>{category === "favorites" ? t("aac.copy060") : activeCategory.label}</h3></div><div className="aac-tools">{(categoriesOpen || canManage) && <label className="aac-search"><Search size={16}/><input value={cardQuery} onChange={(event) => setCardQuery(event.target.value)} placeholder={t("aac.copy061")} aria-label={t("aac.copy061")}/></label>}<button className="small-button" onClick={() => document.querySelector<HTMLElement>(".aac-page")?.requestFullscreen?.()}><LayoutDashboard size={15}/> {t("aac.copy062")}</button>{canManage && freeMode && <button className="small-button" onClick={() => setCustomOpen((value) => !value)}><Plus size={15}/> {t("aac.copy063")}</button>}</div></div>
+      <aside className="aac-category-panel"><div><span className="kicker">{t("aac.copy052")}</span><h3>{category === "recent" ? t("ux.recentCards") : category === "favorites" ? t("aac.copy053") : activeCategory.label}</h3></div><nav className="aac-tabs primary-aac-tabs" aria-label={t("aac.copy054")}><button className={category === "favorites" ? "active" : ""} aria-pressed={category === "favorites"} onClick={() => { setCategory("favorites"); setCardQuery(""); }}><Star size={19}/><span>{t("aac.copy055")}</span><small>{availableCards.filter((card) => card.favorite || card.is_core).length}</small></button><button type="button" className={category === "recent" ? "active" : ""} aria-pressed={category === "recent"} onClick={() => { setCategory("recent"); setCardQuery(""); }}><Clock3 size={19}/><span>{t("ux.recentCards")}</span><small>{recentCardIds.length}</small></button><button className={categoriesOpen ? "active" : ""} aria-expanded={categoriesOpen} aria-controls="more-aac-categories" onClick={() => setCategoriesOpen((value) => !value)}><Plus size={19}/><span>{t("nav.more")}</span><small>{aacCategories.length - 1}</small></button></nav>{categoriesOpen && <nav id="more-aac-categories" className="aac-tabs more-aac-tabs" aria-label={t("aac.copy056")}>{aacCategories.filter((item) => item.id !== "favorites").map((item) => { const Icon = item.icon; const count = availableCards.filter((card) => card.category === item.id).length; return <button key={item.id} className={category === item.id ? "active" : ""} aria-pressed={category === item.id} onClick={() => { setCategory(item.id); setCardQuery(""); }}><Icon size={18}/><span>{item.label}</span><small>{count}</small></button>; })}</nav>}{history.length > 0 && <div className="aac-history"><span className="kicker">{t("aac.copy057")}</span>{history.slice(0,3).map((item) => <button key={item.id} onClick={() => replayHistory(item.phrase)}><RotateCcw size={14}/><span>{item.phrase}</span></button>)}</div>}</aside>
+      <section className="aac-board" aria-busy={cardsLoading}><div className="aac-toolbar"><div><span className="kicker">{category === "favorites" ? t("aac.copy058") : t("aac.copy059")}</span><h3>{normalizedCardQuery ? t("ux.searchAllWords") : category === "recent" ? t("ux.recentCards") : category === "favorites" ? t("aac.copy060") : activeCategory.label}</h3></div><div className="aac-tools">{<label className="aac-search"><Search size={16}/><input type="search" value={cardQuery} onChange={(event) => setCardQuery(event.target.value)} placeholder={t("aac.copy061")} aria-label={t("aac.copy061")}/></label>}<button className="small-button" onClick={() => document.querySelector<HTMLElement>(".aac-page")?.requestFullscreen?.()}><LayoutDashboard size={15}/> {t("aac.copy062")}</button>{canManage && freeMode && <button className="small-button" onClick={() => setCustomOpen((value) => !value)}><Plus size={15}/> {t("aac.copy063")}</button>}</div></div>
         {customOpen && <form className="aac-custom-form" onSubmit={createCustom}><label>{t("aac.copy064")}<input value={custom.label} onChange={(e) => setCustom({...custom,label:e.target.value})} placeholder={t("aac.copy065")} required/></label><label>{t("aac.copy066")}<input value={custom.speech} onChange={(e) => setCustom({...custom,speech:e.target.value})} placeholder={t("aac.copy067")} required/></label><label>{t("aac.copy068")}<select value={custom.category} onChange={(e) => setCustom({...custom,category:e.target.value})}>{aacCategories.filter((item) => item.id !== "favorites").map((item) => <option key={item.id} value={item.id}>{item.label}</option>)}</select></label><label className="aac-custom-photo">{t("aac.copy069")}<input type="file" accept="image/png,image/jpeg,image/webp" required={!customImage} disabled={imageBusy} onChange={async (event) => { const file = event.target.files?.[0]; if (!file) return; setImageBusy(true); try { setCustomImage(await compressPhoto(file)); setAacNotice(""); } catch (cause) { setAacNotice(cause instanceof Error ? cause.message : t("aac.copy070")); } finally { setImageBusy(false); } }}/>{customImage && <Image src={customImage} alt={t("aac.copy071")} width={64} height={64} unoptimized/>}</label><button className="primary-button" disabled={imageBusy || !customImage}>{imageBusy ? t("aac.copy072") : t("aac.copy073")}</button></form>}
-        <div className="aac-card-grid">{visibleCards.map((card) => <div className={`aac-card aac-card-${card.category} ${card.is_core ? "core" : ""}`} key={card.id}><button className="aac-card-main" disabled={selected.some((item) => item.id === card.id)} onClick={() => addCard(card)}><AACVisual card={card}/><strong>{card.label}</strong><small>{card.speech}</small></button><button className={`aac-favorite ${card.favorite ? "active" : ""}`} onClick={() => toggleFavorite(card)} aria-label={card.favorite ? t("aac.removeFavorite", {label:card.label}) : t("aac.addFavorite", {label:card.label})}><Star size={15} fill={card.favorite ? "currentColor" : "none"}/></button></div>)}</div>
-        {!visibleCards.length && <div className="aac-empty"><Search size={24}/><strong>{t("aac.copy078")}</strong><span>{t("aac.copy079")}</span></div>}
+        <div className="aac-card-grid">{visibleCards.map((card) => <div className={`aac-card aac-card-${card.category} ${card.is_core ? "core" : ""}`} key={card.id}><button className="aac-card-main" disabled={speechPending || selected.some((item) => item.id === card.id)} onClick={() => addCard(card)}><AACVisual card={card}/><strong>{card.label}</strong><small>{card.speech}</small></button><button className={`aac-favorite ${card.favorite ? "active" : ""}`} onClick={() => toggleFavorite(card)} aria-label={card.favorite ? t("aac.removeFavorite", {label:card.label}) : t("aac.addFavorite", {label:card.label})}><Star size={15} fill={card.favorite ? "currentColor" : "none"}/></button></div>)}</div>
+        {cardsLoading ? <p role="status">{t("ux.loadingWords")}</p> : boardError ? <div className="aac-empty" role="alert"><strong>{t("aac.copy080")}</strong><button type="button" className="small-button" onClick={loadBoard}>{t("ux.retry")}</button></div> : !visibleCards.length && <div className="aac-empty" role="status"><Search size={24}/><strong>{t("aac.copy078")}</strong><span>{category === "recent" && !normalizedCardQuery ? t("ux.recentHint") : t("aac.copy079")}</span>{normalizedCardQuery && <button type="button" className="small-button" onClick={() => setCardQuery("")}>{t("ux.clearSearch")}</button>}</div>}
       </section>
     </div>}
   </div>;
@@ -2156,11 +2163,11 @@ function ParentScreen({ child, childProfiles, onSelectChild, onDeleted, dashboar
     let active = true;
     api<ChildConsent>(`/api/children/${child.id}/consent`).then((value) => { if (active) { setConsent(value); onConsentChange(value); setConsentReady(true); } }).catch((cause) => {
       if (!active) return;
-      setDataMessage(cause instanceof Error ? t("screen.ParentScreen.template1", {v0: cause.message}) : t("screen.ParentScreen.ui1"));
+      setDataMessage(cause instanceof Error ? t("screen.ParentScreen.template1", { v0: cause.message }) : t("screen.ParentScreen.ui1"));
     });
     api<{ username: string } | null>(`/api/children/${child.id}/student-account`).then((value) => { if (!active) return; setStudent(value); if (value) setStudentForm((current) => ({ ...current, username: value.username })); }).catch((cause) => {
       if (!active) return;
-      setAccountMessage(cause instanceof Error ? t("screen.ParentScreen.template2", {v0: cause.message}) : t("screen.ParentScreen.ui2"));
+      setAccountMessage(cause instanceof Error ? t("screen.ParentScreen.template2", { v0: cause.message }) : t("screen.ParentScreen.ui2"));
     });
     return () => { active = false; };
   }, [child?.id, onConsentChange]);
@@ -2192,48 +2199,33 @@ function ParentScreen({ child, childProfiles, onSelectChild, onDeleted, dashboar
     try { await api(`/api/children/${child.id}`, { method: "DELETE", body: JSON.stringify({ password: deletePassword }) }); onDeleted(child.id); }
     catch (cause) { setDataMessage(cause instanceof Error ? cause.message : t("screen.ParentScreen.ui7")); }
   };
-  const age = child ? (() => { const born = new Date(child.birth_date); const now = new Date(); let years = now.getFullYear() - born.getFullYear(); if (now.getMonth() < born.getMonth() || (now.getMonth() === born.getMonth() && now.getDate() < born.getDate())) years -= 1; return Math.max(0, years); })() : 0;
-  const sessionLabels: Record<ModuleName, [LucideIcon, string]> = { motor: [Mic2, t("product.ui52")], sensory: [Ear, t("screen.ParentScreen.ui9")], mixed: [MessageCircle, t("screen.ParentScreen.ui10")] };
-  return <div className="page-enter stack-xl parent-page">
-    <PageTitle eyebrow={t("screen.ParentScreen.ui11")} title={child?.name || t("nav.parent")} subtitle={t("screen.ParentScreen.ui13")} />
-    <CabinetNavigation cabinet="parent" sections={parentSections} active={section} onNavigate={navigate}/>
-    {childProfiles.length > 1 && <label className="cabinet-child-picker">{t("specialist.copy035")}<select value={child?.id || ""} onChange={event => { const url = new URL(window.location.href); url.searchParams.set("child", event.target.value); window.history.replaceState(null, "", url); onSelectChild(Number(event.target.value)); }}>{childProfiles.map(item => <option key={item.id} value={item.id}>{item.name}</option>)}</select></label>}
-    <div className="cabinet-page" hidden={section !== "materials"}>
-    <nav className="v2-parent-cabinet-links" aria-label={t("screen.ParentScreen.ui15")}><button onClick={() => onNavigate("world")}><ImageIcon/>  {t("screen.ParentScreen.ui16")} <ChevronRight/></button><button onClick={() => onNavigate("aac")}><MessageCircle/>  {t("parentOverview.ui19")} <ChevronRight/></button><button onClick={() => onNavigate("progress")}><TrendingUp/>  {t("auth.history")} <ChevronRight/></button><button onClick={() => onNavigate("goals")}><Target/>  {t("landing.copy096")} <ChevronRight/></button></nav>
-    <section className="storybook-preview-entry"><div><span className="kicker">{t("screen.ParentScreen.ui20")}</span><h2>{t("screen.ParentScreen.ui21")}</h2><p>{t("screen.ParentScreen.ui22")}</p></div><button className="primary-button" onClick={() => onNavigate("comic-preview")}><BookOpen/>  {t("screen.ParentScreen.ui23")} <ChevronRight/></button></section>
-    <section className="storybook-preview-entry"><div><span className="kicker">{t("screen.ParentScreen.ui24")}</span><h2>{t("screen.ParentScreen.ui25")}</h2><p>{t("screen.ParentScreen.ui26")}</p></div><button className="primary-button" onClick={() => onNavigate("story-preview")}><BookOpen/>  {t("screen.ParentScreen.ui27")} <ChevronRight/></button></section>
-    </div>
-    <div className="cabinet-page" hidden={section !== "overview"}>
-    <section className="parent-cabinet-welcome"><div><span className="kicker">{t("screen.ParentScreen.ui28")}</span><h2>{t("screen.ParentScreen.ui29")}</h2><p>{t("screen.ParentScreen.ui30")}</p></div><div className="cabinet-actions"><button className="primary-button" onClick={() => onNavigate("goals")}>{t("screen.ParentScreen.ui31")} <ChevronRight size={18}/></button><button className="secondary-button" onClick={() => navigate("specialist")}>{t("screen.ParentScreen.ui32")}</button></div></section>
-    <section className="parent-overview">
-      <div className="parent-profile"><div className="avatar large">{child?.name[0] || t("screen.ParentScreen.ui33")}</div><div><span className="kicker">{t("screen.ParentScreen.ui34")}</span><h2>{child?.name || t("auth.kid")}, {age}  {t("screen.ParentScreen.ui36")}</h2><p>{dashboard?.total_sessions || 0}  {t("screen.ParentScreen.ui37")} {dashboard?.total_minutes || 0}  {t("screen.ParentScreen.ui38")}</p></div></div>
-      <div className="parent-progress"><div><span>{t("screen.ParentScreen.ui39")}</span><strong>{dashboard?.overall || 0}%</strong></div><div className="parent-progress-track" role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.min(dashboard?.overall || 0, 100)} aria-label={t("screen.ParentScreen.template3", {v0: dashboard?.overall || 0})}><i style={{width:`${Math.min(dashboard?.overall || 0,100)}%`}}/></div><small><Activity size={15}/> {dashboard?.week_sessions || 0}  {t("landing.copy092")}</small></div>
-    </section>
-    <div className="stats-row parent-stats"><StatCard icon={<Check/>} value={String(dashboard?.today_sessions || 0)} label={t("screen.ParentScreen.ui41")}/><StatCard icon={<Gamepad2/>} value={String(dashboard?.week_sessions || 0)} label={t("screen.ParentScreen.ui42")}/><StatCard icon={<Timer/>} value={t("screen.ParentScreen.template4", {v0: dashboard?.week_minutes || 0})} label={t("screen.ParentScreen.ui43")}/><StatCard icon={<Bot/>} value={t("screen.ParentScreen.ui44")} label={t("screen.ParentScreen.ui45")}/></div>
-    </div>
-    <div className="cabinet-page" hidden={section !== "practice"}>
+  return <div className="page-enter stack-xl parent-page focused-parent-cabinet">
+    <PageTitle eyebrow={t("screen.ParentScreen.ui11")} title={child?.name || t("screen.ParentScreen.ui12")} subtitle={t("screen.ParentScreen.ui13")} />
+    <CabinetNavigation cabinet="parent" sections={parentSections.filter(item => item.id !== "materials")} active={section === "materials" ? "practice" : section} onNavigate={navigate}/>
+    {childProfiles.length > 1 && <label className="cabinet-child-picker">{t("screen.ParentScreen.ui14")}<select value={child?.id || ""} onChange={event => { const url = new URL(window.location.href); url.searchParams.set("child", event.target.value); window.history.replaceState(null, "", url); onSelectChild(Number(event.target.value)); }}>{childProfiles.map(item => <option key={item.id} value={item.id}>{item.name}</option>)}</select></label>}
+    <div className="cabinet-page" hidden={section !== "overview"}><ParentCabinetOverview child={child} consentReady={consentReady} consent={consent} student={student} onPractice={() => navigate("practice")} onSpecialist={() => navigate("specialist")} onResults={() => onNavigate("progress")} onAccess={() => navigate("access")}/></div>
+    <div className="cabinet-page" hidden={section !== "practice" && section !== "materials"}>
     <div className="cabinet-intro"><h2>{t("screen.ParentScreen.ui46")}</h2><p>{t("screen.ParentScreen.ui47")}</p><button className="secondary-button" onClick={() => onNavigate("goals")}>{t("screen.ParentScreen.ui48")}</button></div>
     <section className="admin-card family-support-guide"><div className="admin-card-head"><div><span className="kicker">{t("screen.ParentScreen.ui49")}</span><h3>{t("screen.ParentScreen.ui50")}</h3><p>{t("screen.ParentScreen.ui51")}</p></div></div><div><article><span>1</span><div><strong>{t("screen.ParentScreen.ui52")}</strong><p>{t("screen.ParentScreen.ui53")}</p></div></article><article><span>2</span><div><strong>{t("screen.ParentScreen.ui54")}</strong><p>{t("screen.ParentScreen.ui55")}</p></div></article><article><span>3</span><div><strong>{t("screen.ParentScreen.ui56")}</strong><p>{t("screen.ParentScreen.ui57")}</p></div></article><article className="stop"><Pause size={18}/><div><strong>{t("screen.ParentScreen.ui58")}</strong><p>{t("screen.ParentScreen.ui59")}</p></div></article></div></section>
     {child&&<VocabularyProgress key={child.id} childId={child.id} refreshKey={dashboard?.total_sessions||0}/>}
     <FunctionalSkillMap childId={child?.id}/>
     <HomePracticeLibrary childId={child?.id}/>
+    <details className="cabinet-method-note"><summary>{t("journey.previewStories")}</summary>
+    <section className="storybook-preview-entry"><div><span className="kicker">{t("screen.ParentScreen.ui20")}</span><h2>{t("screen.ParentScreen.ui21")}</h2><p>{t("screen.ParentScreen.ui22")}</p></div><button className="primary-button" onClick={() => onNavigate("comic-preview")}><BookOpen/>  {t("screen.ParentScreen.ui23")} <ChevronRight/></button></section>
+    <section className="storybook-preview-entry"><div><span className="kicker">{t("screen.ParentScreen.ui24")}</span><h2>{t("screen.ParentScreen.ui25")}</h2><p>{t("screen.ParentScreen.ui26")}</p></div><button className="primary-button" onClick={() => onNavigate("story-preview")}><BookOpen/>  {t("screen.ParentScreen.ui27")} <ChevronRight/></button></section>
+    </details>
     <details className="cabinet-method-note"><summary>{t("screen.ParentScreen.ui60")}</summary>
       <section className="recommend-card"><div className="recommend-icon"><Bot /></div><span className="kicker">{t("screen.ParentScreen.ui61")}</span><h2>{t("screen.ParentScreen.ui62")}</h2><p>{t("screen.ParentScreen.ui63")}</p><ul><li><Check size={16}/>{t("screen.ParentScreen.ui64")}</li><li><Check size={16}/>{t("screen.ParentScreen.ui65")}</li><li><Check size={16}/>{t("screen.ParentScreen.ui66")}</li></ul></section>
     </details>
     </div>
-    <div className="cabinet-page" hidden={section !== "overview"}>
-    <div className="parent-grid parent-overview-history">
-      <section className="sessions-card"><div className="card-heading"><div><span className="kicker">{t("screen.ParentScreen.ui67")}</span><h3>{t("screen.ParentScreen.ui68")}</h3></div></div>{dashboard?.recent.length ? dashboard.recent.map((item) => { const SessionIcon = sessionLabels[item.module][0]; return <div className="session-row" key={item.id}><span><SessionIcon size={24}/></span><div><strong>{sessionLabels[item.module][1]}</strong><small>{new Date(item.created_at).toLocaleString("ru-RU", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}{item.attempts_count ? t("screen.ParentScreen.template5", {v0: item.correct_answers || 0, v1: item.attempts_count}) : ""}</small></div><b>{item.attempt_status === "technical_error" ? t("specialist.copy007") : item.attempt_status === "participated" ? t("screen.ParentScreen.ui70") : item.attempt_status === "refused" ? t("specialist.copy005") : item.attempt_status === "break" ? t("specialist.copy006") : t("screen.ProgressScreen.template4", {v0: item.score})}</b></div>; }) : <p>{t("screen.ParentScreen.ui73")}</p>}</section>
-    </div>
-    </div>
     <div className="cabinet-page" hidden={section !== "access"}>
     <div className="cabinet-intro"><h2>{t("screen.ParentScreen.ui74")}</h2><p>{t("screen.ParentScreen.ui75")}</p></div>
     <div className="parent-management-grid">
-      <section className="admin-card student-access"><div className="admin-card-head"><div><span className="kicker">{t("screen.ParentScreen.ui76")}</span><h3>{student ? t("screen.ParentScreen.ui77") : t("screen.ParentScreen.ui78")}</h3><p>{t("screen.ParentScreen.ui79")}</p></div><span className="period-pill">{t("screen.ParentScreen.ui80")}</span></div><form className="student-access-form" onSubmit={saveStudent}><label>{t("screen.ParentScreen.ui81")}<input value={studentForm.username} onChange={(e) => setStudentForm({...studentForm, username:e.target.value})} placeholder={t("screen.ParentScreen.ui82")} pattern={"[A-Za-z0-9_.\\-]+"} minLength={3} required/></label><label>{t("screen.ParentScreen.ui83")}<input value={studentForm.pin} onChange={(e) => setStudentForm({...studentForm, pin:e.target.value.replace(/\D/g, "")})} placeholder={t("auth.pinLength")} inputMode="numeric" minLength={4} maxLength={12} required/></label><button className="primary-button">{t("screen.ParentScreen.ui85")}</button></form>{accountMessage && <div className="usage-note" role="status"><Check size={18}/><p>{accountMessage}</p></div>}</section>
-      <section className="admin-card privacy-control"><div className="admin-card-head"><div><span className="kicker">{t("screen.ParentScreen.ui86")}</span><h3>{t("screen.ParentScreen.ui87")}</h3><p>{t("screen.ParentScreen.ui88")}</p></div></div><div className="consent-options"><label><input type="checkbox" disabled={!consentReady || consentSaving} checked={consent.privacy_accepted} onChange={(e)=>setConsent(e.target.checked ? {...consent,privacy_accepted:true} : {...consent,privacy_accepted:false,camera_processing:false,ai_processing:false,analytics_processing:false,specialist_sharing:false})}/><span><b>{t("screen.ParentScreen.ui89")}</b><small>{t("screen.ParentScreen.ui90")}</small></span></label><label className={!consent.privacy_accepted ? "disabled" : ""}><input type="checkbox" disabled={!consentReady || consentSaving || !consent.privacy_accepted} checked={consent.camera_processing} onChange={(e)=>setConsent({...consent,camera_processing:e.target.checked})}/><span><b>{t("screen.ParentScreen.ui91")}</b><small>{t("screen.ParentScreen.ui92")}</small></span></label><label className={!consent.privacy_accepted ? "disabled" : ""}><input type="checkbox" disabled={!consentReady || consentSaving || !consent.privacy_accepted} checked={consent.analytics_processing} onChange={(e)=>setConsent({...consent,analytics_processing:e.target.checked})}/><span><b>{t("screen.ParentScreen.ui93")}</b><small>{t("screen.ParentScreen.ui94")}</small></span></label><label className={!consent.privacy_accepted ? "disabled" : ""}><input type="checkbox" disabled={!consentReady || consentSaving || !consent.privacy_accepted} checked={Boolean(consent.specialist_sharing)} onChange={(e)=>setConsent({...consent,specialist_sharing:e.target.checked})}/><span><b>{t("screen.ParentScreen.ui95")}</b><small>{t("screen.ParentScreen.ui96")}</small></span></label></div><div className="privacy-actions"><button className="primary-button" disabled={!consentReady || consentSaving} onClick={saveConsent}>{t("screen.ParentScreen.ui97")}</button>{consent.updated_at && <small className="consent-updated">{t("screen.ParentScreen.ui98")} {new Date(consent.updated_at).toLocaleString("ru-RU")}</small>}</div></section>
+      <section className="admin-card student-access"><div className="admin-card-head"><div><span className="kicker">{t("screen.ParentScreen.ui76")}</span><h3>{student ? t("screen.ParentScreen.ui77") : t("screen.ParentScreen.ui78")}</h3><p>{t("screen.ParentScreen.ui79")}</p></div><span className="period-pill">{t("screen.ParentScreen.ui80")}</span></div><form className="student-access-form" onSubmit={saveStudent}><label>{t("screen.ParentScreen.ui81")}<input value={studentForm.username} onChange={(e) => setStudentForm({...studentForm, username:e.target.value})} placeholder={t("screen.ParentScreen.ui82")} pattern={"[A-Za-z0-9_.\\-]+"} minLength={3} required/></label><label>{t("screen.ParentScreen.ui83")}<input value={studentForm.pin} onChange={(e) => setStudentForm({...studentForm, pin:e.target.value.replace(/\D/g, "")})} placeholder={t("screen.ParentScreen.ui84")} inputMode="numeric" minLength={4} maxLength={12} required/></label><button className="primary-button">{t("screen.ParentScreen.ui85")}</button></form>{accountMessage && <div className="usage-note" role="status"><Check size={18}/><p>{accountMessage}</p></div>}</section>
+      <section className="admin-card privacy-control"><div className="admin-card-head"><div><span className="kicker">{t("screen.ParentScreen.ui86")}</span><h3>{t("screen.ParentScreen.ui87")}</h3><p>{t("screen.ParentScreen.ui88")}</p></div></div><div className="consent-options"><label><input type="checkbox" disabled={!consentReady || consentSaving} checked={consent.privacy_accepted} onChange={(e)=>setConsent(e.target.checked ? {...consent,privacy_accepted:true} : {...consent,privacy_accepted:false,camera_processing:false,ai_processing:false,analytics_processing:false,specialist_sharing:false})}/><span><b>{t("screen.ParentScreen.ui89")}</b><small>{t("screen.ParentScreen.ui90")}</small></span></label><label className={!consent.privacy_accepted ? "disabled" : ""}><input type="checkbox" disabled={!consentReady || consentSaving || !consent.privacy_accepted} checked={consent.camera_processing} onChange={(e)=>setConsent({...consent,camera_processing:e.target.checked})}/><span><b>{t("screen.ParentScreen.ui91")}</b><small>{t("screen.ParentScreen.ui92")}</small></span></label><label className={!consent.privacy_accepted ? "disabled" : ""}><input type="checkbox" disabled={!consentReady || consentSaving || !consent.privacy_accepted} checked={consent.analytics_processing} onChange={(e)=>setConsent({...consent,analytics_processing:e.target.checked})}/><span><b>{t("screen.ParentScreen.ui93")}</b><small>{t("screen.ParentScreen.ui94")}</small></span></label><label className={!consent.privacy_accepted ? "disabled" : ""}><input type="checkbox" disabled={!consentReady || consentSaving || !consent.privacy_accepted} checked={Boolean(consent.specialist_sharing)} onChange={(e)=>setConsent({...consent,specialist_sharing:e.target.checked})}/><span><b>{t("screen.ParentScreen.ui95")}</b><small>{t("screen.ParentScreen.ui96")}</small></span></label></div><div className="privacy-actions"><button className="primary-button" disabled={!consentReady || consentSaving} onClick={saveConsent}>{t("screen.ParentScreen.ui97")}</button>{consent.updated_at && <small className="consent-updated">{t("screen.ParentScreen.ui98")} {formatDate(consent.updated_at, {dateStyle: "short", timeStyle: "short"})}</small>}</div></section>
     </div>
 
-    <section className="data-control"><div><ShieldCheck/><span><strong>{t("screen.ParentScreen.ui99")}</strong><small>{t("screen.ParentScreen.ui100")}</small></span></div><div className="data-actions"><button className="secondary-button" onClick={exportData}>{t("screen.ParentScreen.ui101")}</button><button className="small-button danger-button" onClick={() => setDeleteOpen(!deleteOpen)}>{t("screen.ParentScreen.ui102")}</button></div></section>{deleteOpen && <form className="delete-data-form" onSubmit={deleteData}><div><strong>{t("screen.ParentScreen.ui103")}</strong><p>{t("screen.ParentScreen.ui104")}</p></div><input type="password" value={deletePassword} onChange={(e)=>setDeletePassword(e.target.value)} placeholder={t("auth.password")} required/><button className="small-button danger-button">{t("screen.ParentScreen.ui106")}</button></form>}{dataMessage && <div className="usage-note"><Check size={18}/><p>{dataMessage}</p></div>}
+    <section className="data-control"><div><ShieldCheck/><span><strong>{t("screen.ParentScreen.ui99")}</strong><small>{t("screen.ParentScreen.ui100")}</small></span></div><div className="data-actions"><button className="secondary-button" onClick={exportData}>{t("screen.ParentScreen.ui101")}</button><button className="small-button danger-button" onClick={() => setDeleteOpen(!deleteOpen)}>{t("screen.ParentScreen.ui102")}</button></div></section>{deleteOpen && <form className="delete-data-form" onSubmit={deleteData}><div><strong>{t("screen.ParentScreen.ui103")}</strong><p>{t("screen.ParentScreen.ui104")}</p></div><input type="password" value={deletePassword} onChange={(e)=>setDeletePassword(e.target.value)} placeholder={t("screen.ParentScreen.ui105")} required/><button className="small-button danger-button">{t("screen.ParentScreen.ui106")}</button></form>}{dataMessage && <div className="usage-note"><Check size={18}/><p>{dataMessage}</p></div>}
     </div>
     <div className="cabinet-page" hidden={section !== "specialist"}>{child && <FamilySpecialistAccess key={child.id} childId={child.id} enabled={consentReady && Boolean(consent.specialist_sharing)} onManagePermissions={() => navigate("access")} onStartPlan={onStartPlan}/>}</div>
     <div className="medical-note"><ShieldCheck size={25}/><div><strong>{t("screen.ParentScreen.ui107")}</strong><p>{t("screen.ParentScreen.ui108")}</p></div></div>
@@ -2543,40 +2535,3 @@ function SettingsScreen({ petPreferences, role, settings, saving, onChange, onLo
 function SettingRow({ icon, title, text, value, onChange }: { icon: React.ReactNode; title: string; text: string; value: boolean; onChange: (v: boolean) => void }) {
   return <div className="setting-row"><div className="setting-icon">{icon}</div><div><strong>{title}</strong><span>{text}</span></div><button type="button" className={`toggle ${value ? "on" : ""}`} onClick={() => onChange(!value)} aria-label={title} role="switch" aria-checked={value}><i/></button></div>;
 }
-
-function ProgressScreen({ childId, dashboard, onStartPractice }: { childId?: number; dashboard: Dashboard | null; onStartPractice: () => void }) {
-  const [data, setData] = useState<{ child?: Child; overall: number; total_sessions: number; skill_progress: SkillProgress[] } | null>(null);
-  const [progressError, setProgressError] = useState("");
-  const [progressReload, setProgressReload] = useState(0);
-  const [progressLoading, setProgressLoading] = useState(true);
-  useEffect(() => {
-    if (!childId) return;
-    api<typeof data>(`/api/progress/${childId}`).then((value) => { setData(value); setProgressError(""); }).catch((cause) => {
-      setProgressError(cause instanceof Error ? cause.message : t("screen.ProgressScreen.ui1"));
-    }).finally(() => setProgressLoading(false));
-  }, [childId, progressReload]);
-  const skillColors = ["coral", "blue", "mint", "lavender", "coral", "blue"];
-  const skills = (data?.skill_progress || dashboard?.skill_progress || []).map((skill, index) => ({ ...skill, color: skillColors[index] }));
-  const chartDays = dashboard?.daily || [];
-  const daysWithData = chartDays.filter((point) => point.sensory !== null).length;
-  const chartCoordinates = (module: ModuleName) => chartDays.flatMap((point, index) => point[module] === null ? [] : [{ x: index * (700 / 6), y: 205 - Number(point[module]) * 1.7 }]);
-  const chartPoints = (module: ModuleName) => chartCoordinates(module).map((point) => `${point.x},${point.y}`).join(" ");
-  const totalSessions = dashboard?.total_sessions ?? data?.total_sessions ?? 0;
-  if (progressLoading && !data && !dashboard) return <div className="page-enter progress-loading-state" role="status"><Timer size={28}/><strong>{t("screen.ProgressScreen.ui2")}</strong></div>;
-  if (!progressError && totalSessions === 0) return <div className="page-enter progress-empty-page"><PageTitle eyebrow={t("screen.ProgressScreen.ui3")} title={t("screen.ProgressScreen.template2", {v0: data?.child?.name || t("localization.childFallback")})} subtitle={t("screen.ProgressScreen.ui5")}/><section><span><BarChart3 size={34}/></span><h2>{t("screen.ProgressScreen.ui6")}</h2><p>{t("screen.ProgressScreen.ui7")}</p><button className="primary-button" onClick={onStartPractice}><Play size={19} fill="currentColor"/>  {t("achievements.ui20")}</button></section></div>;
-  return (
-    <div className="page-enter stack-xl progress-page">
-      {progressError && <div className="game-error" role="alert"><ShieldAlert size={18}/><span>{progressError}</span><button type="button" className="small-button" onClick={() => { setProgressLoading(true); setProgressReload((value) => value + 1); }}>{t("game.repeat")}</button></div>}
-      <section className="progress-hero"><div><span className="kicker">{t("screen.ProgressScreen.ui3")}</span><h1>{t("screen.ProgressScreen.template2", {v0: data?.child?.name || t("localization.childFallback")})}</h1><p>{t("screen.ProgressScreen.ui10")}</p></div><div className="progress-hero-score"><strong>{dashboard?.overall ?? data?.overall ?? 0}%</strong><span>{t("screen.ProgressScreen.ui11")}</span></div></section>
-      <div className="stats-row"><StatCard icon={<TrendingUp/>} value={`${dashboard?.overall ?? data?.overall ?? 0}%`} label={t("screen.ProgressScreen.ui12")} /><StatCard icon={<Timer/>} value={String(dashboard?.total_minutes || 0)} label={t("screen.ParentScreen.ui38")} /><StatCard icon={<Star/>} value={String(dashboard?.stars || 0)} label={t("achievements.ui15")} /><StatCard icon={<Target/>} value={String(dashboard?.total_sessions ?? data?.total_sessions ?? 0)} label={t("screen.ProgressScreen.ui15")} /></div>
-      <div className="progress-grid">
-        <section className="chart-card"><div className="card-heading"><div><span className="kicker">{t("screen.ProgressScreen.ui16")}</span><h3>{t("screen.ProgressScreen.ui17")}</h3></div></div><div className="chart-area"><div className="chart-lines"><i/><i/><i/><i/></div>{daysWithData ? <><svg viewBox="0 0 700 230" preserveAspectRatio="none" aria-label={t("screen.ProgressScreen.ui18")}>{daysWithData >= 3 && <polyline points={chartPoints("sensory")} className="line blue-line"/>}{chartCoordinates("sensory").map((point, index) => <circle key={`sensory-${index}`} cx={point.x} cy={point.y} r="6" className="chart-point sensory-point"/>)}</svg>{daysWithData < 3 && <div className="chart-sparse-note">{t("screen.ProgressScreen.ui19")} {daysWithData === 1 ? t("screen.ProgressScreen.ui20") : t("screen.ProgressScreen.ui21")}{t("screen.ProgressScreen.ui22")}</div>}</> : <div className="chart-empty">{t("screen.ProgressScreen.ui23")}</div>}<div className="chart-labels">{chartDays.map((point) => <span key={point.date}>{point.label}</span>)}</div></div><div className="legend"><span><i className="blue-dot"/>{t("screen.ProgressScreen.ui24")}</span></div></section>
-        <section className="skills-card"><span className="kicker">{t("screen.ProgressScreen.ui25")}</span><h3>{t("screen.ProgressScreen.ui26")}</h3>{skills.length ? skills.map((skill) => <div className="skill" key={skill.skill}><div><span>{skill.label}<small>{skill.average_game_score !== null ? t("screen.ProgressScreen.template3", {v0: skill.sessions}) : skill.participations ? t("screen.ProgressScreen.ui27") : t("screen.ProgressScreen.ui28")}</small></span><strong>{skill.average_game_score !== null ? t("screen.ProgressScreen.template4", {v0: skill.average_game_score}) : t("screen.ProgressScreen.template5", {v0: skill.participations})}</strong></div></div>) : <div className="empty-state">{t("screen.ProgressScreen.ui29")}</div>}<div className="insight-note"><ShieldCheck size={19}/><p>{t("screen.ProgressScreen.ui30")}</p></div></section>
-      </div>
-      <P1ResultsSummary childId={childId}/>
-      <section className="achievements"><div className="section-heading"><div><span className="kicker">{t("screen.ProgressScreen.ui31")}</span><h2>{t("screen.ProgressScreen.ui32")}</h2></div></div><div className="badges"><Badge icon={<Star/>} title={t("screen.ProgressScreen.ui33")} text={t("screen.ProgressScreen.ui34")} unlocked={dashboard?.achievements.first_five}/><Badge icon={<Ear/>} title={t("achievements.ui5")} text={t("screen.ProgressScreen.ui36")} unlocked={dashboard?.achievements.good_listener}/><Badge icon={<MessageCircle/>} title={t("achievements.ui7")} text={t("screen.ProgressScreen.ui38")} unlocked={dashboard?.achievements.phrase_master}/><Badge icon={<Trophy/>} title={t("screen.ProgressScreen.ui39")} text={t("screen.ProgressScreen.ui40")} unlocked={dashboard?.achievements.week_streak}/></div></section>
-    </div>
-  );
-}
-
-function Badge({ icon, title, text, unlocked = false }: { icon: React.ReactNode; title: string; text: string; unlocked?: boolean }) { return <div className={`badge-card ${unlocked ? "unlocked" : "locked"}`}><span>{unlocked ? icon : <LockKeyhole/>}</span><div><strong>{title}</strong><small>{unlocked ? t("achievements.ui17") : text}</small></div></div>; }

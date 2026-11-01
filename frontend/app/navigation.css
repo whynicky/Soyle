@@ -1,0 +1,86 @@
+/* Four destinations stay stable while their pages live inside each section. */
+.section-navigation {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-block: 0 24px;
+  padding-block-end: 16px;
+  border-bottom: 1px solid var(--line);
+}
+.section-navigation button {
+  min-height: 44px;
+  padding: 10px 16px;
+  border: 1px solid transparent;
+  border-radius: 12px;
+  background: transparent;
+  color: var(--muted);
+  font-family: inherit;
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 1.4;
+  cursor: pointer;
+}
+.section-navigation button:hover { background: var(--blue-soft); color: var(--forest); }
+.section-navigation button[aria-current="page"] { background: var(--blue-soft); border-color: var(--forest); color: var(--forest); }
+.section-navigation button:focus-visible, .account-menu button:focus-visible { outline: 3px solid var(--forest); outline-offset: 3px; }
+.account-menu { position: relative; flex-shrink: 0; }
+.account-menu-panel {
+  position: absolute;
+  inset-block-start: calc(100% + 12px);
+  inset-inline-end: 0;
+  z-index: 60;
+  width: min(264px, calc(100vw - 32px));
+  padding: 8px;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  background: var(--paper);
+  box-shadow: 0 12px 36px #17365624;
+  color: var(--ink);
+  text-align: start;
+}
+.account-menu-panel > strong { display: block; padding: 12px; overflow-wrap: anywhere; font-size: 16px; }
+.account-menu-panel > button { display: flex; align-items: center; gap: 12px; width: 100%; min-height: 48px; padding: 12px; border: 0; border-radius: 10px; background: transparent; color: inherit; font: inherit; font-size: 16px; text-align: start; cursor: pointer; }
+.account-menu-panel > button:hover { background: var(--blue-soft); }
+.account-menu-panel > button:last-child { border-top: 1px solid var(--line); border-radius: 0 0 10px 10px; }
+.soyle-unified .topbar { overflow: visible; }
+.soyle-unified.child-shell .topbar .account-menu > .avatar { width: 44px; min-width: 44px; height: 44px; }
+.soyle-unified.room-home-active .topbar {
+  display: flex;
+  position: absolute;
+  inset-block-start: 16px;
+  inset-inline-end: 20px;
+  width: auto;
+  height: auto;
+  min-height: 44px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+  z-index: 30;
+}
+.room-home-active .topbar .mobile-logo { display: none; }
+@media (max-width: 760px) {
+  .section-navigation { gap: 8px; margin-block-end: 20px; }
+  .section-navigation button { flex: 1 1 auto; padding: 10px 12px; }
+  .soyle-unified.room-home-active .topbar { inset-inline-end: 12px; }
+}
+
+/* Account actions belong to the bottom of the navigation on every screen. */
+.soyle-unified .sidebar > .sidebar-note { margin-block-start: 24px; }
+.sidebar-account { margin-block-start: auto; padding-block-start: 20px; flex-shrink: 0; }
+.sidebar-account .account-menu { display: flex; flex-direction: column; gap: 8px; }
+.account-menu-trigger { display: flex; align-items: center; gap: 12px; width: 100%; min-height: 60px; padding: 8px; border: 1px solid var(--line); border-radius: 16px; background: var(--paper); color: var(--ink); text-align: start; cursor: pointer; }
+.account-menu-trigger:hover, .account-menu-trigger[aria-expanded="true"] { background: var(--blue-soft); }
+.account-menu-trigger .avatar { width: 44px; height: 44px; min-width: 44px; flex-shrink: 0; }
+.account-menu-name { flex: 1; min-width: 0; font-size: 14px; font-weight: 750; line-height: 1.4; overflow-wrap: anywhere; }
+.account-menu-chevron { flex-shrink: 0; }
+.account-menu-trigger[aria-expanded="true"] .account-menu-chevron { transform: rotate(180deg); }
+.sidebar-account .account-menu-panel { position: static; order: -1; width: 100%; box-shadow: none; }
+@media (min-width: 1051px) {
+  .child-nav-collapsed .account-menu-trigger { justify-content: center; padding: 8px 4px; }
+  .child-nav-collapsed .account-menu-name, .child-nav-collapsed .account-menu-chevron { display: none; }
+}
+@media (max-width: 1050px) {
+  .soyle-unified .sidebar:has(.account-menu-trigger[aria-expanded="true"]) > .sidebar-note { display: none; }
+}

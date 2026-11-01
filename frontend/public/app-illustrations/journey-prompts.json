@@ -1,0 +1,17 @@
+{
+  "method": "Built-in image_gen",
+  "prompts": [
+    [
+      "progress",
+      "A square children's storybook illustration for a small progress card in a speech-learning web app. A friendly turquoise baby penguin carefully places a golden star beside three colorful wooden stepping blocks, celebrating a small effort. Soft tactile 3D clay and painted storybook style, warm ivory background, teal mint peach and muted golden palette, soft daylight, simple uncluttered composition, generous margins, all subjects fully visible. No letters, no words, no numbers, no charts, no watermark. Child-friendly and calm, not a competitive podium."
+    ],
+    [
+      "family",
+      "A square children's storybook illustration for a parent cabinet card in a speech-learning web app. A friendly mother and young child sit together at a low table choosing picture cards showing a cup and a ball. Ordinary plain t-shirts, simple trousers, no patterns. Soft tactile 3D clay and painted storybook style, warm ivory background, teal mint peach and muted golden palette, soft daylight, uncluttered composition, generous margins, all subjects fully visible. Culturally neutral fictional characters: no national identity or nationality cues, no traditional or ethnic clothing, no national motifs, flags, emblems or cultural objects. No text, no numbers, no charts, no watermark. Calm supportive family learning."
+    ],
+    [
+      "support",
+      "A square children's storybook illustration for a specialist support card in a speech-learning web app. A friendly educator and young child collaboratively build a simple colorful wooden block bridge with a small toy penguin nearby. Ordinary plain t-shirts, simple trousers, no patterns. Soft tactile 3D clay and painted storybook style, warm ivory background, teal mint peach and muted golden palette, soft daylight, uncluttered composition, generous margins, all subjects fully visible. Culturally neutral fictional characters: no national identity or nationality cues, no traditional or ethnic clothing, no national motifs, flags, emblems or cultural objects. No text, no numbers, no charts, no watermark. Calm supportive interaction, no medical equipment."
+    ]
+  ]
+}

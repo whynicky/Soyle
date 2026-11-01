@@ -2691,5 +2691,10 @@
   "app.description": "Поддерживаемая коммуникация, игровые задания и локальные адаптивные планы Söyle",
   "localization.profileOpen": "Открыть профиль",
   "localization.saveResultError": "Не удалось сохранить результат",
-  "localization.childFallback": "ребёнка"
+  "localization.childFallback": "ребёнка",
+  "scenic.greeting": "Привет, {name}!",
+  "scenic.friend": "друг",
+  "scenic.lets": "Давай",
+  "scenic.play": "поиграем!",
+  "scenic.all": "Все занятия"
 }

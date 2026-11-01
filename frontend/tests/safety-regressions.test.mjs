@@ -158,7 +158,7 @@ test("public child navigation does not expose motor prototypes", async () => {
   const modulesBlock = app.slice(app.indexOf("const modules = ["), app.indexOf("const moduleImages"));
   assert.doesNotMatch(modulesBlock, /id:\s*["']motor["']/);
   assert.match(app, /<ExerciseLibrary items=\{exercises\.filter/);
-  assert.match(app, /explore-location-grid/);
+  assert.match(app, /exercise\.engine\?\.content\.exploration\?\.image\.media_ref/);
   assert.doesNotMatch(app, /<details className="child-more-games"/);
 });
 
@@ -200,7 +200,7 @@ test("P1 family screens keep observations separate and drafts review-gated", asy
   ]);
   assert.match(app, /FunctionalSkillMap/);
   assert.match(app, /HomePracticeLibrary/);
-  assert.match(app, /P1ResultsSummary/);
+  assert.match(await readFile(new URL("../components/ParentProgress.tsx", import.meta.url), "utf8"), /P1ResultsSummary/);
   const familyMessages = JSON.parse(await readProjectFile("locales/ru-RU.json"));
   assert.ok(family.includes('t("familyPractice.ui11")'));
   assert.ok(family.includes('t("familyPractice.ui39")'));
