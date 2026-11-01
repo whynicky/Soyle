@@ -7,6 +7,8 @@ RULES=json.loads((Path(__file__).parent/'locales/kk-KZ-aac-rules.json').read_tex
 def compose(cards):
     keys=[card.get('concept_key') for card in cards]
     if len(keys) not in {2,3} or any(key is None for key in keys):return None
+    if keys[0] == "me" and keys[-1] in RULES["past_actions"] and (len(keys) == 2 or (len(keys) == 3 and keys[1] == "yesterday")):
+        return "Мен " + ("кеше " if len(keys) == 3 else "") + RULES["past_actions"][keys[-1]] + "."
     intents=[key for key in keys if key in {'want','see','love'}]
     if len(intents)!=1:return None
     intent=intents[0]
@@ -24,6 +26,7 @@ def compose(cards):
 
 def editorial_phrases():
     phrases=set(RULES['activities'].values())
+    phrases.update("Мен " + prefix + verb + "." for prefix in ("", "кеше ") for verb in RULES["past_actions"].values())
     for subject,actor in RULES['subjects'].items():
         for obj in RULES['objects'].values():
             phrases.add(f"{actor['dat']} {obj['nom']} керек.")

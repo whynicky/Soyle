@@ -1,4 +1,6 @@
 "use client";
+
+import { t, useLocale } from "@/lib/i18n";
 import { useExercisePet } from "./pet/ExercisePet";
 
 import { ObservationExercise } from "./ObservationExercise";
@@ -92,26 +94,28 @@ export type InstructionRunnerMeasurement = {
 };
 
 export function DraftExercisePreview({ version, onClose, onSpeak }: { version: DraftExerciseVersion; onClose: () => void; onSpeak: Speak }) {
-  return <section className="draft-runner-shell" aria-label={`Предпросмотр: ${version.title}`}>
-    <header><div><span className="kicker">DRAFT · ТОЛЬКО ПРЕДПРОСМОТР</span><h2>{version.title}</h2><p>{version.objective}</p></div><button type="button" className="small-button" onClick={onClose}><CircleX size={17}/> Закрыть</button></header>
-    <div className="draft-safety-note"><ShieldCheck size={19}/><span>Результат не сохраняется. Задание станет доступно ребёнку после проверки и публикации администратором.</span></div>
+  useLocale();
+  return <section className="draft-runner-shell" aria-label={t("runner.preview", { title: version.title })}>
+    <header><div><span className="kicker">{t("runner.ui1")}</span><h2>{version.title}</h2><p>{version.objective}</p></div><button type="button" className="small-button" onClick={onClose}><CircleX size={17}/>  {t("runner.ui2")}</button></header>
+    <div className="draft-safety-note"><ShieldCheck size={19}/><span>{t("runner.ui3")}</span></div>
     {version.mechanic === "scene_search"
       ? <ExplorationExercise content={version.content} previewVersionId={version.id} soundEnabled onSpeak={onSpeak} onBack={onClose} onComplete={async()=>({preview:true})}/>
       : version.content.presentation === "picture_description"
-      ? <ObservationExercise content={version.content} soundEnabled onSpeak={onSpeak} onBack={onClose} onComplete={async () => ({preview: true})}/>
+      ? <ObservationExercise language={version.language || "ru"} content={version.content} soundEnabled onSpeak={onSpeak} onBack={onClose} onComplete={async () => ({preview: true})}/>
       : variedMechanics.includes(version.mechanic)
       ? <VariedExerciseRunner mechanic={version.mechanic as VariedMechanic} content={version.content} soundEnabled onSpeak={onSpeak} onBack={onClose} onComplete={async () => ({preview: true})}/>
       : version.mechanic === "tap_instruction"
       ? <TapInstructionPreview version={version} onSpeak={onSpeak}/>
       : version.mechanic === "auditory_choice" || version.mechanic === "action_choice"
         ? <ChoicePreview version={version} onSpeak={onSpeak}/>
-        : <div className="empty-state">Для этой механики используется существующий AAC-runner.</div>}
+        : <div className="empty-state">{t("runner.ui4")}</div>}
   </section>;
 }
 
 function ChoicePreview({ version, onSpeak }: { version: DraftExerciseVersion; onSpeak: Speak }) {
   const stimuli = useMemo(() => version.content.stimuli || [], [version.content.stimuli]);
   const byKey = useMemo(() => new Map(stimuli.map((item) => [item.key, item])), [stimuli]);
+  useLocale();
   const [level, setLevel] = useState<1 | 2 | 3>(2);
   const config = resolveDifficulty(version.content.difficulty_levels, level);
   const [roundLimit, setRoundLimit] = useState(version.content.default_rounds || config.rounds);
@@ -133,7 +137,7 @@ function ChoicePreview({ version, onSpeak }: { version: DraftExerciseVersion; on
     setAudioReady(false);
     const played = await onSpeak(byKey.get(round.targetKey)?.speech || "", 0.78);
     setAudioReady(played);
-    if (!played) setFeedback("Озвучка недоступна. В предпросмотре результат не оценивается.");
+    if (!played) setFeedback(t("runner.ui5"));
   };
   const begin = async (previousCorrectIndex?: number) => {
     if (usedTargetKeysRef.current.length >= stimuli.length) usedTargetKeysRef.current = [];
@@ -152,20 +156,20 @@ function ChoicePreview({ version, onSpeak }: { version: DraftExerciseVersion; on
     const nextAttempts = attempts + 1;
     setAttempts(nextAttempts);
     if (key === roundData.targetKey) {
-      setFeedback(responseOutcome(previewEvidenceRef.current) === "independent" ? "Получилось самостоятельно." : "Получилось с подсказкой.");
+      setFeedback(responseOutcome(previewEvidenceRef.current) === "independent" ? t("runner.ui6") : t("runner.ui7"));
       setPhase("resolved");
       return;
     }
     if (nextAttempts === 1) {
-      setFeedback(byKey.get(roundData.targetKey)?.hint || "Послушай ещё раз и посмотри внимательно.");
+      setFeedback(byKey.get(roundData.targetKey)?.hint || t("runner.ui8"));
       void speakTarget();
     } else if (nextAttempts < config.max_attempts) {
       const other = shuffleWithRandom(roundData.optionKeys.filter((item) => item !== roundData.targetKey && item !== key))[0];
       setVisibleKeys(shuffleWithRandom([roundData.targetKey, other].filter(Boolean)));
-      setFeedback("Теперь можно выбрать из двух картинок.");
+      setFeedback(t("runner.ui9"));
       void speakTarget();
     } else {
-      setFeedback(`Посмотрим вместе: ${byKey.get(roundData.targetKey)?.label || "нужная картинка"}.`);
+      setFeedback(t("runner.model", { label: byKey.get(roundData.targetKey)?.label || t("runner.ui10") }));
       setPhase("resolved");
     }
   };
@@ -180,25 +184,26 @@ function ChoicePreview({ version, onSpeak }: { version: DraftExerciseVersion; on
     setLevel(nextLevel); setPhase("intro"); setRoundNumber(1); setRoundData(null); setFeedback(""); setAudioReady(false);
   };
 
-  if (stimuli.length < 4) return <div className="empty-state">Для runner нужны минимум четыре структурированных стимула.</div>;
-  if (phase === "done" || phase === "stopped") return <div className="runner-finish" role="status"><Check size={36}/><h3>{phase === "done" ? "Спокойное завершение" : "Предпросмотр остановлен"}</h3><p>{phase === "done" ? "Все раунды завершены. В режиме DRAFT ничего не сохранено." : "Перерыв и отказ приняты без ошибки и без оценки."}</p><button type="button" className="primary-button" onClick={() => resetForLevel(level)}>Начать заново</button></div>;
+  if (stimuli.length < 4) return <div className="empty-state">{t("runner.ui11")}</div>;
+  if (phase === "done" || phase === "stopped") return <div className="runner-finish" role="status"><Check size={36}/><h3>{phase === "done" ? t("runner.ui12") : t("runner.ui13")}</h3><p>{phase === "done" ? t("runner.ui14") : t("runner.ui15")}</p><button type="button" className="primary-button" onClick={() => resetForLevel(level)}>{t("runner.ui16")}</button></div>;
 
   return <div className={`p1-choice-runner ${version.mechanic === "action_choice" ? "action-choice" : ""}`}>
-    <div className="runner-levels" aria-label="Сложность"><span>Вариантов ответа:</span>{([1, 2, 3] as const).map((value) => { const item = resolveDifficulty(version.content.difficulty_levels, value); return <button type="button" key={value} className={level === value ? "active" : ""} aria-pressed={level === value} onClick={() => resetForLevel(value)}>{item.option_count}</button>; })}</div>
-    {phase === "intro" && version.content.round_choices && <PracticeLength value={roundLimit} choices={version.content.round_choices} bankSize={stimuli.length} unit={version.mechanic === "action_choice" ? "действий" : "слов"} onChange={setRoundLimit}/>}
-    {phase === "intro" ? <div className="runner-intro"><Volume2 size={42}/><h3>{version.instruction}</h3><p>Сначала прозвучит задание. Положение правильной картинки меняется в каждом раунде.</p><button type="button" className="primary-button" onClick={() => void begin()}>Начать предпросмотр</button></div> : <>
-      <div className="runner-audio"><button type="button" className="sound-button" onClick={() => void speakTarget()} aria-label="Повторить задание"><Volume2 size={28}/></button><div><span className="kicker">РАУНД {roundNumber} ИЗ {roundLimit}</span><strong>{audioReady ? "Покажи подходящую картинку" : "Нажми, чтобы послушать"}</strong></div><button type="button" className="small-button" onClick={() => void speakTarget()}><RotateCcw size={16}/> Повторить</button></div>
-      <div className={`p1-choice-grid options-${visibleKeys.length}`}>{visibleKeys.map((key, index) => { const item = byKey.get(key); if (!item) return null; const revealed = phase === "resolved"; return <button type="button" key={key} disabled={revealed || !audioReady} className={revealed && key === roundData?.targetKey ? "answer" : ""} aria-label={revealed ? item.label : `Вариант ${index + 1}`} onClick={() => choose(key)}><Image src={media[key] || item.media_ref || "/soyle-icon.png"} alt="" width={version.mechanic === "action_choice" ? 960 : 210} height={version.mechanic === "action_choice" ? 720 : 150} sizes={version.mechanic === "action_choice" ? "(max-width:480px) calc(100vw - 64px), (max-width:1000px) 45vw, 300px" : undefined}/>{revealed && <strong>{item.label}</strong>}{revealed && key === roundData?.targetKey && <i><Check size={17}/></i>}</button>; })}</div>
-      {feedback && <div className="runner-feedback" role="status" aria-live="polite"><span>{feedback}</span>{phase === "resolved" && roundNumber >= roundLimit && roundLimit < (version.content.max_rounds || roundLimit) && <button type="button" className="secondary-button" onClick={() => { setRoundLimit(value => Math.min(value + 6, version.content.max_rounds || value)); setRoundNumber(value => value + 1); void begin(); }}>Ещё 6 заданий</button>}{phase === "resolved" && <button type="button" className="primary-button" onClick={next}>{roundNumber >= roundLimit ? "Завершить" : "Дальше"}<ChevronRight size={17}/></button>}</div>}
+    <div className="runner-levels" aria-label={t("runner.ui17")}><span>{t("runner.ui18")}</span>{([1, 2, 3] as const).map((value) => { const item = resolveDifficulty(version.content.difficulty_levels, value); return <button type="button" key={value} className={level === value ? "active" : ""} aria-pressed={level === value} onClick={() => resetForLevel(value)}>{item.option_count}</button>; })}</div>
+    {phase === "intro" && version.content.round_choices && <PracticeLength value={roundLimit} choices={version.content.round_choices} bankSize={stimuli.length} unit={version.mechanic === "action_choice" ? t("runner.ui19") : t("runner.ui20")} onChange={setRoundLimit}/>}
+    {phase === "intro" ? <div className="runner-intro"><Volume2 size={42}/><h3>{version.instruction}</h3><p>{t("runner.ui21")}</p><button type="button" className="primary-button" onClick={() => void begin()}>{t("runner.ui22")}</button></div> : <>
+      <div className="runner-audio"><button type="button" className="sound-button" onClick={() => void speakTarget()} aria-label={t("runner.ui23")}><Volume2 size={28}/></button><div><span className="kicker">{t("runner.round", { current: roundNumber, total: roundLimit })}</span><strong>{audioReady ? t("runner.ui26") : t("runner.ui27")}</strong></div><button type="button" className="small-button" onClick={() => void speakTarget()}><RotateCcw size={16}/>  {t("runner.ui28")}</button></div>
+      <div className={`p1-choice-grid options-${visibleKeys.length}`}>{visibleKeys.map((key, index) => { const item = byKey.get(key); if (!item) return null; const revealed = phase === "resolved"; return <button type="button" key={key} disabled={revealed || !audioReady} className={revealed && key === roundData?.targetKey ? "answer" : ""} aria-label={revealed ? item.label : t("runner.option", { number: index + 1 })} onClick={() => choose(key)}><Image src={media[key] || item.media_ref || "/soyle-icon.png"} alt="" width={version.mechanic === "action_choice" ? 960 : 210} height={version.mechanic === "action_choice" ? 720 : 150} sizes={version.mechanic === "action_choice" ? "(max-width:480px) calc(100vw - 64px), (max-width:1000px) 45vw, 300px" : undefined}/>{revealed && <strong>{item.label}</strong>}{revealed && key === roundData?.targetKey && <i><Check size={17}/></i>}</button>; })}</div>
+      {feedback && <div className="runner-feedback" role="status" aria-live="polite"><span>{feedback}</span>{phase === "resolved" && roundNumber >= roundLimit && roundLimit < (version.content.max_rounds || roundLimit) && <button type="button" className="secondary-button" onClick={() => { setRoundLimit(value => Math.min(value + 6, version.content.max_rounds || value)); setRoundNumber(value => value + 1); void begin(); }}>{t("runner.ui29")}</button>}{phase === "resolved" && <button type="button" className="primary-button" onClick={next}>{roundNumber >= roundLimit ? t("runner.ui30") : t("runner.ui31")}<ChevronRight size={17}/></button>}</div>}
     </>}
-    <div className="runner-stop-actions"><button type="button" className="small-button" onClick={() => setPhase("stopped")}><Pause size={16}/> Перерыв</button><button type="button" className="small-button" onClick={() => setPhase("stopped")}><CircleX size={16}/> Не хочу</button></div>
+    <div className="runner-stop-actions"><button type="button" className="small-button" onClick={() => setPhase("stopped")}><Pause size={16}/>  {t("runner.ui32")}</button><button type="button" className="small-button" onClick={() => setPhase("stopped")}><CircleX size={16}/>  {t("runner.ui33")}</button></div>
   </div>;
 }
 
 function TapInstructionPreview({ version, onSpeak }: { version: DraftExerciseVersion; onSpeak: Speak }) {
+  useLocale();
   const [outcome, setOutcome] = useState<InstructionRunnerMeasurement | null>(null);
   const [revision, setRevision] = useState(0);
-  if (outcome) return <div className="runner-finish" role="status"><Check size={36}/><h3>{outcome.attempt_status === "completed" ? "Спокойное завершение" : "Предпросмотр остановлен"}</h3><p>Предпросмотр не сохраняется в истории ребёнка.</p>{outcome.attempt_status === "completed" && <><p>Самостоятельных ответов: {outcome.independent_completions || 0}</p><p>Выполнено с подсказкой: {outcome.prompted_completions || 0}</p></>}<button className="primary-button" onClick={() => { setOutcome(null); setRevision(value => value + 1); }}>Начать заново</button></div>;
+  if (outcome) return <div className="runner-finish" role="status"><Check size={36}/><h3>{outcome.attempt_status === "completed" ? t("runner.ui12") : t("runner.ui13")}</h3><p>{t("runner.ui34")}</p>{outcome.attempt_status === "completed" && <><p>{t("runner.ui35")} {outcome.independent_completions || 0}</p><p>{t("runner.ui36")} {outcome.prompted_completions || 0}</p></>}<button className="primary-button" onClick={() => { setOutcome(null); setRevision(value => value + 1); }}>{t("runner.ui16")}</button></div>;
   return <PublishedInstructionRunner key={revision} scenarios={version.content.scenarios || []} roundChoices={version.content.round_choices} defaultRounds={version.content.default_rounds} soundEnabled onSpeak={onSpeak} onBack={() => {}} onComplete={async measurement => { setOutcome(measurement); return {preview: true}; }}/>;
 }
 
@@ -219,6 +224,7 @@ export function PublishedInstructionRunner({
   onComplete: (measurement: InstructionRunnerMeasurement, details: Record<string, unknown>) => Promise<unknown> | void;
   onBack: () => void;
 }) {
+  useLocale();
   const pet = useExercisePet();
   const orderedScenarios = useMemo(() => scenarios.every(item => item.result) ? createInstructionSequence(scenarios) : scenarios, [scenarios]);
   const [roundLimit, setRoundLimit] = useState(Math.min(defaultRounds || scenarios.length, scenarios.length));
@@ -266,7 +272,7 @@ export function PublishedInstructionRunner({
   const begin = async () => {
     if (!scenario) return;
     setPhase("playing");
-    setFeedback("Сначала выбери предмет, потом место или персонажа.");
+    setFeedback(t("runner.ui37"));
     await playInstruction();
   };
   const chooseObject = (key: string) => {
@@ -274,13 +280,13 @@ export function PublishedInstructionRunner({
     choicesRef.current += 1;
     selectionTraceRef.current.push({role: "movable", key});
     setSelectedObject(key);
-    setFeedback("Теперь выбери, куда переместить предмет.");
+    setFeedback(t("runner.ui38"));
   };
   const chooseTarget = (key: string) => {
     if (phase !== "playing" || busyRef.current || resolvedRef.current || stoppedRef.current) return;
     choicesRef.current += 1;
     selectionTraceRef.current.push({role: "target", key});
-    if (!selectedObject) { setFeedback("Сначала выбери предмет."); return; }
+    if (!selectedObject) { setFeedback(t("runner.ui39")); return; }
     evidenceRef.current = withResponse(evidenceRef.current, `${selectedObject}:${key}`);
     const nextAttempts = attempts + 1;
     setAttempts(nextAttempts);
@@ -292,7 +298,7 @@ export function PublishedInstructionRunner({
       if (independent) independentRef.current += 1;
       outcomesRef.current.push({ scenario_key: scenario.key, object_key: selectedObject, target_key: key, attempts: nextAttempts, outcome: responseOutcome(evidenceRef.current), supports: evidenceRef.current.supports, first_response: evidenceRef.current.first_response, selections: [...selectionTraceRef.current] });
       setPhase("resolved");
-      setFeedback(independent ? "Инструкция выполнена самостоятельно." : "Инструкция выполнена с подсказкой.");
+      setFeedback(independent ? t("runner.ui40") : t("runner.ui41"));
       return;
     }
     pet("incorrect");
@@ -304,12 +310,12 @@ export function PublishedInstructionRunner({
       resolvedRef.current = true;
       outcomesRef.current.push({ scenario_key: scenario.key, object_key: selectedObject, target_key: key, attempts: nextAttempts, outcome: "modelled", supports: evidenceRef.current.supports, first_response: evidenceRef.current.first_response, selections: [...selectionTraceRef.current] });
       setPhase("resolved");
-      setFeedback("Посмотрим правильное действие вместе. Это не ошибка и не наказание.");
+      setFeedback(t("runner.ui42"));
       void playInstruction();
       return;
     }
     setSelectedObject(null);
-    setFeedback(nextAttempts === 1 || scenario.result ? "Можно послушать ещё раз или посмотреть действие вместе." : "Мягкая подсветка покажет предмет и цель.");
+    setFeedback(nextAttempts === 1 || scenario.result ? t("runner.ui43") : t("runner.ui44"));
     void playInstruction();
   };
   const showModel = () => {
@@ -320,7 +326,7 @@ export function PublishedInstructionRunner({
     promptLevelRef.current = 2;
     resolvedRef.current = true;
     outcomesRef.current.push({ scenario_key: scenario.key, attempts: attempts, outcome: "modelled", supports: evidenceRef.current.supports, first_response: evidenceRef.current.first_response, selections: [...selectionTraceRef.current] });
-    setModelled(true); setPhase("resolved"); setFeedback("Смотрим действие вместе. Самостоятельный ответ не засчитывается.");
+    setModelled(true); setPhase("resolved"); setFeedback(t("runner.ui45"));
   };
   const next = async () => {
     if (index < roundLimit - 1) {
@@ -364,19 +370,19 @@ export function PublishedInstructionRunner({
     if (result) onBack();
   };
 
-  if (!scenario) return <div className="empty-state large" role="alert"><strong>Задание пока недоступно</strong><span>Опубликованная версия не содержит проверенных одношаговых сценариев.</span><button type="button" className="secondary-button" onClick={onBack}>Вернуться к занятиям</button></div>;
-  if (phase === "technical") return <div className="listen-card published-instruction-card"><div className="sensory-demo technical"><Volume2 size={42}/><span className="kicker">БЕЗ ОЦЕНКИ</span><h2>{technicalReason === "image" ? "Картинка не загрузилась" : "Звук сейчас недоступен"}</h2><p>{technicalReason === "image" ? "Без изображения выполнение не оценивается. Можно вернуться и попробовать позже." : "Инструкция должна прозвучать вслух, поэтому без звука выполнение не оценивается."}</p><button type="button" className="primary-button" onClick={() => void recordTechnicalIssue()}>Вернуться без оценки</button></div></div>;
+  if (!scenario) return <div className="empty-state large" role="alert"><strong>{t("runner.ui46")}</strong><span>{t("runner.ui47")}</span><button type="button" className="secondary-button" onClick={onBack}>{t("runner.ui48")}</button></div>;
+  if (phase === "technical") return <div className="listen-card published-instruction-card"><div className="sensory-demo technical"><Volume2 size={42}/><span className="kicker">{t("runner.ui49")}</span><h2>{technicalReason === "image" ? t("runner.ui50") : t("runner.ui51")}</h2><p>{technicalReason === "image" ? t("runner.ui52") : t("runner.ui53")}</p><button type="button" className="primary-button" onClick={() => void recordTechnicalIssue()}>{t("runner.ui54")}</button></div></div>;
   return <div className="listen-card published-instruction-card"><div className="tap-instruction-runner">
-    <div className="instruction-heading"><span className="kicker">ИНСТРУКЦИЯ {index + 1} ИЗ {roundLimit}</span><h3>{scenario.result && phase !== "resolved" ? "Послушай и выполни" : scenario.instruction}</h3><button type="button" className="small-button" disabled={audioPending || phase === "intro"} onClick={() => void playInstruction(true)}><Volume2 size={17}/> Повторить</button></div>
-    {phase === "intro" && index === 0 && roundChoices && <PracticeLength value={roundLimit} choices={roundChoices} bankSize={scenarios.length} unit="ситуаций" onChange={setRoundLimit}/>}
-    {phase === "intro" ? <div className="runner-intro"><p>Сначала прозвучит один шаг. Выполни его двумя простыми нажатиями: предмет, затем цель.</p><button type="button" className="primary-button" onClick={() => void begin()}>Послушать и выполнить</button></div> : <div className="instruction-stage">
-      <section aria-labelledby="published-movable-heading"><h4 id="published-movable-heading">1. Выбери предмет</h4><div>{movable.map((item, position) => <button type="button" key={item.key} className={`${selectedObject === item.key ? "selected" : ""} ${attempts >= 2 && !scenario.result && item.key === scenario.success.object_key ? "hinted" : ""}`} aria-pressed={selectedObject === item.key} disabled={phase === "resolved" || audioPending} onClick={() => chooseObject(item.key)}><Image src={item.media_ref} alt="" width={120} height={120} onError={() => { setTechnicalReason("image"); setPhase("technical"); }}/><strong>{phase === "resolved" || !scenario.result ? item.label : `Предмет ${position + 1}`}</strong></button>)}</div></section>
+    <div className="instruction-heading"><span className="kicker">{t("runner.instruction", { current: index + 1, total: roundLimit })}</span><h3>{scenario.result && phase !== "resolved" ? t("runner.ui56") : scenario.instruction}</h3><button type="button" className="small-button" disabled={audioPending || phase === "intro"} onClick={() => void playInstruction(true)}><Volume2 size={17}/>  {t("runner.ui28")}</button></div>
+    {phase === "intro" && index === 0 && roundChoices && <PracticeLength value={roundLimit} choices={roundChoices} bankSize={scenarios.length} unit={t("runner.ui57")} onChange={setRoundLimit}/>}
+    {phase === "intro" ? <div className="runner-intro"><p>{t("runner.ui58")}</p><button type="button" className="primary-button" onClick={() => void begin()}>{t("runner.ui59")}</button></div> : <div className="instruction-stage">
+      <section aria-labelledby="published-movable-heading"><h4 id="published-movable-heading">{t("runner.ui60")}</h4><div>{movable.map((item, position) => <button type="button" key={item.key} className={`${selectedObject === item.key ? "selected" : ""} ${attempts >= 2 && !scenario.result && item.key === scenario.success.object_key ? "hinted" : ""}`} aria-pressed={selectedObject === item.key} disabled={phase === "resolved" || audioPending} onClick={() => chooseObject(item.key)}><Image src={item.media_ref} alt="" width={120} height={120} onError={() => { setTechnicalReason("image"); setPhase("technical"); }}/><strong>{phase === "resolved" || !scenario.result ? item.label : t("runner.object", { number: position + 1 })}</strong></button>)}</div></section>
       <ChevronRight className="instruction-arrow" aria-hidden="true"/>
-      <section aria-labelledby="published-target-heading"><h4 id="published-target-heading">2. Выбери цель</h4><div>{targets.map((item, position) => <button type="button" key={item.key} className={`${phase === "resolved" && item.key === scenario.success.target_key ? "completed" : ""} ${attempts >= 2 && !scenario.result && item.key === scenario.success.target_key ? "hinted" : ""}`} disabled={phase === "resolved" || audioPending} onClick={() => chooseTarget(item.key)}><Image src={item.media_ref} alt="" width={120} height={120} onError={() => { setTechnicalReason("image"); setPhase("technical"); }}/><strong>{phase === "resolved" || !scenario.result ? item.label : `Цель ${position + 1}`}</strong>{phase === "resolved" && item.key === scenario.success.target_key && <i><Check size={17}/></i>}</button>)}</div></section>
+      <section aria-labelledby="published-target-heading"><h4 id="published-target-heading">{t("runner.ui61")}</h4><div>{targets.map((item, position) => <button type="button" key={item.key} className={`${phase === "resolved" && item.key === scenario.success.target_key ? "completed" : ""} ${attempts >= 2 && !scenario.result && item.key === scenario.success.target_key ? "hinted" : ""}`} disabled={phase === "resolved" || audioPending} onClick={() => chooseTarget(item.key)}><Image src={item.media_ref} alt="" width={120} height={120} onError={() => { setTechnicalReason("image"); setPhase("technical"); }}/><strong>{phase === "resolved" || !scenario.result ? item.label : t("runner.target", { number: position + 1 })}</strong>{phase === "resolved" && item.key === scenario.success.target_key && <i><Check size={17}/></i>}</button>)}</div></section>
     </div>}
-    {phase === "playing" && scenario.result && <button type="button" className="small-button" disabled={audioPending} onClick={showModel}>Показать действие</button>}
+    {phase === "playing" && scenario.result && <button type="button" className="small-button" disabled={audioPending} onClick={showModel}>{t("runner.ui62")}</button>}
     {phase === "resolved" && <InstructionResult scenario={scenario} modelled={modelled} onSpeak={onSpeak} onMediaError={() => { setTechnicalReason("image"); setPhase("technical"); }}/>}
-    {feedback && <div className="runner-feedback" role="status" aria-live="polite"><span>{feedback}</span>{phase === "resolved" && index === roundLimit - 1 && roundLimit < scenarios.length && <button type="button" className="secondary-button" onClick={() => { setRoundLimit(value => Math.min(value + 6, scenarios.length)); evidenceRef.current = newAnswerEvidence(); resolvedRef.current = false; selectionTraceRef.current = []; setModelled(false); setIndex(value => value + 1); setSelectedObject(null); setAttempts(0); setFeedback(""); setPhase("intro"); }}>Продолжить с новыми заданиями</button>}{phase === "resolved" && <button type="button" className="primary-button" onClick={() => void next()}>{index === roundLimit - 1 ? "Завершить" : "Следующая инструкция"}<ChevronRight size={17}/></button>}</div>}
-    <div className="runner-stop-actions"><button type="button" className="small-button" onClick={() => void stop("break")}><Pause size={16}/> Перерыв</button><button type="button" className="small-button" onClick={() => void stop("refused")}><CircleX size={16}/> Не хочу</button></div>
+    {feedback && <div className="runner-feedback" role="status" aria-live="polite"><span>{feedback}</span>{phase === "resolved" && index === roundLimit - 1 && roundLimit < scenarios.length && <button type="button" className="secondary-button" onClick={() => { setRoundLimit(value => Math.min(value + 6, scenarios.length)); evidenceRef.current = newAnswerEvidence(); resolvedRef.current = false; selectionTraceRef.current = []; setModelled(false); setIndex(value => value + 1); setSelectedObject(null); setAttempts(0); setFeedback(""); setPhase("intro"); }}>{t("runner.ui63")}</button>}{phase === "resolved" && <button type="button" className="primary-button" onClick={() => void next()}>{index === roundLimit - 1 ? t("runner.ui30") : t("runner.ui64")}<ChevronRight size={17}/></button>}</div>}
+    <div className="runner-stop-actions"><button type="button" className="small-button" onClick={() => void stop("break")}><Pause size={16}/>  {t("runner.ui32")}</button><button type="button" className="small-button" onClick={() => void stop("refused")}><CircleX size={16}/>  {t("runner.ui33")}</button></div>
   </div></div>;
 }

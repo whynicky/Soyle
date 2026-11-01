@@ -1,4 +1,6 @@
 "use client";
+import { t, useLocale } from "@/lib/i18n";
+
 
 import Image from 'next/image';
 import { X } from 'lucide-react';
@@ -6,12 +8,14 @@ import { useEffect, useRef, type CSSProperties } from 'react';
 import { starLabel } from '@/lib/rewards';
 
 export function StarVault({total, onOpen}: {total: number; onOpen: () => void}) {
-  return <button type="button" className="star-vault" data-star-vault aria-label={`Моя копилка: ${total} ${starLabel(total)}`} onClick={onOpen}>
-    <Image src="/child-room/reward-star.webp" alt="" width={56} height={56}/><span><strong>{total} {starLabel(total)}</strong><small>Моя копилка</small></span><span aria-hidden="true">›</span>
+  useLocale();
+  return <button type="button" className="star-vault" data-star-vault aria-label={t("reward.vault", { count: total, unit: starLabel(total) })} onClick={onOpen}>
+    <Image src="/child-room/reward-star.webp" alt="" width={56} height={56}/><span><strong>{total} {starLabel(total)}</strong><small>{t("finish.ui1")}</small></span><span aria-hidden="true">›</span>
   </button>;
 }
 
 export function StarReward({stars, total, calmMode, onDone}: {stars: number; total: number; calmMode: boolean; onDone: () => void}) {
+  useLocale();
   const layer = useRef<HTMLDivElement>(null);
   useEffect(() => {
     const reduced = window.matchMedia('(prefers-reduced-motion: reduce)');
@@ -30,11 +34,11 @@ export function StarReward({stars, total, calmMode, onDone}: {stars: number; tot
     }, 2850));
     return () => {timers.forEach(window.clearTimeout);pulse?.cancel();};
   }, [calmMode, onDone]);
-  return <div ref={layer} className="starlight-reward" data-calm={calmMode} aria-label="Полученная награда">
+  return <div ref={layer} className="starlight-reward" data-calm={calmMode} aria-label={t("finish.ui2")}>
     <div className="starlight-rays" aria-hidden="true"/>
-    <div className="starlight-card"><button className="starlight-close" type="button" aria-label="Закрыть поздравление" onClick={onDone}><X size={22}/></button>
+    <div className="starlight-card"><button className="starlight-close" type="button" aria-label={t("finish.ui3")} onClick={onDone}><X size={22}/></button>
       <div className="starlight-hero" aria-hidden="true"><Image src="/child-room/reward-star.webp" alt="" width={240} height={240} priority/></div>
-      <div role="status" aria-live="polite" aria-atomic="true"><h2>+{stars} {starLabel(stars)}!</h2><p>Задание сохранено</p><strong>В твоей копилке: {total}</strong></div>
+      <div role="status" aria-live="polite" aria-atomic="true"><h2>+{stars} {starLabel(stars)}!</h2><p>{t("finish.ui4")}</p><strong>{t("finish.ui5")} {total}</strong></div>
     </div>
     <div className="starlight-particles" aria-hidden="true">{Array.from({length:12},(_,i)=><span key={i} style={{'--particle-x':`${Math.cos(i * Math.PI / 6) * (130 + i % 3 * 24)}px`,'--particle-y':`${Math.sin(i * Math.PI / 6) * 150}px`,'--particle-turn':`${i * 29}deg`,'--particle-delay':`${i % 4 * 40}ms`} as CSSProperties}><Image src="/child-room/reward-star.webp" alt="" width={36} height={36}/></span>)}</div>
     <div className="starlight-flights" aria-hidden="true">{Array.from({length:Math.min(5,stars)},(_,i)=><span key={i} style={{animationDelay:`${1950+i*110}ms`} as CSSProperties}><Image src="/child-room/reward-star.webp" alt="" width={42} height={42}/></span>)}</div>

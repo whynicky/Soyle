@@ -1,5 +1,7 @@
 "use client";
 
+import { t, useLocale } from "@/lib/i18n";
+
 export function PracticeLength({ value, choices, bankSize, unit, onChange }: {
   value: number;
   choices: number[];
@@ -7,10 +9,12 @@ export function PracticeLength({ value, choices, bankSize, unit, onChange }: {
   unit: string;
   onChange: (value: number) => void;
 }) {
+  useLocale();
+  const localizedUnit = ({ "действий": t("practice.unit.actions"), "слов": t("practice.unit.words"), "ситуаций": t("practice.unit.scenarios"), "картинки": t("practice.unit.pictures") } as Record<string, string>)[unit] || unit;
   return <fieldset className="practice-length">
-    <legend>Длина серии</legend>
-    <p>В наборе: {bankSize} {unit}. Сначала показываем разные задания.</p>
-    <div>{choices.map(count => <button key={count} type="button" aria-pressed={value === count} onClick={() => onChange(count)}>{count} заданий</button>)}</div>
-    {value > bankSize && <small>После всех карточек начнётся повторение с другим расположением вариантов.</small>}
+    <legend>{t("practice.length.title")}</legend>
+    <p>{t("practice.length.bank", { count: bankSize, unit: localizedUnit })}</p>
+    <div>{choices.map(count => <button key={count} type="button" aria-pressed={value === count} onClick={() => onChange(count)}>{t("practice.length.count", { count })}</button>)}</div>
+    {value > bankSize && <small>{t("practice.length.repeat")}</small>}
   </fieldset>;
 }

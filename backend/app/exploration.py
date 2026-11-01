@@ -7,6 +7,7 @@ from copy import deepcopy
 from uuid import uuid4
 from fastapi import HTTPException
 from .database import now_iso
+from .exploration_localization import localize_snapshot
 from .exploration_content import hit_object
 from .exercise_engine import get_version,published_exercise
 from .vocabulary import observe,focus_for_exercise
@@ -14,7 +15,7 @@ from .vocabulary import observe,focus_for_exercise
 
 def snapshot(db,run):
     run=dict(run);version=get_version(db,run['version_id']);state=json.loads(run['state_json'])
-    return {'id':run['id'],'revision':run['revision'],'preview':run['child_id'] is None,'exercise_id':version['exercise_id'],'version_id':version['id'],'scene':version['content']['exploration'],'state':state,'measurement':measurement(state),'details':details(run,state,version)}
+    return localize_snapshot(db, {'id':run['id'],'revision':run['revision'],'preview':run['child_id'] is None,'exercise_id':version['exercise_id'],'version_id':version['id'],'scene':version['content']['exploration'],'state':state,'measurement':measurement(state),'details':details(run,state,version)})
 
 
 def empty_round():return {'responses':[],'related_responses':[],'audio_presentations':0,'resume_replays':0,'outside_taps':0,'hint_level':0,'repeats':0,'audio_ready':False,'resolved':False}

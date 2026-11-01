@@ -30,7 +30,7 @@ def test_translations_seeded_unapproved_and_immutable(client, admin_headers):
         assert count > 0
         seed_translation_drafts(db)
         assert db.execute('SELECT count(*) n FROM exercise_translations').fetchone()['n'] == count
-        row = db.execute('SELECT source_version_id FROM exercise_translations LIMIT 1').fetchone()
+        row = db.execute("SELECT t.source_version_id FROM exercise_translations t JOIN exercise_versions v ON v.id=t.source_version_id WHERE v.mechanic='auditory_choice' LIMIT 1").fetchone()
         data = get_translation(db, row['source_version_id'])
         assert data['status'] == 'needs_review' and data['reviewed_by'] is None
         validate_translation(data['source'], data['payload'])
@@ -58,7 +58,7 @@ def test_approved_overlay_keeps_ids_and_original(client):
     from app.exercise_engine import published_exercise_rows
     with connect() as db:
         original = published_exercise_rows(db)
-        exercise = next(item for item in original if get_translation(db,item['engine']['version_id'])['status'] == 'needs_review')
+        exercise = next(item for item in original if 'stimuli' in item['engine']['content'] and get_translation(db,item['engine']['version_id'])['status'] == 'needs_review')
         version_id = exercise['engine']['version_id']
         current = get_translation(db, version_id)
         reviewer = db.execute("SELECT id FROM users WHERE role='admin' LIMIT 1").fetchone()['id']
@@ -152,3 +152,58 @@ def test_varied_translations_are_complete_pending_and_preserve_scoring_reference
             validate_translation(draft['source'],draft['payload'])
             assert draft['payload']['title'] != draft['source']['title']
             assert ('kk',draft['payload']['instruction']) in catalogue()
+
+
+def test_instruction_adaptations_keep_relations_and_scoring_pending_review(client):
+    from app.localization import require_complete_translation
+    from app.practice_localization import localize_plan
+    with connect() as db:
+        rows = db.execute("SELECT v.* FROM exercise_versions v WHERE v.mechanic='tap_instruction' AND v.language='ru'").fetchall()
+        assert rows
+        count = db.execute('SELECT count(*) n FROM exercise_translations').fetchone()['n']
+        seed_translation_drafts(db)
+        assert db.execute('SELECT count(*) n FROM exercise_translations').fetchone()['n'] == count
+        for row in rows:
+            data = get_translation(db, row['id'])
+            assert data['status'] == 'needs_review'
+            assert data['reviewed_by'] is None
+            validate_translation(data['source'], data['payload'])
+            require_complete_translation(data['source'], data['payload'])
+            for original, adapted in zip(data['source']['content']['scenarios'], data['payload']['content']['scenarios']):
+                assert original['key'] == adapted['key']
+                assert original['success'] == adapted['success']
+                assert original['speech'] != adapted['speech']
+                assert [(item['key'], item['role'], item['media_ref']) for item in original['objects']] == [(item['key'], item['role'], item['media_ref']) for item in adapted['objects']]
+                if original.get('result'):
+                    assert original['result']['relation'] == adapted['result']['relation']
+                    assert original['result']['speech'] != adapted['result']['speech']
+            broken = copy.deepcopy(data['payload'])
+            broken['content']['scenarios'][0]['success']['object_key'] = 'wrong-answer'
+            with pytest.raises(HTTPException):
+                validate_translation(data['source'], broken)
+        first = get_translation(db, rows[0]['id'])
+        reviewer = db.execute("SELECT id FROM users WHERE role='admin' LIMIT 1").fetchone()['id']
+        approve_translation(db, rows[0]['id'], TranslationReview(revision=first['revision'], comment='Synthetic instruction review only'), reviewer)
+        token = LOCALE.set('kk-KZ')
+        try:
+            plan = localize_plan(db, {'summary': '', 'notices': [], 'items': [{'exercise_version_id': rows[0]['id'], 'exercise_title': rows[0]['title'], 'instruction': rows[0]['instruction'], 'assignment_reason': {'messages': []}}]})
+            assert plan['items'][0]['exercise_title'] == first['payload']['title']
+            assert plan['items'][0]['translation_available'] is True
+        finally:
+            LOCALE.reset(token)
+        # Return the disposable test row to pending for other tests.
+        approved = get_translation(db, rows[0]['id'])
+        save_translation(db, rows[0]['id'], TranslationUpdate(revision=approved['revision'], payload=approved['payload'], status='needs_review'), reviewer)
+
+
+def test_motor_preview_translation_does_not_enable_approval(client):
+    from fastapi import HTTPException
+    with connect() as db:
+        row = db.execute("SELECT id FROM exercise_versions WHERE mechanic='local_face_mirror' LIMIT 1").fetchone()
+        current = get_translation(db,row['id'])
+        assert current['status'] == 'needs_review' and current['reviewed_by'] is None
+        validate_translation(current['source'],current['payload'])
+        reviewer = db.execute("SELECT id FROM users WHERE role='specialist' LIMIT 1").fetchone()['id']
+        with pytest.raises(HTTPException) as error:
+            approve_translation(db,row['id'],TranslationReview(revision=current['revision'],comment='Synthetic review must fail'),reviewer)
+        assert error.value.detail == 'translation.mechanic_needs_adaptation'

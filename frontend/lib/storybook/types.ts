@@ -8,6 +8,7 @@ export type StorySceneDefinition = {
   layers: Record<string, LayerPlacement>; layer_reactions: Array<{ when: Record<string, string | number | boolean>; layers: Record<string, Partial<LayerPlacement>> }>; decorative_motion: string[];
 };
 export type StoryDefinition = {
+  language?: "ru" | "kk";
   key: string; version: number; schema_version: number; status: "DRAFT" | "PUBLISHED"; review_status: string;
   title: string; subtitle: string; summary: string; age_note: string; review_note: string;
   assets: Record<"room" | "misha" | "mother" | "objects", string>;

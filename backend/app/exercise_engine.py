@@ -578,12 +578,13 @@ def needs_admin_confirmation(version: dict) -> bool:
 def preview_version(db, version_id: int) -> dict:
     version = get_version(db, version_id)
     errors = validate_version(version)
+    from .practice_localization import localize_plan_message, practice_text
     return {
         "version": version,
         "valid": not errors,
-        "errors": errors,
+        "errors": [localize_plan_message(error) for error in errors],
         "can_publish": not errors and (version["publication_status"] == "draft" or needs_admin_confirmation(version)),
-        "blocker": "Исправьте замечания перед публикацией" if errors else None,
+        "blocker": practice_text("Исправьте замечания перед публикацией") if errors else None,
     }
 
 
@@ -646,8 +647,10 @@ def review_workspace(db, version_id: int, user_id: int) -> dict:
            FROM exercise_versions WHERE exercise_id=? ORDER BY version DESC,id DESC""",
         (version["exercise_id"],),
     ).fetchall()
+    from .methodology_localization import preview as methodology_preview
     return {
         **preview,
+        "method_card_translation": methodology_preview(version.get("method_card")),
         "stimuli_index": stimuli,
         "reviews": [dict(row) for row in review_rows],
         "version_history": [dict(row) for row in history_rows],

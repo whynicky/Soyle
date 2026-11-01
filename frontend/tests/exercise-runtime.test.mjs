@@ -124,9 +124,11 @@ test("one-step instruction requires the selected object and destination pair", (
 
 test("P1 runner exposes repeat audio, break, refusal and tap-sequence controls", async () => {
   const source = await readFile(new URL("../components/P1ExerciseRunners.tsx", import.meta.url), "utf8");
-  assert.match(source, /Повторить/);
-  assert.match(source, /Перерыв/);
-  assert.match(source, /Не хочу/);
+  const messages = JSON.parse(await readFile(new URL("../locales/ru-RU.json", import.meta.url), "utf8"));
+  for (const [key, label] of [["runner.ui28", "Повторить"], ["runner.ui32", "Перерыв"], ["runner.ui33", "Не хочу"]]) {
+    assert.ok(source.includes(`t("${key}")`));
+    assert.equal(messages[key], label);
+  }
   assert.match(source, /instructionMatches/);
   assert.match(source, /role === "movable"/);
   assert.match(source, /role === "target"/);

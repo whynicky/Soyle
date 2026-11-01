@@ -114,6 +114,9 @@ def ingest_card_session(db,row,exercise):
 
 
 def vocabulary_summary(db,child_id):
+    from .practice_localization import localize_plan_message, practice_text
+    from .localization import LOCALE
+    from pathlib import Path
     from .exercise_engine import published_exercise_rows
     available={e['engine']['version_id']:e for e in published_exercise_rows(db) if e['engine']['mechanic']=='auditory_choice'}
     links={}
@@ -128,4 +131,9 @@ def vocabulary_summary(db,child_id):
         valid=[r for r in items if r['outcome']!='incomplete'];q=queues.get(concept)
         if q and q['updated_at']<(datetime.now(timezone.utc)-timedelta(days=45)).isoformat():q=None
         words.append(dict(concept_id=concept,label=items[0]['label'],independent=sum(r['outcome']=='independent' for r in valid),with_help=sum(r['outcome'] in {'prompted','modelled'} for r in valid),first_correct=sum(r['first_correct'] for r in valid),observations=len(valid),unfinished=sum(r['outcome']=='incomplete' for r in items),status=q['status'] if q else 'observing',reason=q['reason'] if q else 'Для решения о закреплении нужны несколько наблюдений.',card_exercises=links.get(concept,[]),content_pending=not bool(links.get(concept)),history=[{**{k:r[k] for k in ['context','outcome','first_correct','errors','repeats','hint_level','created_at']},'responses':json.loads(r['responses_json']),'supports':json.loads(r['supports_json'])} for r in items[:20]]))
-    return dict(words=words,policy=policy_for(db,child_id),rules_version=RULES_VERSION,note='Это результаты конкретных игровых проб. Контексты сцены и карточек учитываются отдельно. Решения о закреплении используют пробы за последние 45 дней; медицинские выводы не делаются.')
+    if LOCALE.get() == "kk-KZ":
+        labels=json.loads((Path(__file__).parent/"locales"/"kk-KZ-education.json").read_text())
+        for word in words:
+            word["label"]=labels.get(word["label"], practice_text(word["label"]))
+            word["reason"]=localize_plan_message(word["reason"])
+    return dict(words=words,policy=policy_for(db,child_id),rules_version=RULES_VERSION,note=practice_text('Это результаты конкретных игровых проб. Контексты сцены и карточек учитываются отдельно. Решения о закреплении используют пробы за последние 45 дней; медицинские выводы не делаются.'))

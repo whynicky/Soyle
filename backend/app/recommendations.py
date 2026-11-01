@@ -2,6 +2,8 @@
 from fastapi import HTTPException
 
 from .exercise_engine import published_exercise_rows
+from .practice_localization import localize_goal
+from .localization import LOCALE
 from .practice_goals import decode_goal, exercise_matches_goal, get_preferences
 
 
@@ -37,7 +39,7 @@ def recommendations(db, child_id: int, specialist_id: int | None = None) -> list
         exercise = catalogue.get(item["exercise_id"])
         item["exercise_available"] = bool(exercise and exercise["id"] not in avoided
             and (item["exercise_version_id"] is None or item["exercise_version_id"] == exercise["engine"]["version_id"]))
-        item["suitable_goals"] = [{"id": goal["id"], "title": goal["title"]} for goal in goals
+        item["suitable_goals"] = [{"id": goal["id"], "title": localize_goal(goal)["title"]} for goal in goals
             if exercise and exercise_matches_goal(exercise, goal)]
         item["goal_available"] = any(goal["id"] == item["goal_id"] for goal in item["suitable_goals"])
         history = attempts.get(item["id"], [])
@@ -47,6 +49,12 @@ def recommendations(db, child_id: int, specialist_id: int | None = None) -> list
             if attempt["attempt_status"] in {"completed", "participated"}), None)
         item["ready_for_plan"] = bool(item["is_current"] and item["exercise_available"]
             and item["goal_available"] and item["family_decision"] == "accepted" and not item["completed_at"])
+        if LOCALE.get() == "kk-KZ":
+            if exercise: item["exercise_title"] = exercise["title"]
+            elif item["exercise_id"]: item["exercise_title"] = "Тапсырманың қазақша аудармасы тексерілуде"
+            if item["goal_id"]:
+                source_goal = db.execute("SELECT * FROM parent_practice_goals WHERE id=?", (item["goal_id"],)).fetchone()
+                if source_goal: item["goal_title"] = localize_goal(decode_goal(source_goal))["title"]
         result.append(item)
     return result
 

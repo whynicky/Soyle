@@ -1,3 +1,5 @@
+import { getLocale } from "./locale.ts";
+
 export type PracticeMinutes = 3 | 5 | 10;
 
 export const SESSION_EXERCISE_COUNTS: Record<PracticeMinutes, number> = {
@@ -7,6 +9,7 @@ export const SESSION_EXERCISE_COUNTS: Record<PracticeMinutes, number> = {
 };
 
 export function exerciseCountLabel(count: number): string {
+  if (getLocale() === "kk-KZ") return `${count} тапсырма`;
   const remainder100 = count % 100;
   const remainder10 = count % 10;
   const word = remainder100 >= 11 && remainder100 <= 14

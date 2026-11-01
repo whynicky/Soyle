@@ -27,6 +27,7 @@ from .aac_grammar import compose_aac_phrase
 from .ai_assistant import DISCLAIMER as LOCAL_ASSISTANT_DISCLAIMER, answer_parent
 from .exercise_engine import create_draft, preview_version, publish_version, published_exercise, published_exercise_rows, review_capabilities, review_workspace, submit_content_review, needs_admin_confirmation
 from .family_practice import descriptive_results, home_library, save_home_observation, skill_map, upsert_skill_observation
+from .practice_localization import practice_text, localize_plan_message
 from .adaptive_planner import create_plan as create_adaptive_plan, get_plan as get_adaptive_plan, plan_history as adaptive_plan_history
 from .practice_goals import create_goal as create_practice_goal, get_preferences, list_goals as list_practice_goals, list_templates as list_practice_goal_templates, save_observation as save_practice_goal_observation, save_preferences, update_goal as update_practice_goal
 from .migrations import LATEST_SCHEMA_VERSION
@@ -651,6 +652,16 @@ def list_notifications(user: dict = Depends(require_roles("parent"))) -> dict:
             create_module_notification(db, completed["child_id"], completed["exercise_id"])
         rows = db.execute("SELECT * FROM notifications WHERE user_id=? ORDER BY id DESC LIMIT 30", (user["id"],)).fetchall()
     items = [{**dict(row), "metadata": json.loads(row["metadata"]), "is_read": bool(row["is_read"])} for row in rows]
+    for item in items:
+        if item["event_key"].startswith("module_complete:"):
+            item["title"] = localize_plan_message(item["title"])
+            source_template = "{v0}: по всем доступным заданиям этой подборки есть сохранённые попытки. Это охват практики, а не оценка развития речи."
+            suffix = source_template.removeprefix("{v0}")
+            if item["message"].endswith(suffix):
+                name = item["message"][:-len(suffix)]
+                item["message"] = practice_text(source_template).format(v0=name)
+            for field in ("unit_label", "unit_title"):
+                if field in item["metadata"]: item["metadata"][field] = practice_text(item["metadata"][field])
     return {"unread": sum(1 for item in items if not item["is_read"]), "items": items}
 
 
@@ -1420,7 +1431,7 @@ def build_skill_progress(rows, exercise_rows) -> list[dict]:
         average_game_score = round(sum(row["score"] for row in scored_rows) / len(scored_rows)) if scored_rows else None
         results.append({
             "skill": skill,
-            "label": meta["label"],
+            "label": practice_text(meta["label"]),
             "value": average_game_score,
             "average_game_score": average_game_score,
             "measurement": "game_result" if scored_rows else "participation",
@@ -1455,7 +1466,7 @@ def progress_data(child_id: int, user: dict) -> dict:
     for row in scored_rows:
         by_module[row["module"]].append(row["score"])
     labels = {"motor": "Практика по назначению", "sensory": "Игровые задания на слух", "mixed": "AAC-коммуникация"}
-    skills = [{"module": module, "label": labels[module], "value": round(sum(by_module[module]) / len(by_module[module])) if by_module[module] else None, "sessions": len(by_module[module])} for module in ("motor", "sensory", "mixed")]
+    skills = [{"module": module, "label": practice_text(labels[module]), "value": round(sum(by_module[module]) / len(by_module[module])) if by_module[module] else None, "sessions": len(by_module[module])} for module in ("motor", "sensory", "mixed")]
     active_exercise_ids = {
         module: {row["id"] for row in exercise_rows if row["module"] == module}
         for module in ("motor", "sensory", "mixed")
@@ -1487,7 +1498,7 @@ def progress_data(child_id: int, user: dict) -> dict:
     independent_before = sum(1 for row in previous_home if row["result"] == "independent")
     plain_language = None
     if current_home:
-        plain_language = f"В последних {len(current_home)} домашних ситуациях ребёнок справился самостоятельно {independent_now} раз. В предыдущих {len(previous_home)} — {independent_before} раз."
+        plain_language = localize_plan_message(f"В последних {len(current_home)} домашних ситуациях ребёнок справился самостоятельно {independent_now} раз. В предыдущих {len(previous_home)} — {independent_before} раз.")
     return {
         "child": child, "overall": overall, "total_sessions": len(rows), "skills": skills,
         "skill_progress": skill_progress, "module_completion": completion, "module_completed": completed,
@@ -1562,7 +1573,7 @@ def dashboard(child_id: int, user: dict = Depends(require_roles("admin", "parent
     today_rows = [row for row, day in activity_rows if day == today]
     week_rows = [row for row, day in activity_rows if week_start <= day <= today]
     week_activity = []
-    for offset, label in enumerate(("Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс")):
+    for offset, label in enumerate(("Дс", "Сс", "Ср", "Бс", "Жм", "Сб", "Жс") if LOCALE.get() == "kk-KZ" else ("Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс")):
         day = week_start + timedelta(days=offset)
         sessions = sum(1 for _, row_day in activity_rows if row_day == day)
         week_activity.append({
@@ -1800,13 +1811,13 @@ def ai_plan(child_id: int, payload: AIPlanRequest, user: dict = Depends(require_
     ensure_child_access(child_id, user)
     plan = session_plan(child_id, payload.target_minutes, user)
     plan.update({
-        "title": "Спокойная практика на сегодня",
-        "reason": "Задания выбраны локальными правилами из проверенной библиотеки без обращения к внешней модели.",
-        "parent_tip": "Предлагайте выбор, ждите ответ не меньше пяти секунд и спокойно завершайте занятие после отказа.",
+        "title": practice_text("Спокойная практика на сегодня"),
+        "reason": practice_text("Задания выбраны локальными правилами из проверенной библиотеки без обращения к внешней модели."),
+        "parent_tip": practice_text("Предлагайте выбор, ждите ответ не меньше пяти секунд и спокойно завершайте занятие после отказа."),
         "generated_by": "local_rules",
         "model": None,
         "needs_ai_consent": False,
-        "disclaimer": LOCAL_ASSISTANT_DISCLAIMER,
+        "disclaimer": practice_text(LOCAL_ASSISTANT_DISCLAIMER),
     })
     return plan
 
@@ -1823,7 +1834,7 @@ def ai_ask(child_id: int, payload: AIAskRequest, user: dict = Depends(require_ro
         "safety_note": str(result["safety_note"])[:600],
         "generated_by": "local_rules",
         "model": None,
-        "disclaimer": LOCAL_ASSISTANT_DISCLAIMER,
+        "disclaimer": practice_text(LOCAL_ASSISTANT_DISCLAIMER),
     }
 
 
@@ -2203,7 +2214,7 @@ def export_child_data(child_id: int, user: dict = Depends(require_roles("parent"
         setting_placeholders = ",".join("?" for _ in setting_keys)
         payload = {
             "exported_at": now_iso(),
-            "export_scope": "Все хранимые данные профиля ребёнка; хэши паролей и PIN не включаются.",
+            "export_scope": practice_text("Все хранимые данные профиля ребёнка; хэши паролей и PIN не включаются."),
             "child": child,
             "consent": dict(db.execute("SELECT * FROM child_consents WHERE child_id=?", (child_id,)).fetchone() or {}),
             "student_account": dict(student) if student else None,
@@ -2400,7 +2411,7 @@ def admin_usage(
         "breakdown": [dict(row) for row in breakdown],
         "daily": daily,
         "recent": [dict(row) for row in recent],
-        "note": "Внешняя модель отключена. Раздел хранит только прежние события; локальный анализ не расходует токены и не отправляет данные поставщику AI.",
+        "note": practice_text("Внешняя модель отключена. Раздел хранит только прежние события; локальный анализ не расходует токены и не отправляет данные поставщику AI."),
     }
 
 
@@ -2563,12 +2574,16 @@ def list_home_activity_drafts(_: dict = Depends(require_roles("admin"))) -> list
         for field in ("materials", "adult_instructions", "accepted_responses", "prompts", "stop_conditions"):
             item[field] = json.loads(item.pop(f"{field}_json") or "[]")
         item["method_card"] = json.loads(item.pop("method_card_json", "{}") or "{}")
-        result.append(item)
+        from .home_localization import preview
+        result.append(preview(item))
     return result
 
 
 @app.post("/api/admin/home-activity-drafts/{activity_id}/publish")
 def publish_home_activity_draft(activity_id: int, admin: dict = Depends(require_roles("admin"))) -> dict:
+    from .localization import LOCALE
+    if LOCALE.get() == "kk-KZ":
+        raise HTTPException(409, "translation.review_required")
     with connect() as db:
         row = db.execute("SELECT * FROM home_activity_templates WHERE id=?", (activity_id,)).fetchone()
         if not row:
@@ -2803,6 +2818,9 @@ async def localized_http_error(request: Request, exc: StarletteHTTPException):
     }
     codes = {
         "translation.conflict": "Аударма өзгерді. Соңғы нұсқасын ашыңыз.",
+        "translation.review_required": "Аударманы маман тексеруі қажет.",
+        "translation.observation_invalid": "Суретті сипаттау нұсқалары мен дұрыс бөліктерін тексеріңіз.",
+        "translation.exploration_invalid": "Көріністің құрылымы мен нұсқауларын тексеріңіз.",
         "translation.needs_specialist_review": "Қазақша нұсқа маманның тексеруін күтуде. Ата-ана алдын ала қарай алады.",
         "translation.source_changed": "Бастапқы нұсқа өзгерді. Аударманы қайта тексеру қажет.",
         "translation.mechanic_needs_adaptation": "Бұл тапсырмаға бөлек тілдік бейімдеу қажет.",

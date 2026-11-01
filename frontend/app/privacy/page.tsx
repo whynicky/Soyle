@@ -1,21 +1,25 @@
 "use client";
 
 import Link from "next/link";
+import { t, useLocale } from "@/lib/i18n";
+import { LanguagePicker } from "@/components/LanguagePicker";
 import { useEffect, useState } from "react";
 import { api } from "@/lib/api";
 
 type PrivacyProfile = { operator_configured: boolean; operator_name: string | null; operator_country: string | null; contact_email: string | null; hosting_location: string | null; history_retention_policy: string | null; backup_retention_policy: string | null; deletion_request_policy: string | null };
-const fields: Array<[keyof Omit<PrivacyProfile, "operator_configured">, string]> = [["operator_name", "Оператор"], ["operator_country", "Страна оператора"], ["contact_email", "Контакт для запросов"], ["hosting_location", "Размещение сервера и базы"], ["history_retention_policy", "Хранение истории"], ["backup_retention_policy", "Резервные копии"], ["deletion_request_policy", "Порядок обработки запросов"]];
+const getFields = (): Array<[keyof Omit<PrivacyProfile, "operator_configured">, string]> => [["operator_name", t("legal.privacy.ui1")], ["operator_country", t("legal.privacy.ui2")], ["contact_email", t("legal.privacy.ui3")], ["hosting_location", t("legal.privacy.ui4")], ["history_retention_policy", t("legal.privacy.ui5")], ["backup_retention_policy", t("legal.privacy.ui6")], ["deletion_request_policy", t("legal.privacy.ui7")]];
 export default function PrivacyPage() {
+  useLocale();
+  const fields = getFields();
   const [profile, setProfile] = useState<PrivacyProfile | null>(null);
   const [error, setError] = useState("");
-  useEffect(() => { let active = true; api<PrivacyProfile>("/api/privacy").then(value => { if (active) setProfile(value); }).catch(() => { if (active) setError("Сведения об операторе сейчас недоступны. Повторите позже."); }); return () => { active = false; }; }, []);
-  return <main className="legal-page"><Link href="/">← На главную</Link><h1>Приватность в Söyle</h1><p>Сведения о текущем MVP. Обновлено 31 октября 2026 года.</p>
-    <h2>Статус и оператор</h2><p>Проект находится на стадии MVP. Этот текст описывает работу программы. Юридическая проверка документа и готовность к пилоту с реальными детьми пока не подтверждены.</p>
-    {error && <p role="alert">{error}</p>}{!profile && !error && <p role="status">Загружаем сведения…</p>}{profile && <><p>{profile.operator_configured ? "Реквизиты заполнены оператором. Их заполнение само по себе не подтверждает юридическую проверку." : "Сведения об операторе и правилах хранения заполнены не полностью. До работы с реальными детскими данными их необходимо определить."}</p><dl>{fields.map(([key, label]) => <div key={key}><dt><strong>{label}</strong></dt><dd>{profile[key] || "Пока не определено"}</dd></div>)}</dl></>}
-    <h2>Какие данные сохраняются</h2><p>Данные аккаунта, профиль ребёнка, разрешения семьи, история игровых попыток и поддержки, цели и наблюдения, фотографии и карточки, которые добавила семья. AAC-фразы сохраняются только при включённом разрешении на описательную историю.</p>
-    <h2>Камера и звук</h2><p>Проверка движения камерой выполняется в браузере после отдельного разрешения. Кадры не отправляются на сервер. Записи голоса ребёнка не создаются. Для озвучки типовых учебных текстов сервер может использовать Microsoft Azure Speech. В Azure передаются только реплики из общего учебного каталога; имена детей, их ответы и личные карточки туда не отправляются. Готовые записи используются повторно. Личные фразы могут озвучиваться установленным локальным голосом устройства. Подбор заданий работает по локальным правилам без отправки ответов внешней AI-модели.</p>
-    <h2>Доступ специалиста</h2><p>Родитель отдельно включает разрешение и добавляет конкретного специалиста по логину. Доступ действует только для выбранного профиля. Разрешение можно отозвать в кабинете родителя. Наблюдения специалиста хранятся отдельно от игровых результатов.</p>
-    <h2>Выгрузка и удаление</h2><p>В кабинете родителя можно скачать данные ребёнка и удалить его профиль с подтверждением паролем. В профиле взрослого можно удалить аккаунт вместе с данными детей. Удаление затрагивает действующую базу сразу и необратимо.</p><p>Программа не удаляет самостоятельно копии базы вне действующего сервера. Срок их хранения и исключение удалённых данных при восстановлении должен определить оператор. Автоматический срок удаления истории сейчас не установлен: она хранится до удаления профиля или аккаунта родителем.</p>
+  useEffect(() => { let active = true; api<PrivacyProfile>("/api/privacy").then(value => { if (active) setProfile(value); }).catch(() => { if (active) setError(t("legal.privacy.ui8")); }); return () => { active = false; }; }, []);
+  return <main className="legal-page"><LanguagePicker compact/><Link href="/">{t("legal.privacy.ui9")}</Link><h1>{t("legal.privacy.ui10")}</h1><p>{t("legal.privacy.ui11")}</p>
+    <h2>{t("legal.privacy.ui12")}</h2><p>{t("legal.privacy.ui13")}</p>
+    {error && <p role="alert">{error}</p>}{!profile && !error && <p role="status">{t("legal.privacy.ui14")}</p>}{profile && <><p>{profile.operator_configured ? t("legal.privacy.ui15") : t("legal.privacy.ui16")}</p><dl>{fields.map(([key, label]) => <div key={key}><dt><strong>{label}</strong></dt><dd>{profile[key] || t("legal.privacy.ui17")}</dd></div>)}</dl></>}
+    <h2>{t("legal.privacy.ui18")}</h2><p>{t("legal.privacy.ui19")}</p>
+    <h2>{t("legal.privacy.ui20")}</h2><p>{t("legal.privacy.ui21")}</p>
+    <h2>{t("legal.privacy.ui22")}</h2><p>{t("legal.privacy.ui23")}</p>
+    <h2>{t("legal.privacy.ui24")}</h2><p>{t("legal.privacy.ui25")}</p><p>{t("legal.privacy.ui26")}</p>
   </main>;
 }

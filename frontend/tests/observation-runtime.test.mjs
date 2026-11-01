@@ -25,3 +25,14 @@ test('each phrase grows grammatically by actor, action and its own detail questi
     assert.equal(new Set(scene.options.flat()).size, 9);
   }
 });
+
+test('Kazakh description uses SOV order and its own questions without changing stored parts', async () => {
+  const {descriptionPhrase} = await import('../lib/observationRuntime.ts');
+  const bank = JSON.parse(readFileSync(new URL('../../backend/app/locales/kk-KZ-observation.json', import.meta.url))).scenes;
+  const dad = bank.find(scene => scene.key === 'dad-flies');
+  assert.equal(descriptionPhrase(dad.parts,'kk'),'Әке батпырауық ұшырып жатыр');
+  assert.equal(descriptionQuestion(dad,0,'kk'),'Суретте кім бар?');
+  assert.equal(descriptionQuestion(dad,1,'kk'),'Әке не істеп жатыр?');
+  assert.equal(descriptionQuestion(dad,2,'kk'),'Не ұшырып жатыр?');
+  assert.deepEqual(dad.parts,['Әке','ұшырып жатыр','батпырауық']);
+});

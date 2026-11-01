@@ -1189,6 +1189,31 @@ def _migration_42_varied_translations(db) -> None:
     seed_translation_drafts(db)
 
 
+def _migration_43_instruction_translations(db) -> None:
+    from .localization import seed_translation_drafts
+    seed_translation_drafts(db)
+
+
+def _migration_44_scene_translations(db) -> None:
+    from .localization import seed_translation_drafts
+    seed_translation_drafts(db)
+
+
+def _migration_45_remaining_vocabulary_translations(db) -> None:
+    from .localization import seed_translation_drafts
+    seed_translation_drafts(db)
+
+
+def _migration_46_guided_aac_translations(db) -> None:
+    from .localization import seed_translation_drafts
+    seed_translation_drafts(db)
+
+
+def _migration_47_motor_preview_translations(db):
+    from .localization import seed_translation_drafts
+    seed_translation_drafts(db)
+
+
 MIGRATIONS = (
     (9, _migration_9_exercise_engine),
     (10, _migration_10_content_contracts),
@@ -1224,6 +1249,11 @@ MIGRATIONS = (
     (40, _migration_40_translations),
     (41, _migration_41_aac_translations),
     (42, _migration_42_varied_translations),
+    (43, _migration_43_instruction_translations),
+    (44, _migration_44_scene_translations),
+    (45, _migration_45_remaining_vocabulary_translations),
+    (46, _migration_46_guided_aac_translations),
+    (47, _migration_47_motor_preview_translations),
 )
 LATEST_SCHEMA_VERSION = MIGRATIONS[-1][0]
 

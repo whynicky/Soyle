@@ -249,6 +249,7 @@ export type AdaptivePlanItem = {
   exercise_version_id: number;
   exercise_version: number;
   exercise_title: string;
+  translation_available?: boolean;
   instruction: string;
   module: "sensory" | "mixed";
   target: string;

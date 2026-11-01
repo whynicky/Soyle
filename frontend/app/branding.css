@@ -88,3 +88,20 @@ button:hover > .soyle-logo {
     transform: none !important;
   }
 }
+
+/* Keep the Kazakh wordmark independent of sidebar caption typography. */
+.soyle-local-brand.soyle-local-brand--compact {
+  gap: 10px;
+  flex-shrink: 0;
+}
+.soyle-local-brand.soyle-local-brand--compact > span {
+  font: 850 30px/1.1 var(--font-display);
+  letter-spacing: -.04em;
+  text-transform: none;
+  color: #163656;
+}
+.mobile-logo > .soyle-local-brand--compact { width: 116px !important; }
+.mobile-logo > .soyle-local-brand--compact > span { font-size: 24px; }
+.soyle-local-brand--vertical { flex-direction: column; text-align: center; }
+.soyle-local-brand--vertical > img { width: 70%; }
+.soyle-local-brand--vertical > span { font-size: 22px; }

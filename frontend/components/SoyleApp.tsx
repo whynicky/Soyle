@@ -44,8 +44,8 @@ import {
   Check,
   ChevronRight,
   Circle,
-  CircleAlert,
   CircleEllipsis,
+  CircleAlert,
   CircleCheck,
   CircleX,
   CircleUserRound,
@@ -79,9 +79,9 @@ import {
   ImageIcon,
   KeyRound,
   LampDesk,
-  Languages,
   Laugh,
   LayoutDashboard,
+  Languages,
   LockKeyhole,
   LogOut,
   Menu,
@@ -141,8 +141,8 @@ import type { FaceLandmarker } from "@mediapipe/tasks-vision";
 import { api, ApiError, AACCard, AIAnswer, type AdaptivePlan, AppSettings, Child, ChildConsent, clearLegacyAuth, Dashboard, Exercise, LearningSession, NotificationsData, Role, SkillProgress, User } from "@/lib/api";
 import { compressPhoto } from "@/lib/imageUpload";
 import { composeAACMessage } from "@/lib/aacGrammar";
-import { canAddAACScenarioCard, evaluateAACScenario } from "@/lib/aacScenarioRuntime";
-import { t, getLocale, languageOf, normalizeLocale, setLocale, supportedInterfaceLanguages, useLocale } from "@/lib/i18n";
+import { canAddAACScenarioCard, evaluateAACScenario, scenarioCardLabel } from "@/lib/aacScenarioRuntime";
+import { t, formatDate, getLocale, languageOf, normalizeLocale, setLocale, supportedInterfaceLanguages, useLocale } from "@/lib/i18n";
 import { exerciseCountLabel, SESSION_EXERCISE_COUNTS } from "@/lib/homePractice";
 import { nextIncompleteExerciseIndex, reconcileActiveSession, summarizeSessionResults } from "@/lib/sessionRuntime";
 import { categoriesToScores, evaluateMotorMovement, mergeBaseline, targetForSequenceStep, type BlendshapeScores } from "@/lib/motorDetection";
@@ -166,6 +166,8 @@ import {
   SkillsExperience,
 } from "@/components/ProductExperience";
 
+
+
 type Screen = "learn" | "my-world" | "success" | "comic-preview" | "story-preview" | "home" | "stories" | "world" | "skills" | "achievements" | "guides" | "games" | "session" | "exercise-complete" | "motor" | "sensory" | "mixed" | "aac" | "ai" | "progress" | "goals" | "parent" | "profile" | "settings" | "more" | "admin";
 type ModuleName = "motor" | "sensory" | "mixed";
 type GameMeasurement = { attempts_count?: number; correct_answers?: number; prompts_used?: number; gameplay_choices?: number; independent_completions?: number; prompted_completions?: number; attempt_status?: "completed" | "participated" | "refused" | "break" | "technical_error"; independence?: number; prompt_level?: "independent" | "minimal" | "full"; response_ms?: number; communication_initiatives?: number };
@@ -177,21 +179,21 @@ const defaultSettings: AppSettings = { camera_enabled: false, sound_enabled: tru
 const modules = [
   {
     id: "sensory" as const,
-    title: "Слушай и находи",
-    eyebrow: "Сенсорный модуль",
-    description: "Слушай слово и выбирай правильную картинку",
+    get title() { return t("module.sensory.title"); },
+    get eyebrow() { return t("module.sensory.eyebrow"); },
+    get description() { return t("module.sensory.description"); },
     accent: "blue",
     progress: 0,
-    time: "4 минуты",
+    get time() { return t("module.sensory.time"); },
   },
   {
     id: "mixed" as const,
-    title: "Собери свою фразу",
-    eyebrow: "Модуль общения",
-    description: "Складывай карточки и составляй понятные сообщения",
+    get title() { return t("module.mixed.title"); },
+    get eyebrow() { return t("module.mixed.eyebrow"); },
+    get description() { return t("module.mixed.description"); },
     accent: "mint",
     progress: 0,
-    time: "6 минут",
+    get time() { return t("module.mixed.time"); },
   },
 ];
 function BrandIcon({ size = 26 }: { size?: number }) {
@@ -209,6 +211,7 @@ import { SpecialistInvitation } from "./SpecialistInvitation";
 import { AdminContentQueue } from "./AdminContentQueue";
 
 export function SoyleApp() {
+  useLocale();
   const [user, setUser] = useState<User | null>(null);
   const [authLoading, setAuthLoading] = useState(true);
   const [authActionError, setAuthActionError] = useState("");
@@ -263,7 +266,7 @@ export function SoyleApp() {
     void navigator.serviceWorker.register("/sw.js", { updateViaCache: "none" }).catch(() => undefined);
   }, []);
 
-  if (authLoading) return <div className="auth-loading"><div className="brand-mark"><BrandIcon /></div><span>Söyle загружается…</span></div>;
+  if (authLoading) return <div className="auth-loading"><div className="brand-mark"><BrandIcon /></div><span>{t("screen.SoyleApp.ui1")}</span></div>;
   const logout = async () => {
     stopCurrentSpeech();
     setAuthActionError("");
@@ -272,7 +275,7 @@ export function SoyleApp() {
       clearLegacyAuth();
       setUser(null);
     } catch (cause) {
-      setAuthActionError(cause instanceof Error ? `Не удалось завершить сеанс: ${cause.message}` : "Не удалось завершить сеанс");
+      setAuthActionError(cause instanceof Error ? t("shell.template1", { v0: cause.message }) : t("screen.SoyleApp.ui2"));
     }
   };
   const invitation = invitationToken ? <SpecialistInvitation token={invitationToken} user={user} onClose={() => { setInvitationToken(""); window.history.replaceState(null, "", window.location.pathname + window.location.search); }}/> : null;
@@ -356,7 +359,7 @@ function AuthenticatedApp({ user, onLogout, externalError, onDismissExternalErro
     const updateConnection = () => {
       const online = navigator.onLine;
       setIsOnline(online);
-      if (online) setSessionError((current) => current.includes("нет интернета") ? "Связь восстановлена. Если страница не обновлялась, нажмите кнопку сохранения ещё раз." : current);
+      if (online) setSessionError((current) => current.includes(t("screen.AuthenticatedApp.ui1")) ? t("screen.AuthenticatedApp.ui2") : current);
     };
     updateConnection();
     window.addEventListener("online", updateConnection);
@@ -400,7 +403,7 @@ function AuthenticatedApp({ user, onLogout, externalError, onDismissExternalErro
     setChildrenError("");
     api<Child[]>("/api/children")
       .then((items) => { setChildren(items); setSelectedChildId((current) => items.some(item => item.id === current) ? current : items[0]?.id || null); })
-      .catch((cause) => { setChildrenError(cause instanceof Error ? cause.message : "Не удалось загрузить профиль ребёнка"); })
+      .catch((cause) => { setChildrenError(cause instanceof Error ? cause.message : t("screen.AuthenticatedApp.ui3")); })
       .finally(() => setChildrenLoading(false));
   }, [user.role]);
   useEffect(() => {
@@ -422,12 +425,12 @@ function AuthenticatedApp({ user, onLogout, externalError, onDismissExternalErro
       if (value.language_configured) window.dispatchEvent(new Event("soyle-profile-locale"));
     }).catch((cause) => {
       setSettings({ ...defaultSettings, language: languageOf(getLocale()) });
-      setRequestError(cause instanceof Error ? `Не удалось загрузить настройки: ${cause.message}` : "Не удалось загрузить настройки");
+      setRequestError(cause instanceof Error ? t("shell.template2", {v0: cause.message}) : t("screen.AuthenticatedApp.ui4"));
     });
   }, []);
   const loadNotifications = useCallback(() => {
     if (user.role === "parent") api<NotificationsData>("/api/notifications").then(setNotifications).catch((cause) => {
-      setRequestError(cause instanceof Error ? `Не удалось загрузить уведомления: ${cause.message}` : "Не удалось загрузить уведомления");
+      setRequestError(cause instanceof Error ? t("shell.template3", {v0: cause.message}) : t("screen.AuthenticatedApp.ui5"));
     });
   }, [user.role]);
   useEffect(loadNotifications, [loadNotifications]);
@@ -442,7 +445,7 @@ function AuthenticatedApp({ user, onLogout, externalError, onDismissExternalErro
           { id: "aac", label: t("nav.words"), icon: MessageCircle },
           { id: "more", label: t("nav.more"), icon: CircleEllipsis },
           { id: "world", label: t("nav.world"), icon: ImageIcon },
-          { id: "skills", label: "Навыки", icon: BarChart3 },
+          { id: "skills", label: t("navigation.skills"), icon: BarChart3 },
           { id: "achievements", label: t("nav.achievements"), icon: Trophy },
           { id: "settings", label: t("nav.settings"), icon: Settings },
         ]
@@ -463,7 +466,7 @@ function AuthenticatedApp({ user, onLogout, externalError, onDismissExternalErro
     api<Exercise[]>(path).then(value => { if (active) setExercises(value); }).catch((cause) => {
       if (!active) return;
       setExercises([]);
-      setRequestError(cause instanceof Error ? `Не удалось загрузить задания: ${cause.message}` : "Не удалось загрузить задания");
+      setRequestError(cause instanceof Error ? t("shell.template4", {v0: cause.message}) : t("screen.AuthenticatedApp.ui6"));
     });
     return () => { active = false; };
   }, [selectedChildId, user.role, catalogRevision, interfaceLocale]);
@@ -477,7 +480,7 @@ function AuthenticatedApp({ user, onLogout, externalError, onDismissExternalErro
     api<ChildConsent>(`/api/children/${child.id}/consent`).then(value => { if (active) setConsent(value); }).catch((cause) => {
       if (!active) return;
       setConsent(null);
-      setRequestError(cause instanceof Error ? `Не удалось проверить разрешения семьи: ${cause.message}` : "Не удалось проверить разрешения семьи");
+      setRequestError(cause instanceof Error ? t("shell.template5", {v0: cause.message}) : t("screen.AuthenticatedApp.ui7"));
     });
     return () => { active = false; };
   }, [child?.id, user.role, catalogRevision]);
@@ -491,14 +494,14 @@ function AuthenticatedApp({ user, onLogout, externalError, onDismissExternalErro
       if (session && session.status !== "completed") setDailyMinutes(session.target_minutes);
     }).catch((cause) => {
       if (cancelled) return;
-      setRequestError(cause instanceof Error ? `Не удалось проверить незавершённое занятие: ${cause.message}` : "Не удалось проверить незавершённое занятие");
+      setRequestError(cause instanceof Error ? t("shell.template6", {v0: cause.message}) : t("screen.AuthenticatedApp.ui8"));
     }).finally(() => { if (!cancelled) setActiveSessionLoading(false); });
     return () => { cancelled = true; };
   }, [child?.id, screen, catalogRevision]);
 
   const refreshDashboard = useCallback(() => {
     if (child?.id) api<Dashboard>(`/api/dashboard/${child.id}`).then(setDashboard).catch((cause) => {
-      setRequestError(cause instanceof Error ? `Не удалось обновить историю практики: ${cause.message}` : "Не удалось обновить историю практики");
+      setRequestError(cause instanceof Error ? t("shell.template7", {v0: cause.message}) : t("screen.AuthenticatedApp.ui9"));
     });
   }, [child]);
   useEffect(refreshDashboard, [refreshDashboard]);
@@ -526,8 +529,8 @@ function AuthenticatedApp({ user, onLogout, externalError, onDismissExternalErro
         preview: true,
       };
       setExerciseCompletion({
-        title: "Предпросмотр завершён",
-        message: "Это был просмотр взрослого. Ответы не сохранены в истории ребёнка и не влияют на подбор заданий.",
+        title: t("screen.AuthenticatedApp.ui10"),
+        message: t("screen.AuthenticatedApp.ui11"),
         nextExercise,
         sessionMode: false,
         sessionFinished: false,
@@ -536,11 +539,11 @@ function AuthenticatedApp({ user, onLogout, externalError, onDismissExternalErro
       return previewResult;
     }
     if (!consent?.privacy_accepted) {
-      setSessionError(user.role === "parent" ? "Сначала откройте кабинет родителя и разрешите сохранение результатов." : "Попроси взрослого разрешить сохранение результатов.");
+      setSessionError(user.role === "parent" ? t("screen.AuthenticatedApp.ui12") : t("screen.AuthenticatedApp.ui13"));
       return null;
     }
     if (!navigator.onLine) {
-      setSessionError("Сейчас нет интернета. Результат не сохранён автоматически и пропадёт при обновлении или закрытии страницы. Не обновляйте страницу; после восстановления связи нажмите сохранение ещё раз.");
+      setSessionError(t("screen.AuthenticatedApp.ui14"));
       return null;
     }
     const sequenceIndex = sessionExerciseActive ? activeSession?.exercises.findIndex((item) => item.id === exerciseId) : undefined;
@@ -564,10 +567,10 @@ function AuthenticatedApp({ user, onLogout, externalError, onDismissExternalErro
         }
         const refreshed = await api<LearningSession>(`/api/learning-sessions/${activeSession.id}`).catch(() => null);
         if (refreshed) { setActiveSession(refreshed); setSessionExerciseActive(false); setScreen("session"); }
-        setSessionError(`${cause.message}. ${refreshed ? "Текущий план обновлён; повторный результат не записан." : "Не удалось обновить план. Вернитесь на главную и восстановите занятие."}`);
+        setSessionError(`${cause.message}. ${refreshed ? t("screen.AuthenticatedApp.ui15") : t("screen.AuthenticatedApp.ui16")}`);
         return null;
       }
-      setSessionError(`${cause instanceof Error ? cause.message : "Не удалось сохранить результат"}. Попытка осталась на экране — можно повторить сохранение.`);
+      setSessionError(t("shell.template8", {v0: cause instanceof Error ? cause.message : t("localization.saveResultError")}));
       return null;
     }).finally(() => { savingAttemptRef.current = false; });
     if (result) {
@@ -587,8 +590,8 @@ function AuthenticatedApp({ user, onLogout, externalError, onDismissExternalErro
         if (!advancesSession) return result;
         setExerciseCompletion({
           refused: result.attempt_status === "refused",
-          title: result.attempt_status === "refused" ? "Сообщение принято" : "Задание завершено",
-          message: result.attempt_status === "refused" ? "«Нет» и «не хочу» - полноценные сообщения. Продолжать не нужно." : "Попытка сохранена. Можно спокойно перейти дальше.",
+          title: result.attempt_status === "refused" ? t("screen.AuthenticatedApp.ui18") : t("screen.AuthenticatedApp.ui19"),
+          message: result.attempt_status === "refused" ? t("screen.AuthenticatedApp.ui20") : t("screen.AuthenticatedApp.ui21"),
           nextExercise: updatedSession.exercises[nextIndex] || null,
           sessionMode: true,
           sessionFinished: nextIndex >= updatedSession.exercises.length,
@@ -599,8 +602,8 @@ function AuthenticatedApp({ user, onLogout, externalError, onDismissExternalErro
         const nextExercise = currentIndex >= 0 ? exercises[currentIndex + 1] || null : null;
         setExerciseCompletion({
           refused: result.attempt_status === "refused",
-          title: result.attempt_status === "refused" ? "Сообщение принято" : "Готово!",
-          message: result.attempt_status === "refused" ? "Ребёнок отказался - это не ошибка. Задание можно закончить." : "Попытка сохранена. Выбери, продолжить или вернуться к занятиям.",
+          title: result.attempt_status === "refused" ? t("screen.AuthenticatedApp.ui18") : t("screen.AuthenticatedApp.ui22"),
+          message: result.attempt_status === "refused" ? t("screen.AuthenticatedApp.ui23") : t("screen.AuthenticatedApp.ui24"),
           nextExercise,
           sessionMode: false,
           sessionFinished: false,
@@ -616,7 +619,7 @@ function AuthenticatedApp({ user, onLogout, externalError, onDismissExternalErro
     if (user.role === "parent") setParentPracticeMode("child_practice");
     setSessionLoading(true); setSessionError("");
     try {
-      if (!consent?.privacy_accepted) throw new Error(user.role === "parent" ? "Сначала откройте кабинет родителя и разрешите сохранение программы и результатов." : "Попроси взрослого разрешить сохранение программы и результатов.");
+      if (!consent?.privacy_accepted) throw new Error(user.role === "parent" ? t("screen.AuthenticatedApp.ui25") : t("screen.AuthenticatedApp.ui26"));
       const existing = await api<LearningSession | null>(`/api/children/${child.id}/active-session`);
       if (existing) {
         setActiveSession(existing);
@@ -624,22 +627,22 @@ function AuthenticatedApp({ user, onLogout, externalError, onDismissExternalErro
         return;
       }
       const plan = await api<AdaptivePlan>(`/api/adaptive-plans/${child.id}`, { method: "POST", body: JSON.stringify({ target_minutes: dailyMinutes }) });
-      if (!plan.items.length) throw new Error(plan.notices[0]?.message || "Для активных целей пока нет утверждённых заданий.");
+      if (!plan.items.length) throw new Error(plan.notices[0]?.message || t("screen.AuthenticatedApp.ui27"));
       const created = await api<LearningSession>("/api/learning-sessions", { method: "POST", body: JSON.stringify({ child_id: child.id, exercise_ids: plan.items.map((item) => item.exercise_id), target_minutes: plan.target_minutes, adaptive_plan_id: plan.id }) });
       setActiveSession({ ...created, results: [] });
       setScreen("session");
     } catch (cause) {
-      setSessionError(cause instanceof Error ? cause.message : "Не удалось подготовить занятие");
+      setSessionError(cause instanceof Error ? cause.message : t("screen.AuthenticatedApp.ui28"));
     } finally { setSessionLoading(false); }
   };
 
   const startPreparedPlan = async (plan: AdaptivePlan) => {
-    if (!child || !plan.items.length) throw new Error("В подготовленном плане нет доступных заданий");
-    if (!consent?.privacy_accepted) throw new Error("Сначала разрешите сохранение программы и результатов в кабинете родителя.");
+    if (!child || !plan.items.length) throw new Error(t("screen.AuthenticatedApp.ui29"));
+    if (!consent?.privacy_accepted) throw new Error(t("screen.AuthenticatedApp.ui30"));
     if (user.role === "parent") setParentPracticeMode("child_practice");
     const existing = await api<LearningSession | null>(`/api/children/${child.id}/active-session`);
     if (existing) {
-      if (existing.adaptive_plan_id !== plan.id) throw new Error("Есть незавершённое занятие. Продолжите его с главной страницы перед запуском другого плана.");
+      if (existing.adaptive_plan_id !== plan.id) throw new Error(t("screen.AuthenticatedApp.ui31"));
       setActiveSession(existing);
       setScreen("session");
       return;
@@ -661,7 +664,7 @@ function AuthenticatedApp({ user, onLogout, externalError, onDismissExternalErro
       const refreshed = await api<LearningSession>(`/api/learning-sessions/${activeSession.id}`);
       setActiveSession(refreshed);
       if (refreshed.status === "completed" || refreshed.current_index >= refreshed.exercises.length) return;
-      if (refreshed.status === "paused") throw new Error("Занятие приостановлено в другом окне. Вернитесь на главную и продолжите его заново.");
+      if (refreshed.status === "paused") throw new Error(t("screen.AuthenticatedApp.ui32"));
       const exercise = refreshed.exercises[refreshed.current_index];
       setSessionExerciseActive(true);
       setSelectedExercise(exercise);
@@ -669,7 +672,7 @@ function AuthenticatedApp({ user, onLogout, externalError, onDismissExternalErro
       setScreen(exercise.module);
       window.scrollTo({ top: 0, behavior: "smooth" });
     } catch (cause) {
-      setSessionError(cause instanceof Error ? cause.message : "Не удалось продолжить занятие");
+      setSessionError(cause instanceof Error ? cause.message : t("screen.AuthenticatedApp.ui33"));
     } finally { setSessionLoading(false); }
   };
 
@@ -682,7 +685,7 @@ function AuthenticatedApp({ user, onLogout, externalError, onDismissExternalErro
       setActiveSession({ ...activeSession, status: value.status });
       setScreen("home");
     } catch (cause) {
-      setSessionError(cause instanceof Error ? cause.message : "Не удалось поставить занятие на паузу");
+      setSessionError(cause instanceof Error ? cause.message : t("screen.AuthenticatedApp.ui34"));
     } finally { setSessionLoading(false); }
   };
 
@@ -695,13 +698,13 @@ function AuthenticatedApp({ user, onLogout, externalError, onDismissExternalErro
       const refreshed = await api<LearningSession | null>(`/api/children/${child.id}/active-session`);
       if (!refreshed) {
         setActiveSession(null);
-        setSessionError("Предыдущее занятие уже завершено. Можно начать новое.");
+        setSessionError(t("screen.AuthenticatedApp.ui35"));
         return;
       }
       setActiveSession(refreshed);
       setScreen("session");
     } catch (cause) {
-      setSessionError(cause instanceof Error ? cause.message : "Не удалось восстановить занятие");
+      setSessionError(cause instanceof Error ? cause.message : t("screen.AuthenticatedApp.ui36"));
     } finally {
       setSessionLoading(false);
     }
@@ -714,7 +717,7 @@ function AuthenticatedApp({ user, onLogout, externalError, onDismissExternalErro
       await api(`/api/notifications/${id}/read`, { method: "PATCH" });
       setNotifications((current) => ({ unread: Math.max(0, current.unread - (current.items.find((item) => item.id === id && !item.is_read) ? 1 : 0)), items: current.items.map((item) => item.id === id ? { ...item, is_read: true } : item) }));
     } catch (cause) {
-      setRequestError(cause instanceof Error ? `Уведомление не отмечено прочитанным: ${cause.message}` : "Уведомление не отмечено прочитанным");
+      setRequestError(cause instanceof Error ? t("shell.template9", {v0: cause.message}) : t("screen.AuthenticatedApp.ui37"));
     }
   };
   const markAllNotificationsRead = async () => {
@@ -723,7 +726,7 @@ function AuthenticatedApp({ user, onLogout, externalError, onDismissExternalErro
       await api("/api/notifications/actions/read-all", { method: "PATCH" });
       setNotifications((current) => ({ unread: 0, items: current.items.map((item) => ({ ...item, is_read: true })) }));
     } catch (cause) {
-      setRequestError(cause instanceof Error ? `Уведомления не изменены: ${cause.message}` : "Уведомления не изменены");
+      setRequestError(cause instanceof Error ? t("shell.template10", {v0: cause.message}) : t("screen.AuthenticatedApp.ui38"));
     }
   };
 
@@ -747,7 +750,7 @@ function AuthenticatedApp({ user, onLogout, externalError, onDismissExternalErro
           settingsRef.current = persistedSettingsRef.current;
           setSettings(persistedSettingsRef.current);
           setLocale(persistedSettingsRef.current.language);
-          setRequestError(cause instanceof Error ? `Настройки не сохранены и возвращены к предыдущим: ${cause.message}` : "Настройки не сохранены и возвращены к предыдущим");
+          setRequestError(cause instanceof Error ? t("shell.template11", {v0: cause.message}) : t("screen.AuthenticatedApp.ui39"));
         }
       } finally {
         if (version === settingsSaveVersionRef.current) setSettingsSaving(false);
@@ -761,8 +764,8 @@ function AuthenticatedApp({ user, onLogout, externalError, onDismissExternalErro
     return () => window.removeEventListener("soyle-language-selected", selected);
   });
 
-  if (user.role === "parent" && childrenLoading) return <div className="auth-loading"><div className="brand-mark"><BrandIcon /></div><span>Загружаем профиль ребёнка…</span></div>;
-  if (["parent", "student"].includes(user.role) && childrenError) return <div className="auth-loading" role="alert"><ShieldAlert size={30}/><span>{childrenError}</span><button className="primary-button" onClick={loadChildren}>Повторить загрузку</button></div>;
+  if (user.role === "parent" && childrenLoading) return <div className="auth-loading"><div className="brand-mark"><BrandIcon /></div><span>{t("screen.AuthenticatedApp.ui40")}</span></div>;
+  if (["parent", "student"].includes(user.role) && childrenError) return <div className="auth-loading" role="alert"><ShieldAlert size={30}/><span>{childrenError}</span><button className="primary-button" onClick={loadChildren}>{t("parentAdvice.ui6")}</button></div>;
   if (user.role === "parent" && !children.length) return <ChildOnboarding user={user} onCreated={(newChild) => { setChildren([newChild]); setSelectedChildId(newChild.id); }} onLogout={onLogout} />;
 
   const openScreen = (next: Screen, cabinetSection = "overview") => {
@@ -842,9 +845,9 @@ function AuthenticatedApp({ user, onLogout, externalError, onDismissExternalErro
     {screen === "motor" && <MotorGame exercises={exercises.filter((item) => item.module === "motor")} initialExercise={selectedExercise} cameraConsentGranted={Boolean(consent?.privacy_accepted && consent?.camera_processing && settings.camera_enabled)} canManageConsent={user.role === "parent"} onOpenConsent={() => openScreen("parent")} onBack={exerciseBack} onComplete={(score, exerciseId, measurement, details) => saveSession(exerciseId, "motor", score, details || { source: "manual" }, measurement)} />}
     {screen === "sensory" && selectedExercise?.engine?.mechanic === "scene_search" && <ExplorationExercise key={`${selectedExercise.id}-${selectedExercise.engine.version_id}`} content={selectedExercise.engine.content} childId={child?.id} exerciseId={selectedExercise.id} previewVersionId={user.role==='parent'&&parentPracticeMode==='adult_preview'?selectedExercise.engine.version_id:undefined} learningSessionId={sessionExerciseActive?activeSession?.id:undefined} plannedLevel={selectedExercise.adaptive?.difficulty_params.difficulty_level} defaultRounds={selectedExercise.adaptive?.difficulty_params.round_count} soundEnabled={settings.sound_enabled} showStopControls={!(user.role==='student'||parentPracticeMode==='child_practice')} onSpeak={(text,rate)=>speak(text,rate,settings.sound_enabled,selectedExercise?.engine?.language || "ru", "exercise", selectedExercise?.engine?.version_id)} onBack={exerciseBack} onComplete={(measurement,details)=>saveSession(selectedExercise.id,'sensory',0,details,measurement)} stopRef={variedStopRef}/>}
     {screen === "sensory" && selectedExercise?.engine && variedMechanics.includes(selectedExercise.engine.mechanic) && <div className="page-enter game-page"><GameHeader title={selectedExercise.title} subtitle={selectedExercise.instruction} step={t("game.picture")} onBack={exerciseBack}/><VariedExerciseRunner stopRef={variedStopRef} key={`${selectedExercise.id}-${selectedExercise.engine.version_id}`} mechanic={selectedExercise.engine.mechanic as VariedMechanic} content={selectedExercise.engine.content} defaultRounds={selectedExercise.adaptive?.difficulty_params.round_count} soundEnabled={settings.sound_enabled} onSpeak={(text, rate) => speak(text, rate, settings.sound_enabled, selectedExercise?.engine?.language || "ru", "exercise", selectedExercise?.engine?.version_id)} onBack={exerciseBack} onComplete={(measurement, details) => saveSession(selectedExercise.id, "sensory", 0, details, measurement)}/></div>}
-    {screen === "sensory" && selectedExercise?.engine?.mechanic === "tap_instruction" ? <div className="page-enter game-page"><GameHeader title={selectedExercise.title} subtitle={t("game.oneStep")} step="Предмет → цель" onBack={exerciseBack}/><PublishedInstructionRunner scenarios={selectedExercise.engine.content.scenarios || []} roundChoices={selectedExercise.engine.content.round_choices} defaultRounds={selectedExercise.adaptive?.difficulty_params.round_count || selectedExercise.engine.content.default_rounds} soundEnabled={settings.sound_enabled} onSpeak={(text, rate) => speak(text, rate, settings.sound_enabled, selectedExercise?.engine?.language || "ru", "exercise", selectedExercise?.engine?.version_id)} onBack={exerciseBack} onComplete={(measurement, details) => saveSession(selectedExercise.id, "sensory", 0, details, measurement)}/></div> : null}
+    {screen === "sensory" && selectedExercise?.engine?.mechanic === "tap_instruction" ? <div className="page-enter game-page"><GameHeader title={selectedExercise.title} subtitle={t("game.oneStep")} step={t("screen.AuthenticatedApp.ui42")} onBack={exerciseBack}/><PublishedInstructionRunner scenarios={selectedExercise.engine.content.scenarios || []} roundChoices={selectedExercise.engine.content.round_choices} defaultRounds={selectedExercise.adaptive?.difficulty_params.round_count || selectedExercise.engine.content.default_rounds} soundEnabled={settings.sound_enabled} onSpeak={(text, rate) => speak(text, rate, settings.sound_enabled, selectedExercise?.engine?.language || "ru", "exercise", selectedExercise?.engine?.version_id)} onBack={exerciseBack} onComplete={(measurement, details) => saveSession(selectedExercise.id, "sensory", 0, details, measurement)}/></div> : null}
     {screen === "sensory" && selectedExercise?.engine?.mechanic !== "tap_instruction" && selectedExercise?.engine?.mechanic !== "scene_search" && !variedMechanics.includes(selectedExercise?.engine?.mechanic || "") && <SensoryGame key={selectedExercise?.id || "sensory"} exercise={selectedExercise?.module === "sensory" ? selectedExercise : exercises.find((item) => item.module === "sensory")} soundEnabled={settings.sound_enabled} onBack={exerciseBack} onComplete={(score, exerciseId, measurement, details) => saveSession(exerciseId, "sensory", score, details || {}, measurement)} />}
-    {screen === "mixed" && selectedExercise?.engine?.content.presentation === "picture_description" && <div className="page-enter game-page"><GameHeader title={selectedExercise.title} subtitle={t("game.describe")} step={t("game.description")} onBack={exerciseBack}/><ObservationExercise stopRef={variedStopRef} key={`${selectedExercise.id}-${selectedExercise.engine.version_id}`} content={selectedExercise.engine.content} defaultRounds={selectedExercise.adaptive?.difficulty_params.round_count} soundEnabled={settings.sound_enabled} onSpeak={(text, rate) => speak(text, rate, settings.sound_enabled, selectedExercise?.engine?.language || "ru", "exercise", selectedExercise?.engine?.version_id)} onBack={exerciseBack} onComplete={(measurement, details) => saveSession(selectedExercise.id, "mixed", 0, details, measurement)}/></div>}
+    {screen === "mixed" && selectedExercise?.engine?.content.presentation === "picture_description" && <div className="page-enter game-page"><GameHeader title={selectedExercise.title} subtitle={t("game.describe")} step={t("game.description")} onBack={exerciseBack}/><ObservationExercise language={selectedExercise.engine.language || "ru"} stopRef={variedStopRef} key={`${selectedExercise.id}-${selectedExercise.engine.version_id}`} content={selectedExercise.engine.content} defaultRounds={selectedExercise.adaptive?.difficulty_params.round_count} soundEnabled={settings.sound_enabled} onSpeak={(text, rate) => speak(text, rate, settings.sound_enabled, selectedExercise?.engine?.language || "ru", "exercise", selectedExercise?.engine?.version_id)} onBack={exerciseBack} onComplete={(measurement, details) => saveSession(selectedExercise.id, "mixed", 0, details, measurement)}/></div>}
     {screen === "mixed" && selectedExercise?.engine?.content.presentation !== "picture_description" && <PhraseGame key={selectedExercise?.id || "mixed"} childId={child?.id} canManage={user.role === "parent"} exercise={selectedExercise?.module === "mixed" ? selectedExercise : exercises.find((item) => item.module === "mixed")} soundEnabled={settings.sound_enabled} onBack={exerciseBack} onComplete={(score, phrase, exerciseId, measurement) => saveSession(exerciseId, "mixed", score, { phrase }, measurement)} />}
   </>;
   const isChildExerciseFocus = ["motor", "sensory", "mixed"].includes(screen) && (user.role === "student" || (user.role === "parent" && parentPracticeMode === "child_practice"));
@@ -878,11 +881,11 @@ function AuthenticatedApp({ user, onLogout, externalError, onDismissExternalErro
 
   if (isChildExerciseFocus) {
     const progress = sessionExerciseActive && activeSession
-      ? `Шаг ${Math.min(activeSession.current_index + 1, activeSession.exercises.length)} из ${activeSession.exercises.length}`
-      : "Одно задание";
+      ? t("shell.template12", {v0: Math.min(activeSession.current_index + 1, activeSession.exercises.length), v1: activeSession.exercises.length})
+      : t("screen.AuthenticatedApp.ui43");
     return <ExercisePetProvider key={`${child?.id}:${focusExercise?.id}`} preferences={{ ...petPreferences.value, visible: petPreferences.ready && petPreferences.value.visible }} soundEnabled={settings.sound_enabled} calmMode={settings.calm_mode}><ExerciseFocusShell
-      instruction={focusExercise?.engine?.content.presentation === "picture_description" ? "Рассмотри картинку. Собери фразу." : focusExercise?.instruction?.split(/(?<=[.!?])\s+/)[0]}
-      title={focusExercise?.title || "Спокойная практика"}
+      instruction={focusExercise?.engine?.content.presentation === "picture_description" ? t("screen.AuthenticatedApp.ui44") : focusExercise?.instruction?.split(/(?<=[.!?])\s+/)[0]}
+      title={focusExercise?.title || t("screen.AuthenticatedApp.ui45")}
       progress={progress}
       soundEnabled={settings.sound_enabled}
       stopping={focusStopping}
@@ -891,7 +894,7 @@ function AuthenticatedApp({ user, onLogout, externalError, onDismissExternalErro
       onBreak={() => void stopFocusedExercise("break")}
       onRefuse={() => void stopFocusedExercise("refused")}
     >
-      {!isOnline && <div className="offline-banner" role="status"><CircleAlert size={18}/><span><strong>Нет соединения.</strong> Результат не сохранится автоматически. Не закрывай страницу.</span></div>}
+      {!isOnline && <div className="offline-banner" role="status"><CircleAlert size={18}/><span><strong>{t("screen.AuthenticatedApp.ui46")}</strong>  {t("screen.AuthenticatedApp.ui47")}</span></div>}
       {externalError && <div className="game-error global-request-error" role="alert"><ShieldAlert size={18}/><span>{externalError}</span><button type="button" className="small-button" onClick={onDismissExternalError}>{t("common.close")}</button></div>}
       {requestError && <div className="game-error global-request-error" role="alert"><ShieldAlert size={18}/><span>{requestError}</span><button type="button" className="small-button" onClick={() => setRequestError("")}>{t("common.close")}</button></div>}
       {sessionError && <div className="game-error" role="alert"><ShieldAlert size={18}/><span>{sessionError}</span></div>}
@@ -903,15 +906,15 @@ function AuthenticatedApp({ user, onLogout, externalError, onDismissExternalErro
 
   return (
     <AppRoleShell home={user.role === "student" && screen === "home"} navigationCollapsed={childNavigationCollapsed}>
-      {user.role === "student" && compactNavigation && navigationHidden && <button ref={menuButtonRef} type="button" className="child-menu-toggle" onClick={() => { setSidebarOpen(true); }} aria-label={t("landing.copy046")} aria-expanded={false} aria-controls="primary-navigation"><Menu size={23}/><span>Меню</span></button>}
+      {user.role === "student" && compactNavigation && navigationHidden && <button ref={menuButtonRef} type="button" className="child-menu-toggle" onClick={() => { setSidebarOpen(true); }} aria-label={t("landing.copy046")} aria-expanded={false} aria-controls="primary-navigation"><Menu size={23}/><span>{t("screen.AuthenticatedApp.ui48")}</span></button>}
       <div className="ambient ambient-one" />
       <div className="ambient ambient-two" />
-      <aside id="primary-navigation" className={`sidebar ${sidebarOpen ? "open" : ""}`} aria-label="Навигация" role={sidebarIsDialog && sidebarOpen ? "dialog" : undefined} aria-modal={sidebarIsDialog && sidebarOpen ? true : undefined} aria-hidden={navigationHidden ? true : undefined} inert={navigationHidden ? true : undefined}>
-        <button ref={sidebarBrandRef} type="button" className="brand" onClick={() => childRail ? setChildNavigationCollapsed(false) : openScreen("home")} aria-label={childRail ? "Развернуть меню" : "Söyle - на главную"} title={childRail ? "Нажми на Söyle, чтобы развернуть меню" : undefined} aria-expanded={childRail ? false : undefined} aria-controls={childRail ? "primary-navigation" : undefined}>
+      <aside id="primary-navigation" className={`sidebar ${sidebarOpen ? "open" : ""}`} aria-label={t("screen.AuthenticatedApp.ui49")} role={sidebarIsDialog && sidebarOpen ? "dialog" : undefined} aria-modal={sidebarIsDialog && sidebarOpen ? true : undefined} aria-hidden={navigationHidden ? true : undefined} inert={navigationHidden ? true : undefined}>
+        <button ref={sidebarBrandRef} type="button" className="brand" onClick={() => childRail ? setChildNavigationCollapsed(false) : openScreen("home")} aria-label={childRail ? t("screen.AuthenticatedApp.ui50") : t("screen.AuthenticatedApp.ui51")} title={childRail ? t("screen.AuthenticatedApp.ui52") : undefined} aria-expanded={childRail ? false : undefined} aria-controls={childRail ? "primary-navigation" : undefined}>
           <BrandLogo variant={user.role === "student" && childNavigationCollapsed && !compactNavigation ? "vertical" : "compact"} width={user.role === "student" && childNavigationCollapsed && !compactNavigation ? 72 : 170} decorative />
         </button>
-        {!childRail && <button ref={sidebarCloseRef} type="button" className="sidebar-close" onClick={user.role === "student" && !compactNavigation ? () => { setChildNavigationCollapsed(true); window.requestAnimationFrame(() => sidebarBrandRef.current?.focus()); } : closeSidebar} aria-label={user.role === "student" && !compactNavigation ? "Свернуть меню" : t("landing.copy045")} aria-expanded={user.role === "student" && !compactNavigation ? true : undefined} aria-controls="primary-navigation">{user.role === "student" && !compactNavigation ? <PanelLeftClose/> : <X/>}</button>}
-        <nav aria-label="Основное меню">
+        {!childRail && <button ref={sidebarCloseRef} type="button" className="sidebar-close" onClick={user.role === "student" && !compactNavigation ? () => { setChildNavigationCollapsed(true); window.requestAnimationFrame(() => sidebarBrandRef.current?.focus()); } : closeSidebar} aria-label={user.role === "student" && !compactNavigation ? t("screen.AuthenticatedApp.ui53") : t("landing.copy045")} aria-expanded={user.role === "student" && !compactNavigation ? true : undefined} aria-controls="primary-navigation">{user.role === "student" && !compactNavigation ? <PanelLeftClose/> : <X/>}</button>}
+        <nav aria-label={t("screen.AuthenticatedApp.ui54")}>
           {navigation.map((item) => {
             const active = screen === item.id || (item.id === "games" && ["session", "exercise-complete", "motor", "sensory", "mixed"].includes(screen));
             const Icon = item.icon;
@@ -924,12 +927,12 @@ function AuthenticatedApp({ user, onLogout, externalError, onDismissExternalErro
         </nav>
         <div className="sidebar-note">
           <span className="note-spark">{user.role === "student" ? "‖" : "✦"}</span>
-          <strong>{user.role === "student" ? "Твой спокойный темп" : t("auth.history")}</strong>
-          <span>{user.role === "student" ? "Можно сделать паузу в любой момент" : `${dashboard?.week_sessions || 0} занятий на этой неделе`}</span>
+          <strong>{user.role === "student" ? t("screen.AuthenticatedApp.ui55") : t("auth.history")}</strong>
+          <span>{user.role === "student" ? t("screen.AuthenticatedApp.ui56") : t("shell.template13", {v0: dashboard?.week_sessions || 0})}</span>
         </div>
         <button type="button" className="sidebar-logout" onClick={onLogout}><LogOut size={20} aria-hidden="true"/><span>{t("common.logoutAccount")}</span></button>
         <div className="profile-mini">
-          <button className="avatar avatar-button" onClick={() => openScreen("profile")} aria-label="Открыть профиль">{user.full_name[0]}</button>
+          <button className="avatar avatar-button" onClick={() => openScreen("profile")} aria-label={t("localization.profileOpen")}>{user.full_name[0]}</button>
           <button className="profile-mini-info" onClick={() => openScreen("profile")}><strong>{user.full_name}</strong><span>{roleLabel(user.role)}</span></button>
           <button className="logout-mini" onClick={onLogout} aria-label={t("common.logout")}><LogOut size={17} /></button>
         </div>
@@ -941,20 +944,20 @@ function AuthenticatedApp({ user, onLogout, externalError, onDismissExternalErro
         <header className="topbar v2-topbar">
           {user.role !== "student" && <button ref={menuButtonRef} className="menu-button" onClick={() => setSidebarOpen(true)} aria-label={t("landing.copy046")} aria-expanded={sidebarOpen} aria-controls="primary-navigation"><Menu /></button>}
           <div className="mobile-logo"><BrandLogo variant="compact" width={116} /></div>
-          {user.role === "parent" && <form className="v2-global-search" role="search" onSubmit={submitGlobalSearch}><Search/><input value={globalSearch} onChange={(event) => setGlobalSearch(event.target.value)} placeholder="Поиск по занятиям, историям, гайдам…" aria-label="Поиск по Söyle"/><button aria-label="Найти"><ArrowRight/></button></form>}
+          {user.role === "parent" && <form className="v2-global-search" role="search" onSubmit={submitGlobalSearch}><Search/><input value={globalSearch} onChange={(event) => setGlobalSearch(event.target.value)} placeholder={t("screen.AuthenticatedApp.ui57")} aria-label={t("screen.AuthenticatedApp.ui58")}/><button aria-label={t("screen.AuthenticatedApp.ui59")}><ArrowRight/></button></form>}
           <div className="top-actions v2-top-actions">
             {user.role !== "student" && user.role !== "parent" && <button className="language" data-i18n-native onClick={() => openScreen("settings")} aria-label={{ ru: "Язык интерфейса: русский", en: "Interface language: English", kk: "Интерфейс тілі: қазақша" }[settings.language]}><Languages size={17} /> {{ ru: "RU", en: "EN", kk: "ҚАЗ" }[settings.language]}</button>}
             {user.role !== "student" && user.role !== "parent" && <div className="stars"><Star size={18} fill="currentColor" /> {dashboard?.stars || 0}</div>}
             <button className="v2-icon-button" onClick={() => openScreen("settings")} aria-label={t("nav.settings")}><Settings size={21}/></button>
-            {user.role === "parent" && <div className="notification-wrap"><button className="notification-button" onClick={() => setNotificationsOpen((value) => !value)} aria-label={t("nav.notifications")}><Bell size={19}/>{notifications.unread > 0 && <i>{notifications.unread}</i>}</button>{notificationsOpen && <div className="notification-panel"><div className="notification-head"><div><span className="kicker">УВЕДОМЛЕНИЯ</span><strong>События программы</strong></div>{notifications.unread > 0 && <button onClick={markAllNotificationsRead}>Прочитать все</button>}</div><div className="notification-list">{notifications.items.length ? notifications.items.map((item) => <button key={item.id} className={item.is_read ? "read" : "unread"} onClick={() => markNotificationRead(item.id)}><span className="notification-symbol"><Trophy size={18}/></span><div><strong>{item.title}</strong><p>{item.message}</p><small>{new Date(item.created_at).toLocaleDateString("ru-RU", { day: "numeric", month: "long" })}</small></div>{!item.is_read && <i/>}</button>) : <div className="notification-empty"><Bell size={24}/><strong>Пока всё спокойно</strong><span>Здесь появятся отметки о занятиях и новых шагах программы.</span></div>}</div></div>}</div>}
+            {user.role === "parent" && <div className="notification-wrap"><button className="notification-button" onClick={() => setNotificationsOpen((value) => !value)} aria-label={t("nav.notifications")}><Bell size={19}/>{notifications.unread > 0 && <i>{notifications.unread}</i>}</button>{notificationsOpen && <div className="notification-panel"><div className="notification-head"><div><span className="kicker">{t("screen.AuthenticatedApp.ui60")}</span><strong>{t("screen.AuthenticatedApp.ui61")}</strong></div>{notifications.unread > 0 && <button onClick={markAllNotificationsRead}>{t("screen.AuthenticatedApp.ui62")}</button>}</div><div className="notification-list">{notifications.items.length ? notifications.items.map((item) => <button key={item.id} className={item.is_read ? "read" : "unread"} onClick={() => markNotificationRead(item.id)}><span className="notification-symbol"><Trophy size={18}/></span><div><strong>{item.title}</strong><p>{item.message}</p><small>{new Date(item.created_at).toLocaleDateString("ru-RU", { day: "numeric", month: "long" })}</small></div>{!item.is_read && <i/>}</button>) : <div className="notification-empty"><Bell size={24}/><strong>{t("screen.AuthenticatedApp.ui63")}</strong><span>{t("screen.AuthenticatedApp.ui64")}</span></div>}</div></div>}</div>}
             {user.role === "parent" && <span className="v2-top-divider"/>}
-            {user.role === "parent" && <button className="v2-user-greeting" onClick={() => openScreen("profile")}><span>Привет,</span><strong>{user.full_name.split(" ")[0]}!</strong></button>}
+            {user.role === "parent" && <button className="v2-user-greeting" onClick={() => openScreen("profile")}><span>{t("screen.ProfileScreen.ui4")}</span><strong>{user.full_name.split(" ")[0]}!</strong></button>}
             {user.role === "student" && <StarVault total={dashboard?.stars || 0} onOpen={() => openScreen("achievements")}/>}
-            <button className="avatar small avatar-button" onClick={() => openScreen("profile")} aria-label="Открыть профиль">{user.full_name[0]}</button>
+            <button className="avatar small avatar-button" onClick={() => openScreen("profile")} aria-label={t("localization.profileOpen")}>{user.full_name[0]}</button>
           </div>
         </header>
 
-        {!isOnline && <div className="offline-banner" role="status"><CircleAlert size={18}/><span><strong>Нет соединения.</strong> Результат не сохранится автоматически и пропадёт при обновлении или закрытии страницы. Не обновляйте страницу; после восстановления связи повторите сохранение.</span></div>}
+        {!isOnline && <div className="offline-banner" role="status"><CircleAlert size={18}/><span><strong>{t("screen.AuthenticatedApp.ui46")}</strong>  {t("screen.AuthenticatedApp.ui66")}</span></div>}
         {externalError && <div className="game-error global-request-error" role="alert"><ShieldAlert size={18}/><span>{externalError}</span><button type="button" className="small-button" onClick={onDismissExternalError}>{t("common.close")}</button></div>}
         {requestError && <div className="game-error global-request-error" role="alert"><ShieldAlert size={18}/><span>{requestError}</span><button type="button" className="small-button" onClick={() => setRequestError("")}>{t("common.close")}</button></div>}
 
@@ -971,7 +974,7 @@ function AuthenticatedApp({ user, onLogout, externalError, onDismissExternalErro
           {screen === "session" && sessionError && <div className="v2-inline-alert" role="alert">{sessionError}</div>}
           {screen === "session" && activeSession && <SessionScreen session={activeSession} busy={sessionLoading} onContinue={continueSession} onPause={pauseSession} onFinish={() => { setActiveSession(null); refreshDashboard(); setScreen("home"); }} />}
           {screen === "exercise-complete" && exerciseCompletion && <ExercisePetProvider key={`complete-${child?.id}-${selectedExercise?.id}`} preferences={{ ...petPreferences.value, visible: petPreferences.ready && petPreferences.value.visible && !exerciseCompletion.refused && (user.role === "student" || parentPracticeMode === "child_practice") }} soundEnabled={settings.sound_enabled} calmMode={settings.calm_mode} initialEvent="complete"><div className="pet-completion"><ExercisePet/></div><ExerciseCompletionScreen completion={exerciseCompletion} onContinue={continueAfterExercise} onFinish={() => { if (exerciseCompletion.refused) { if (exerciseCompletion.sessionMode) void pauseSession(); else openScreen("home"); } else openScreen(exerciseCompletion.sessionMode ? "session" : "games"); }} /></ExercisePetProvider>}
-          {user.role === "parent" && parentPracticeMode === "adult_preview" && ["motor", "sensory", "mixed"].includes(screen) && <div className="adult-preview-banner" role="status"><Eye size={19}/><div><strong>{t("cinema.copy054")}</strong><span>Ответы не сохраняются в профиль ребёнка.</span></div><button type="button" onClick={() => setParentPracticeMode("child_practice")}>Перейти к практике ребёнка</button></div>}
+          {user.role === "parent" && parentPracticeMode === "adult_preview" && ["motor", "sensory", "mixed"].includes(screen) && <div className="adult-preview-banner" role="status"><Eye size={19}/><div><strong>{t("cinema.copy054")}</strong><span>{t("screen.AuthenticatedApp.ui67")}</span></div><button type="button" onClick={() => setParentPracticeMode("child_practice")}>{t("screen.AuthenticatedApp.ui68")}</button></div>}
           {sessionError && ["motor", "sensory", "mixed"].includes(screen) && <div className="game-error" role="alert"><ShieldAlert size={18}/><span>{sessionError}</span></div>}
           {activeExerciseContent}
           {screen === "aac" && <PhraseGame key="free-aac" childId={child?.id} canManage={user.role === "parent"} freeMode soundEnabled={settings.sound_enabled} onBack={() => openScreen("home")} />}
@@ -993,13 +996,14 @@ function AuthenticatedApp({ user, onLogout, externalError, onDismissExternalErro
 }
 
 function ChildOnboarding({ user, onCreated, onLogout }: { user: User; onCreated: (child: Child) => void; onLogout: () => void }) {
+  useLocale();
   const [name, setName] = useState(""); const [birthDate, setBirthDate] = useState(""); const [module, setModule] = useState<ModuleName>("mixed"); const [error, setError] = useState("");
-  const submit = async (event: React.FormEvent) => { event.preventDefault(); setError(""); try { const child = await api<Child>("/api/children", { method: "POST", body: JSON.stringify({ name, birth_date: birthDate, primary_module: module, avatar_color: "#f07d68" }) }); onCreated(child); } catch (cause) { setError(cause instanceof Error ? cause.message : "Не удалось создать профиль"); } };
-  return <div className="onboarding-page"><div className="onboarding-card"><div className="brand"><BrandLogo variant="vertical" width={150} /><span>первичная настройка</span></div><span className="kicker">ДОБРО ПОЖАЛОВАТЬ, {user.full_name.toUpperCase()}</span><h1>Создадим профиль ребёнка</h1><p>Это поможет сохранять историю практики и готовить короткие адаптивные планы по локальным правилам.</p><form onSubmit={submit}><label>Имя ребёнка<input value={name} onChange={(e) => setName(e.target.value)} placeholder="Алихан" required minLength={2}/></label><label>Дата рождения<input type="date" max={new Date().toISOString().slice(0,10)} value={birthDate} onChange={(e) => setBirthDate(e.target.value)} required/></label><label>Стартовое направление<select value={module} onChange={(e) => setModule(e.target.value as ModuleName)}><option value="sensory">Игровые задания на слух</option><option value="mixed">AAC-коммуникация и смешанная практика</option></select></label>{error && <div className="auth-error">{error}</div>}<button className="primary-button">Создать профиль <ChevronRight size={18}/></button></form><button className="auth-switch" onClick={onLogout}>Выйти из аккаунта</button></div></div>;
+  const submit = async (event: React.FormEvent) => { event.preventDefault(); setError(""); try { const child = await api<Child>("/api/children", { method: "POST", body: JSON.stringify({ name, birth_date: birthDate, primary_module: module, avatar_color: "#f07d68" }) }); onCreated(child); } catch (cause) { setError(cause instanceof Error ? cause.message : t("screen.ChildOnboarding.ui1")); } };
+  return <div className="onboarding-page"><div className="onboarding-card"><div className="brand"><BrandLogo variant="vertical" width={150} /><span>{t("screen.ChildOnboarding.ui2")}</span></div><span className="kicker">{t("screen.ChildOnboarding.ui3")} {user.full_name.toUpperCase()}</span><h1>{t("screen.ChildOnboarding.ui4")}</h1><p>{t("screen.ChildOnboarding.ui5")}</p><form onSubmit={submit}><label>{t("screen.ChildOnboarding.ui6")}<input value={name} onChange={(e) => setName(e.target.value)} placeholder={t("screen.ChildOnboarding.ui7")} required minLength={2}/></label><label>{t("screen.ChildOnboarding.ui8")}<input type="date" max={new Date().toISOString().slice(0,10)} value={birthDate} onChange={(e) => setBirthDate(e.target.value)} required/></label><label>{t("screen.ChildOnboarding.ui9")}<select value={module} onChange={(e) => setModule(e.target.value as ModuleName)}><option value="sensory">{t("screen.ChildOnboarding.ui10")}</option><option value="mixed">{t("screen.ChildOnboarding.ui11")}</option></select></label>{error && <div className="auth-error">{error}</div>}<button className="primary-button">{t("screen.ChildOnboarding.ui12")} <ChevronRight size={18}/></button></form><button className="auth-switch" onClick={onLogout}>{t("screen.ChildOnboarding.ui13")}</button></div></div>;
 }
 
 function roleLabel(role: Role) {
-  return { admin: "Администратор", parent: "Родитель", student: "Ученик", specialist: "Специалист" }[role];
+  return { admin: t("screen.roleLabel.ui1"), parent: t("screen.roleLabel.ui2"), student: t("screen.roleLabel.ui3"), specialist: t("screen.roleLabel.ui4") }[role];
 }
 
 function AuthScreen({ onAuthenticated }: { onAuthenticated: (user: User) => void }) {
@@ -1024,8 +1028,8 @@ function AuthScreen({ onAuthenticated }: { onAuthenticated: (user: User) => void
       clearLegacyAuth(); onAuthenticated(currentUser);
     } catch (cause) {
       const message = cause instanceof Error ? cause.message : t("errors.auth");
-      setError(message === "Не удалось подтвердить авторизацию"
-        ? "Вход не сохранился в браузере. Разрешите cookies или откройте Söyle в Safari/Chrome и попробуйте ещё раз."
+      setError(message === t("screen.AuthScreen.ui1")
+        ? t("screen.AuthScreen.ui2")
         : message);
     }
     finally { setLoading(false); }
@@ -1039,7 +1043,7 @@ function AuthScreen({ onAuthenticated }: { onAuthenticated: (user: User) => void
       <div className="auth-copy"><span className="pill"><ShieldCheck size={15}/> {t("auth.calmPractice")}</span><h1>{t("auth.helpChild")}<br/><em>{t("auth.communicate")}</em></h1><p>{t("auth.description")}</p><div className="auth-benefits"><span><Check/> {t("auth.steps")}</span><span><Check/> {t("auth.history")}</span><span><Check/> {t("auth.separate")}</span></div></div>
       <div className="auth-orbs"><i><Bot/></i><i><ModuleGlyph module="sensory"/></i><i><ModuleGlyph module="mixed"/></i></div>
     </div>
-    <div className="auth-form-wrap"><LanguagePicker /><Link href="/" className="auth-back-home"><ArrowLeft size={17}/> {t("nav.homeLink")}</Link><form className="auth-card" autoComplete="off" onSubmit={submit}>
+    <div className="auth-form-wrap"><LanguagePicker compact /><Link href="/" className="auth-back-home"><ArrowLeft size={17}/> {t("nav.homeLink")}</Link><form className="auth-card" autoComplete="off" onSubmit={submit}>
       <div className="auth-card-brand"><BrandLogo variant="primary" width={230} priority /></div>
       <div className="auth-role-tabs" aria-label={t("auth.type")}><button type="button" className={mode !== "student" ? "active" : ""} onClick={() => switchMode("login")}><UserRoundCheck size={18}/> {t("auth.adult")}</button><button type="button" className={mode === "student" ? "active" : ""} onClick={() => switchMode("student")}><Backpack size={18}/> {t("auth.kid")}</button></div>
       <span className="kicker">{mode === "register" ? t("auth.new") : t("auth.welcome")}</span><h2>{heading}</h2><p>{mode === "student" ? t("auth.childHelp") : mode === "login" ? t("auth.loginHelp") : t("auth.registerHelp")}</p>
@@ -1068,38 +1072,41 @@ function ChildHomeScreen({ onOpen, onExercise, onStartSession, onResume, soundEn
 }
 
 function SessionScreen({ session, busy, onContinue, onPause, onFinish }: { session: LearningSession; busy: boolean; onContinue: () => void; onPause: () => void; onFinish: () => void }) {
+  useLocale();
   const complete = session.current_index >= session.exercises.length || session.status === "completed";
   const results = session.results || [];
   const summary = summarizeSessionResults(results, session.exercises.map((exercise) => exercise.id));
   const totalMinutes = Math.max(1, Math.round(summary.durationSeconds / 60));
-  if (complete) return <div className="page-enter session-complete"><div className="completion-mascot"><Image src="/illustrations/session-complete-parrot.webp" alt="Попугай Söyle в новой праздничной позе отмечает завершение занятия" width={190} height={285}/></div><span className="kicker">ЗАНЯТИЕ ЗАВЕРШЕНО</span><h1>Отличная работа!</h1><p>Результаты сохранены в профиле. Это показатели игровых заданий, а не медицинская оценка.</p><div className="session-summary"><StatCard icon={<Check/>} value={`${summary.completedCount}/${session.exercises.length}`} label="заданий выполнено"/><StatCard icon={<Target/>} value={summary.averageScore === null ? "без оценки" : `${summary.averageScore}%`} label="средний игровой результат"/><StatCard icon={<Timer/>} value={`${totalMinutes} мин`} label="время занятия"/></div><button className="primary-button" onClick={onFinish}>Вернуться на главную <ChevronRight size={18}/></button></div>;
-  return <div className="page-enter stack-xl"><PageTitle eyebrow="СЕГОДНЯШНЕЕ ЗАНЯТИЕ" title="Короткая практика шаг за шагом" subtitle="Перед сменой активности посмотри, что будет дальше. Пауза сохранит занятие."/><section className="session-mode"><div className="session-progress-head"><div><strong>{session.current_index} из {session.exercises.length} шагов завершено</strong><span>Осталось примерно {Math.max(1, Math.round(session.target_minutes * (session.exercises.length - session.current_index) / session.exercises.length))} минут</span></div><b>{Math.round(session.current_index / session.exercises.length * 100)}%</b></div><div className="session-progress-track"><i style={{width:`${session.current_index / session.exercises.length * 100}%`}}/></div><div className="activity-warning"><Sparkles size={18}/><span>Сейчас: <b>{session.exercises[session.current_index]?.title}</b>{session.exercises[session.current_index + 1] ? ` · затем ${session.exercises[session.current_index + 1].title}` : " · это последнее задание"}</span></div><div className="session-steps">{session.exercises.map((exercise, index) => { const done = index < session.current_index; const current = index === session.current_index; return <div key={exercise.id} className={`${done ? "done" : ""} ${current ? "current" : ""}`}><span>{done ? <Check size={20}/> : index + 1}</span><div><small>{exercise.adaptive ? `Цель: ${exercise.adaptive.goal_title}` : exercise.skill ? skillLabel(exercise.skill) : "Практика"}</small><strong>{exercise.title}</strong><p>{exercise.instruction}</p>{exercise.adaptive && <em className="session-adaptive-note">{exercise.adaptive.assignment_reason.messages[0]}</em>}</div>{current ? <Play size={20}/> : done ? <Star size={18} fill="currentColor"/> : <LockKeyhole size={18}/>}</div>; })}</div><div className="session-actions"><button className="small-button" disabled={busy} onClick={onPause}>Сделать паузу</button><button className="primary-button session-continue" disabled={busy} onClick={onContinue}><Play size={18} fill="currentColor"/>{session.current_index ? "Продолжить занятие" : "Начать первое задание"}</button></div></section></div>;
+  if (complete) return <div className="page-enter session-complete"><div className="completion-mascot"><Image src="/illustrations/session-complete-parrot.webp" alt={t("screen.SessionScreen.ui1")} width={190} height={285}/></div><span className="kicker">{t("screen.SessionScreen.ui2")}</span><h1>{t("screen.SessionScreen.ui3")}</h1><p>{t("screen.SessionScreen.ui4")}</p><div className="session-summary"><StatCard icon={<Check/>} value={`${summary.completedCount}/${session.exercises.length}`} label={t("screen.SessionScreen.ui5")}/><StatCard icon={<Target/>} value={summary.averageScore === null ? t("screen.SessionScreen.ui6") : `${summary.averageScore}%`} label={t("screen.SessionScreen.ui7")}/><StatCard icon={<Timer/>} value={t("shell.template14", { v0: totalMinutes })} label={t("screen.SessionScreen.ui8")}/></div><button className="primary-button" onClick={onFinish}>{t("screen.SessionScreen.ui9")} <ChevronRight size={18}/></button></div>;
+  return <div className="page-enter stack-xl"><PageTitle eyebrow={t("screen.SessionScreen.ui10")} title={t("screen.SessionScreen.ui11")} subtitle={t("screen.SessionScreen.ui12")}/><section className="session-mode"><div className="session-progress-head"><div><strong>{session.current_index}  {t("screen.SessionScreen.ui13")} {session.exercises.length}  {t("screen.SessionScreen.ui14")}</strong><span>{t("screen.SessionScreen.ui15")} {Math.max(1, Math.round(session.target_minutes * (session.exercises.length - session.current_index) / session.exercises.length))}  {t("screen.SessionScreen.ui16")}</span></div><b>{Math.round(session.current_index / session.exercises.length * 100)}%</b></div><div className="session-progress-track"><i style={{width:`${session.current_index / session.exercises.length * 100}%`}}/></div><div className="activity-warning"><Sparkles size={18}/><span>{t("screen.SessionScreen.ui17")} <b>{session.exercises[session.current_index]?.title}</b>{session.exercises[session.current_index + 1] ? t("shell.template15", { v0: session.exercises[session.current_index + 1].title }) : t("screen.SessionScreen.ui18")}</span></div><div className="session-steps">{session.exercises.map((exercise, index) => { const done = index < session.current_index; const current = index === session.current_index; return <div key={exercise.id} className={`${done ? "done" : ""} ${current ? "current" : ""}`}><span>{done ? <Check size={20}/> : index + 1}</span><div><small>{exercise.adaptive ? t("shell.template16", { v0: exercise.adaptive.goal_title }) : exercise.skill ? skillLabel(exercise.skill) : t("screen.SessionScreen.ui19")}</small><strong>{exercise.title}</strong><p>{exercise.instruction}</p>{exercise.adaptive && <em className="session-adaptive-note">{exercise.adaptive.assignment_reason.messages[0]}</em>}</div>{current ? <Play size={20}/> : done ? <Star size={18} fill="currentColor"/> : <LockKeyhole size={18}/>}</div>; })}</div><div className="session-actions"><button className="small-button" disabled={busy} onClick={onPause}>{t("screen.SessionScreen.ui20")}</button><button className="primary-button session-continue" disabled={busy} onClick={onContinue}><Play size={18} fill="currentColor"/>{session.current_index ? t("screen.SessionScreen.ui21") : t("screen.SessionScreen.ui22")}</button></div></section></div>;
 }
 
 function ExerciseCompletionScreen({ completion, onContinue, onFinish }: { completion: ExerciseCompletion; onContinue: () => void; onFinish: () => void }) {
+  useLocale();
   const nextLabel = completion.sessionFinished
-    ? "Посмотреть итог занятия"
+    ? t("screen.ExerciseCompletionScreen.ui1")
     : completion.nextExercise
-      ? `Дальше: ${completion.nextExercise.title}`
-      : "Вернуться к занятиям";
+      ? t("shell.template17", { v0: completion.nextExercise.title })
+      : t("screen.ExerciseCompletionScreen.ui2");
   return <div className="page-enter exercise-completion" role="status" aria-live="polite">
     <div className="completion-check"><Check size={42} strokeWidth={2.2}/></div>
-    <span className="kicker">{completion.refused ? "ПРАКТИКА ОСТАНОВЛЕНА" : "ШАГ ЗАВЕРШЁН"}</span>
+    <span className="kicker">{completion.refused ? t("screen.ExerciseCompletionScreen.ui3") : t("screen.ExerciseCompletionScreen.ui4")}</span>
     <h1>{completion.title}</h1>
     <p>{completion.message}</p>
-    {!completion.refused && completion.nextExercise && !completion.sessionFinished && <div className="next-activity-preview"><span>СЛЕДУЮЩЕЕ ЗАДАНИЕ</span><strong>{completion.nextExercise.title}</strong><small>{completion.nextExercise.instruction}</small></div>}
+    {!completion.refused && completion.nextExercise && !completion.sessionFinished && <div className="next-activity-preview"><span>{t("screen.ExerciseCompletionScreen.ui5")}</span><strong>{completion.nextExercise.title}</strong><small>{completion.nextExercise.instruction}</small></div>}
     <div className="completion-actions">
-      <button className="primary-button" onClick={completion.refused ? onFinish : onContinue}>{completion.refused ? "Закончить практику" : nextLabel}<ChevronRight size={18}/></button>
-      {!completion.refused && !completion.sessionFinished && <button className="secondary-button" onClick={onFinish}>{completion.sessionMode ? "Вернуться к плану" : "Закончить практику"}</button>}
+      <button className="primary-button" onClick={completion.refused ? onFinish : onContinue}>{completion.refused ? t("screen.ExerciseCompletionScreen.ui6") : nextLabel}<ChevronRight size={18}/></button>
+      {!completion.refused && !completion.sessionFinished && <button className="secondary-button" onClick={onFinish}>{completion.sessionMode ? t("screen.ExerciseCompletionScreen.ui7") : t("screen.ExerciseCompletionScreen.ui6")}</button>}
     </div>
   </div>;
 }
 
 function skillLabel(skill: Exercise["skill"] | SkillProgress["skill"]) {
-  return { articulation: "Артикуляция", vocabulary: "Словарный запас", speech_comprehension: "Понимание речи", word_repetition: "Повторение слов", phrase_building: "Построение фраз", communication: "Коммуникация" }[skill || "communication"];
+  return { articulation: t("screen.skillLabel.ui1"), vocabulary: t("screen.skillLabel.ui2"), speech_comprehension: t("screen.skillLabel.ui3"), word_repetition: t("screen.skillLabel.ui4"), phrase_building: t("screen.skillLabel.ui5"), communication: t("screen.skillLabel.ui6") }[skill || "communication"];
 }
 
 function ModuleCard({ module, onClick, index, completed, total }: { module: typeof modules[number]; onClick: () => void; index: number; completed?: number; total?: number }) {
+  useLocale();
   return (
     <button className={`module-card ${module.accent}`} onClick={onClick}>
       <div className="module-top"><span className="module-number">0{index}</span><span className="module-time">{module.time}</span></div>
@@ -1108,7 +1115,7 @@ function ModuleCard({ module, onClick, index, completed, total }: { module: type
       <h3>{module.title}</h3>
       <p>{module.description}</p>
       <div className="module-progress"><span style={{ width: `${module.progress}%` }} /></div>
-      <div className="module-bottom"><small>Охват попытками: {module.progress}%{total ? ` · ${Math.min(completed || 0, total)} из ${total}` : ""}</small><span className="round-arrow"><ChevronRight size={18} /></span></div>
+      <div className="module-bottom"><small>{t("screen.ModuleCard.ui1")} {module.progress}%{total ? t("shell.template18", { v0: Math.min(completed || 0, total), v1: total }) : ""}</small><span className="round-arrow"><ChevronRight size={18} /></span></div>
     </button>
   );
 }
@@ -1118,16 +1125,16 @@ function GamesScreen({ onOpen, onExercise, dashboard, exercises, childMode, pare
   return (
     <div className={`page-enter stack-xl exercise-catalog-page ${childMode ? "child-games" : ""}`}>
       <section className="exercise-catalog-hero">
-        <div className="exercise-catalog-hero-copy"><span className="kicker">ЗАНЯТИЯ · {exercises.length}</span><h1>{childMode ? "Выбери игру" : "Все занятия"}</h1><p>{childMode ? "Выбери, во что поиграть." : "Все доступные задания собраны здесь. Выбирайте любое."}</p></div>
-        <Image src="/app-illustrations/exercise-library-hero.webp" width={768} height={512} alt="Ребёнок выбирает карточку с водой вместе с мишкой" priority />
+        <div className="exercise-catalog-hero-copy"><span className="kicker">{t("screen.GamesScreen.ui1")} {exercises.length}</span><h1>{childMode ? t("screen.GamesScreen.ui2") : t("product.ui31")}</h1><p>{childMode ? t("screen.GamesScreen.ui4") : t("screen.GamesScreen.ui5")}</p></div>
+        <Image src="/app-illustrations/exercise-library-hero.webp" width={768} height={512} alt={t("screen.GamesScreen.ui6")} priority />
       </section>
-      {!childMode && exercises.some((item) => item.engine?.review_gate.demo_only) && <div className="unreviewed-demo-banner" role="status"><ShieldAlert size={20}/><div><strong>{childMode ? "Знакомые игры" : "Практика из прежней библиотеки"}</strong><span>{childMode ? "Выбирай любую игру. Если понадобится помощь, позови взрослого." : "Эти задания доступны для свободной игры, но пока не прошли повторную независимую проверку. Это не утверждённая программа занятий."}</span></div></div>}
-      <button className="child-aac-entry" onClick={() => onOpen("aac")}><Image src="/app-illustrations/aac-help.webp" width={78} height={78} alt="Карточка помощи"/><div><strong>Сказать, что нужно</strong><small>Попросить помощь или перерыв</small></div><ChevronRight size={24}/></button>
-      {parentPracticeMode && <section className="practice-mode-card" aria-labelledby="practice-mode-title"><div><Eye size={22}/><span><strong id="practice-mode-title">Кто сейчас выполняет задание?</strong><small>Предпросмотр взрослого никогда не попадает в историю и адаптивный подбор.</small></span></div><div className="practice-mode-options"><button type="button" className={parentPracticeMode === "adult_preview" ? "active" : ""} aria-pressed={parentPracticeMode === "adult_preview"} onClick={() => onParentPracticeModeChange?.("adult_preview")}><Eye size={17}/> Предпросмотр взрослого</button><button type="button" className={parentPracticeMode === "child_practice" ? "active" : ""} aria-pressed={parentPracticeMode === "child_practice"} onClick={() => onParentPracticeModeChange?.("child_practice")}><Baby size={17}/> Практика ребёнка</button></div></section>}
-      {exercises.some(e=>e.engine?.mechanic==='scene_search')&&<section aria-label="Исследуй мир"><div className="section-heading"><div><span className="kicker">СЛУШАЙ И НАХОДИ</span><h2>Исследуй мир</h2></div></div><div className="explore-location-grid">{exercises.filter(e=>e.engine?.mechanic==='scene_search').map(e=><button className="explore-location" key={e.id} onClick={()=>onExercise(e)}><Image src={e.engine!.content.exploration!.image.media_ref} alt="" width={640} height={360}/><span><strong>{e.engine!.content.exploration!.title}</strong><small>12 предметов · короткая серия или продолжение</small></span></button>)}</div></section>}
+      {!childMode && exercises.some((item) => item.engine?.review_gate.demo_only) && <div className="unreviewed-demo-banner" role="status"><ShieldAlert size={20}/><div><strong>{childMode ? t("screen.GamesScreen.ui7") : t("screen.GamesScreen.ui8")}</strong><span>{childMode ? t("screen.GamesScreen.ui9") : t("screen.GamesScreen.ui10")}</span></div></div>}
+      <button className="child-aac-entry" onClick={() => onOpen("aac")}><Image src="/app-illustrations/aac-help.webp" width={78} height={78} alt={t("screen.GamesScreen.ui11")}/><div><strong>{t("screen.ProfileScreen.ui15")}</strong><small>{t("screen.GamesScreen.ui13")}</small></div><ChevronRight size={24}/></button>
+      {parentPracticeMode && <section className="practice-mode-card" aria-labelledby="practice-mode-title"><div><Eye size={22}/><span><strong id="practice-mode-title">{t("screen.GamesScreen.ui14")}</strong><small>{t("screen.GamesScreen.ui15")}</small></span></div><div className="practice-mode-options"><button type="button" className={parentPracticeMode === "adult_preview" ? "active" : ""} aria-pressed={parentPracticeMode === "adult_preview"} onClick={() => onParentPracticeModeChange?.("adult_preview")}><Eye size={17}/>  {t("book.copy033")}</button><button type="button" className={parentPracticeMode === "child_practice" ? "active" : ""} aria-pressed={parentPracticeMode === "child_practice"} onClick={() => onParentPracticeModeChange?.("child_practice")}><Baby size={17}/>  {t("screen.GamesScreen.ui17")}</button></div></section>}
+      {exercises.some(e=>e.engine?.mechanic==='scene_search')&&<section aria-label={t("screen.GamesScreen.ui18")}><div className="section-heading"><div><span className="kicker">{t("screen.GamesScreen.ui19")}</span><h2>{t("screen.GamesScreen.ui18")}</h2></div></div><div className="explore-location-grid">{exercises.filter(e=>e.engine?.mechanic==='scene_search').map(e=><button className="explore-location" key={e.id} onClick={()=>onExercise(e)}><Image src={e.engine!.content.exploration!.image.media_ref} alt="" width={640} height={360}/><span><strong>{e.engine!.content.exploration!.title}</strong><small>{t("screen.GamesScreen.ui20")}</small></span></button>)}</div></section>}
       {!exercises.length && <p role="status">{t("content.empty")}</p>}
       {(exercises.some(e=>e.engine?.mechanic!=='scene_search'))&&<ExerciseLibrary items={exercises.filter(e=>e.engine?.mechanic!=='scene_search')} completedIds={dashboard?.completed_exercise_ids || []} onExercise={onExercise} />}
-      {!childMode && <div className="tip-banner"><div className="tip-icon"><Sparkles/></div><div><strong>Подсказка для взрослых</strong><p>Короткую практику можно закончить в любой момент. Частоту, длительность и цели согласуйте со специалистом и состоянием ребёнка.</p></div></div>}
+      {!childMode && <div className="tip-banner"><div className="tip-icon"><Sparkles/></div><div><strong>{t("screen.GamesScreen.ui21")}</strong><p>{t("screen.GamesScreen.ui22")}</p></div></div>}
     </div>
   );
 }
@@ -1138,9 +1145,10 @@ const exerciseImages: Record<string, string> = {
 };
 
 function ExerciseLibrary({ items, completedIds, onExercise }: { items: Exercise[]; completedIds: number[]; onExercise: (exercise: Exercise) => void }) {
+  useLocale();
   const completed = new Set(completedIds);
-  const labels = { motor: "Зеркало", sensory: "Слушай и выбирай", mixed: "Карточки и фразы" };
-  return <section className="exercise-library" aria-labelledby="all-exercises-title"><div className="section-heading"><div><span className="kicker">ВСЁ В ОДНОМ МЕСТЕ</span><h2 id="all-exercises-title">Доступные задания · {items.length}</h2></div></div><div className="exercise-grid">{items.map((exercise) => <button key={exercise.id} className={`exercise-card ${exercise.module}`} onClick={() => onExercise(exercise)}><span className="exercise-card-visual"><Image src={exerciseImages[exercise.target] ? `/app-illustrations/${exerciseImages[exercise.target]}` : exercise.icon} width={320} height={230} alt="" /></span><div className="exercise-card-copy"><small>{labels[exercise.module]}{completed.has(exercise.id) ? " · можно повторить" : ""}</small><strong>{exercise.title}</strong><p>{exercise.instruction}</p><span className="exercise-card-open">Начать <ArrowRight size={18}/></span></div></button>)}</div>{!items.length && <div className="empty-state large"><ShieldAlert size={28}/><strong>Задания пока не загрузились</strong><span>Попробуйте обновить страницу. Черновики и задания на внутренней проверке не входят в этот список.</span></div>}</section>;
+  const labels = { motor: t("screen.ExerciseLibrary.ui1"), sensory: t("screen.ExerciseLibrary.ui2"), mixed: t("screen.ExerciseLibrary.ui3") };
+  return <section className="exercise-library" aria-labelledby="all-exercises-title"><div className="section-heading"><div><span className="kicker">{t("screen.ExerciseLibrary.ui4")}</span><h2 id="all-exercises-title">{t("screen.ExerciseLibrary.ui5")} {items.length}</h2></div></div><div className="exercise-grid">{items.map((exercise) => <button key={exercise.id} className={`exercise-card ${exercise.module}`} onClick={() => onExercise(exercise)}><span className="exercise-card-visual"><Image src={exerciseImages[exercise.target] ? `/app-illustrations/${exerciseImages[exercise.target]}` : exercise.icon} width={320} height={230} alt="" /></span><div className="exercise-card-copy"><small>{labels[exercise.module]}{completed.has(exercise.id) ? t("screen.ExerciseLibrary.ui6") : ""}</small><strong>{exercise.title}</strong><p>{exercise.instruction}</p><span className="exercise-card-open">{t("common.start")} <ArrowRight size={18}/></span></div></button>)}</div>{!items.length && <div className="empty-state large"><ShieldAlert size={28}/><strong>{t("screen.ExerciseLibrary.ui8")}</strong><span>{t("screen.ExerciseLibrary.ui9")}</span></div>}</section>;
 }
 
 function PageTitle({ eyebrow, title, subtitle }: { eyebrow: string; title: string; subtitle: string }) {
@@ -1148,9 +1156,10 @@ function PageTitle({ eyebrow, title, subtitle }: { eyebrow: string; title: strin
 }
 
 function GameHeader({ title, subtitle, step, onBack }: { title: string; subtitle: string; step: string; onBack: () => void }) {
+  useLocale();
   return (
     <div className="game-header">
-      <button className="back-button" onClick={onBack} aria-label="Назад к занятиям"><ArrowLeft size={20} /></button>
+      <button className="back-button" onClick={onBack} aria-label={t("screen.GameHeader.ui1")}><ArrowLeft size={20} /></button>
       <div><span>{subtitle}</span><h2>{title}</h2></div>
       <div className="step-pill">{step}</div>
     </div>
@@ -1158,12 +1167,12 @@ function GameHeader({ title, subtitle, step, onBack }: { title: string; subtitle
 }
 
 const motorExercises = [
-  { id: "smile", title: "Сделай широкую улыбку", text: "Улыбнись широко и удерживай движение 3 секунды." },
-  { id: "tube", title: "Сложи губы трубочкой", text: "Вытяни губы вперёд, будто хочешь задуть свечу." },
-  { id: "open", title: "Открой окошко", text: "Плавно открой рот и удерживай нижнюю челюсть спокойно." },
-  { id: "teeth", title: "Покажи заборчик", text: "Сомкни зубы и покажи их в спокойной улыбке." },
-  { id: "cheeks", title: "Надуй воздушный шар", text: "Надуй обе щёки и удерживай воздух 3 секунды." },
-  { id: "sequence", title: "Улыбка - трубочка", text: "Сначала широко улыбнись, затем сложи губы трубочкой." },
+  { id: "smile", get title() { return t("motor.exercise0.title"); }, get text() { return t("motor.exercise0.text"); } },
+  { id: "tube", get title() { return t("motor.exercise1.title"); }, get text() { return t("motor.exercise1.text"); } },
+  { id: "open", get title() { return t("motor.exercise2.title"); }, get text() { return t("motor.exercise2.text"); } },
+  { id: "teeth", get title() { return t("motor.exercise3.title"); }, get text() { return t("motor.exercise3.text"); } },
+  { id: "cheeks", get title() { return t("motor.exercise4.title"); }, get text() { return t("motor.exercise4.text"); } },
+  { id: "sequence", get title() { return t("motor.exercise5.title"); }, get text() { return t("motor.exercise5.text"); } },
 ] as const;
 type MotorExercise = typeof motorExercises[number]["id"];
 type MotorPracticePhase = "idle" | "prepare" | "checking" | "matched" | "not_found";
@@ -1173,11 +1182,13 @@ type MotorDetectionState = { status: MotorDetectionStatus; confidence: number; s
 const idleMotorDetection: MotorDetectionState = { status: "idle", confidence: 0, sequenceStep: 0, message: "" };
 
 function MouthGuide({ type }: { type: MotorExercise }) {
-  if (type === "sequence") return <div className="mouth-sequence" aria-label="Сначала улыбка, затем губы трубочкой"><MouthGuide type="smile"/><ChevronRight/><MouthGuide type="tube"/></div>;
+  useLocale();
+  if (type === "sequence") return <div className="mouth-sequence" aria-label={t("screen.MouthGuide.ui1")}><MouthGuide type="smile"/><ChevronRight/><MouthGuide type="tube"/></div>;
   return <div className={`mouth-guide ${type}`} aria-hidden="true"><i className="guide-eye left"/><i className="guide-eye right"/><span className="guide-mouth">{type === "teeth" && <b><i/><i/><i/><i/></b>}</span>{type === "cheeks" && <><i className="guide-cheek left"/><i className="guide-cheek right"/></>}</div>;
 }
 
 function MotorGame({ exercises, initialExercise, cameraConsentGranted, canManageConsent, onOpenConsent, onBack, onComplete }: { exercises: Exercise[]; initialExercise: Exercise | null; cameraConsentGranted: boolean; canManageConsent: boolean; onOpenConsent: () => void; onBack: () => void; onComplete: (score: number, exerciseId: number, measurement: GameMeasurement, details?: Record<string, unknown>) => Promise<unknown> | void }) {
+  useLocale();
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const faceLandmarkerRef = useRef<FaceLandmarker | null>(null);
@@ -1227,14 +1238,14 @@ function MotorGame({ exercises, initialExercise, cameraConsentGranted, canManage
       } else if (practice.phase === "prepare") {
         if (baselineSamplesRef.current < 3) {
           setPractice({ phase: "not_found", seconds: 0 });
-          setDetection({ status: "no_face", confidence: 0, sequenceStep: 0, message: "Не удалось настроить проверку: лицо не было видно" });
+          setDetection({ status: "no_face", confidence: 0, sequenceStep: 0, message: t("screen.MotorGame.ui1") });
         } else {
           setPractice({ phase: "checking", seconds: 10 });
-          setDetection({ status: "tracking", confidence: 0, sequenceStep: 0, message: exercise?.id === "sequence" ? "Сначала улыбнись" : "Покажи нужное движение" });
+          setDetection({ status: "tracking", confidence: 0, sequenceStep: 0, message: exercise?.id === "sequence" ? t("screen.MotorGame.ui2") : t("screen.MotorGame.ui3") });
         }
       } else {
         setPractice({ phase: "not_found", seconds: 0 });
-        setDetection((current) => ({ ...current, status: "tracking", confidence: 0, message: "Движение пока не найдено" }));
+        setDetection((current) => ({ ...current, status: "tracking", confidence: 0, message: t("screen.MotorGame.ui4") }));
       }
     }, 1000);
     return () => window.clearTimeout(timer);
@@ -1274,13 +1285,13 @@ function MotorGame({ exercises, initialExercise, cameraConsentGranted, canManage
           const categories = result.faceBlendshapes[0]?.categories || [];
           if (!categories.length) {
             stableMatchesRef.current = 0;
-            if (practice.phase === "checking") setDetection((current) => ({ ...current, status: "no_face", confidence: 0, message: "Покажи лицо целиком в рамке" }));
+            if (practice.phase === "checking") setDetection((current) => ({ ...current, status: "no_face", confidence: 0, message: t("screen.MotorGame.ui5") }));
           } else {
             const scores = categoriesToScores(categories);
             if (practice.phase === "prepare") {
               baselineRef.current = mergeBaseline(baselineRef.current, scores, baselineSamplesRef.current);
               baselineSamplesRef.current += 1;
-              setDetection({ status: "calibrating", confidence: 0, sequenceStep: 0, message: "Смотри прямо и расслабь лицо" });
+              setDetection({ status: "calibrating", confidence: 0, sequenceStep: 0, message: t("screen.MotorGame.ui6") });
             } else {
               const checkedTarget = targetForSequenceStep(exercise.id, sequenceStepRef.current);
               const check = evaluateMotorMovement(checkedTarget, scores, baselineRef.current);
@@ -1292,22 +1303,22 @@ function MotorGame({ exercises, initialExercise, cameraConsentGranted, canManage
                 if (exercise.id === "sequence" && sequenceStepRef.current === 0) {
                   sequenceStepRef.current = 1;
                   stableMatchesRef.current = 0;
-                  setDetection({ status: "tracking", confidence: 0, sequenceStep: 1, message: "Теперь сложи губы трубочкой" });
+                  setDetection({ status: "tracking", confidence: 0, sequenceStep: 1, message: t("screen.MotorGame.ui7") });
                 } else {
                   setPractice({ phase: "matched", seconds: 0 });
-                  setDetection({ status: "tracking", confidence: 100, sequenceStep: sequenceStepRef.current, message: "Движение распознано" });
+                  setDetection({ status: "tracking", confidence: 100, sequenceStep: sequenceStepRef.current, message: t("screen.MotorGame.ui8") });
                 }
               } else {
                 const message = exercise.id === "sequence"
-                  ? sequenceStepRef.current === 0 ? "Сначала улыбнись" : "Теперь сложи губы трубочкой"
-                  : confidence >= 55 ? "Почти получилось — удерживай" : "Повтори движение с картинки";
+                  ? sequenceStepRef.current === 0 ? t("screen.MotorGame.ui2") : t("screen.MotorGame.ui7")
+                  : confidence >= 55 ? t("screen.MotorGame.ui9") : t("screen.MotorGame.ui10");
                 setDetection({ status: "tracking", confidence, sequenceStep: sequenceStepRef.current, message });
               }
             }
           }
         } catch {
           setPractice({ phase: "idle", seconds: 0 });
-          setDetection({ status: "error", confidence: 0, sequenceStep: 0, message: "Локальная проверка остановилась. Попробуйте запустить ещё раз." });
+          setDetection({ status: "error", confidence: 0, sequenceStep: 0, message: t("screen.MotorGame.ui11") });
         }
       }
       animationFrameRef.current = window.requestAnimationFrame(scanFrame);
@@ -1339,13 +1350,13 @@ function MotorGame({ exercises, initialExercise, cameraConsentGranted, canManage
       setCameraState("error");
       const name = cause instanceof DOMException ? cause.name : "";
       if (["NotAllowedError", "SecurityError"].includes(name)) {
-        setCameraError("Доступ к камере запрещён в браузере. Разрешите камеру для этого сайта и попробуйте снова.");
+        setCameraError(t("screen.MotorGame.ui12"));
       } else if (["NotFoundError", "DevicesNotFoundError"].includes(name)) {
-        setCameraError("Камера не найдена. Подключите её или выберите другое устройство.");
+        setCameraError(t("screen.MotorGame.ui13"));
       } else if (["NotReadableError", "TrackStartError"].includes(name)) {
-        setCameraError("Камера занята другим приложением. Закройте его и попробуйте снова.");
+        setCameraError(t("screen.MotorGame.ui14"));
       } else {
-        setCameraError("Браузер не смог включить камеру. Проверьте разрешение камеры и откройте сайт через HTTPS или localhost.");
+        setCameraError(t("screen.MotorGame.ui15"));
       }
     }
   };
@@ -1360,16 +1371,16 @@ function MotorGame({ exercises, initialExercise, cameraConsentGranted, canManage
 
   const startPractice = async () => {
     if (cameraState !== "ready") {
-      setDetection({ status: "error", confidence: 0, sequenceStep: 0, message: "Сначала включите камеру — без распознанного движения попытка не засчитывается." });
+      setDetection({ status: "error", confidence: 0, sequenceStep: 0, message: t("screen.MotorGame.ui16") });
       return;
     }
     setSaved(null);
-    setDetection({ status: "loading", confidence: 0, sequenceStep: 0, message: "Готовим локальную проверку…" });
+    setDetection({ status: "loading", confidence: 0, sequenceStep: 0, message: t("screen.MotorGame.ui17") });
     try {
       await loadFaceLandmarker();
       if (!streamRef.current?.active) {
         setPractice({ phase: "idle", seconds: 0 });
-        setDetection({ status: "error", confidence: 0, sequenceStep: 0, message: "Камера была выключена. Включите её и начните проверку снова." });
+        setDetection({ status: "error", confidence: 0, sequenceStep: 0, message: t("screen.MotorGame.ui18") });
         return;
       }
       baselineRef.current = {};
@@ -1377,11 +1388,11 @@ function MotorGame({ exercises, initialExercise, cameraConsentGranted, canManage
       stableMatchesRef.current = 0;
       sequenceStepRef.current = 0;
       bestConfidenceRef.current = 0;
-      setDetection({ status: "calibrating", confidence: 0, sequenceStep: 0, message: "Смотри прямо и расслабь лицо" });
+      setDetection({ status: "calibrating", confidence: 0, sequenceStep: 0, message: t("screen.MotorGame.ui6") });
       setPractice({ phase: "prepare", seconds: 3 });
     } catch {
       setPractice({ phase: "idle", seconds: 0 });
-      setDetection({ status: "error", confidence: 0, sequenceStep: 0, message: "Не удалось загрузить локальную проверку. Обновите страницу и попробуйте снова." });
+      setDetection({ status: "error", confidence: 0, sequenceStep: 0, message: t("screen.MotorGame.ui19") });
     }
   };
 
@@ -1426,29 +1437,29 @@ function MotorGame({ exercises, initialExercise, cameraConsentGranted, canManage
     if (result && status === "break") onBack();
   };
 
-  if (!exercise) return <div className="empty-state large"><ShieldAlert size={28}/><strong>Задания для зеркала пока не загрузились</strong><span>Вернитесь к занятиям, обновите страницу и попробуйте снова.</span><button className="secondary-button" onClick={onBack}>Вернуться к занятиям</button></div>;
+  if (!exercise) return <div className="empty-state large"><ShieldAlert size={28}/><strong>{t("screen.MotorGame.ui20")}</strong><span>{t("screen.MotorGame.ui21")}</span><button className="secondary-button" onClick={onBack}>{t("screen.MotorGame.ui22")}</button></div>;
 
   return (
     <div className="page-enter game-page">
-      <GameHeader title="Повтори движение перед зеркалом" subtitle="Локальное зеркало" step={`${exerciseIndex + 1} из ${availableMotorExercises.length}`} onBack={onBack} />
+      <GameHeader title={t("screen.MotorGame.ui23")} subtitle={t("screen.MotorGame.ui24")} step={t("shell.template19", { v0: exerciseIndex + 1, v1: availableMotorExercises.length })} onBack={onBack} />
       <div className="game-layout">
         <div className="camera-panel">
           <video ref={videoRef} playsInline muted aria-hidden="true" className={cameraState === "ready" ? "visible" : ""} />
-          {cameraState !== "ready" && <div className="camera-placeholder" aria-live="polite"><Image className="camera-placeholder-art" src="/app-illustrations/exercise-camera-hero.webp" width={768} height={512} alt="Мальчик с мишкой улыбается перед камерой планшета"/><div className="camera-placeholder-content"><h3>{!cameraConsentGranted ? "Нужно разрешение родителя" : cameraState === "loading" ? "Включаем камеру…" : cameraState === "error" ? "Камеру не удалось запустить" : "Потренируемся перед зеркалом?"}</h3><p>{!cameraConsentGranted ? canManageConsent ? "Разрешите локальную проверку движения в кабинете родителя. Камера не включится автоматически." : "Попроси родителя включить «Локальную проверку движения» в своём кабинете." : cameraState === "error" ? "Исправьте указанную ниже причину и повторите попытку." : "После нажатия браузер отдельно спросит доступ. Кадры анализируются только на этом устройстве, не отправляются и не сохраняются."}</p>{cameraError && <div className="camera-error" role="alert"><ShieldAlert size={17}/><span>{cameraError}</span></div>}{!cameraConsentGranted ? canManageConsent && <button className="primary-button" onClick={onOpenConsent}><ShieldCheck size={19}/> Открыть разрешения</button> : <button className="primary-button" onClick={startCamera} disabled={cameraState === "loading"}><Camera size={19} /> {cameraState === "error" ? "Попробовать ещё раз" : "Включить камеру"}</button>}</div></div>}
-          {cameraState === "ready" && <><div className="face-frame" /><div className="camera-label"><span className="live-dot" /> Камера работает локально</div><button className="camera-stop-button" onClick={disableCamera}><CircleX size={15}/> Выключить камеру</button>{practice.phase !== "idle" && !saved && <div className={`motor-attempt-overlay ${practice.phase}`} aria-hidden="true"><div>{practice.phase === "prepare" ? <><small>СПОКОЙНОЕ ЛИЦО</small><strong>{practice.seconds}</strong></> : practice.phase === "checking" ? <><small>{detection.message}</small><strong>{detection.confidence}%</strong></> : practice.phase === "matched" ? <><Check size={54}/><strong>Движение найдено</strong></> : <><RotateCcw size={45}/><strong>Попробуй ещё</strong></>}</div></div>}</>}
+          {cameraState !== "ready" && <div className="camera-placeholder" aria-live="polite"><Image className="camera-placeholder-art" src="/app-illustrations/exercise-camera-hero.webp" width={768} height={512} alt={t("screen.MotorGame.ui25")}/><div className="camera-placeholder-content"><h3>{!cameraConsentGranted ? t("screen.MotorGame.ui26") : cameraState === "loading" ? t("screen.MotorGame.ui27") : cameraState === "error" ? t("screen.MotorGame.ui28") : t("screen.MotorGame.ui29")}</h3><p>{!cameraConsentGranted ? canManageConsent ? t("screen.MotorGame.ui30") : t("screen.MotorGame.ui31") : cameraState === "error" ? t("screen.MotorGame.ui32") : t("screen.MotorGame.ui33")}</p>{cameraError && <div className="camera-error" role="alert"><ShieldAlert size={17}/><span>{cameraError}</span></div>}{!cameraConsentGranted ? canManageConsent && <button className="primary-button" onClick={onOpenConsent}><ShieldCheck size={19}/>  {t("screen.MotorGame.ui34")}</button> : <button className="primary-button" onClick={startCamera} disabled={cameraState === "loading"}><Camera size={19} /> {cameraState === "error" ? t("screen.MotorGame.ui35") : t("screen.MotorGame.ui36")}</button>}</div></div>}
+          {cameraState === "ready" && <><div className="face-frame" /><div className="camera-label"><span className="live-dot" />  {t("screen.MotorGame.ui37")}</div><button className="camera-stop-button" onClick={disableCamera}><CircleX size={15}/>  {t("screen.MotorGame.ui38")}</button>{practice.phase !== "idle" && !saved && <div className={`motor-attempt-overlay ${practice.phase}`} aria-hidden="true"><div>{practice.phase === "prepare" ? <><small>{t("screen.MotorGame.ui39")}</small><strong>{practice.seconds}</strong></> : practice.phase === "checking" ? <><small>{detection.message}</small><strong>{detection.confidence}%</strong></> : practice.phase === "matched" ? <><Check size={54}/><strong>{t("screen.MotorGame.ui40")}</strong></> : <><RotateCcw size={45}/><strong>{t("screen.MotorGame.ui41")}</strong></>}</div></div>}</>}
         </div>
         <div className="instruction-panel">
-          <span className="kicker">ТВОЁ ЗАДАНИЕ</span>
+          <span className="kicker">{t("screen.MotorGame.ui42")}</span>
           <div className={`mouth-demo ${exercise.id}`}><MouthGuide type={exercise.id}/></div>
           <h2>{exercise.title}</h2>
           <p>{exercise.text}</p>
-          <div className="motor-camera-note"><ShieldCheck size={18}/><span>Алгоритм локально проверяет, появилось ли нужное движение. Это игровая проверка мимики, а не оценка речи, диагноза или качества выполнения.</span></div>
-          <div className="coach-note"><Sparkles size={18} /> {cameraState === "ready" ? "Сначала спокойно смотри в камеру 3 секунды, затем повтори движение." : "Для зачёта движения нужно включить камеру слева."}</div>
+          <div className="motor-camera-note"><ShieldCheck size={18}/><span>{t("screen.MotorGame.ui43")}</span></div>
+          <div className="coach-note"><Sparkles size={18} /> {cameraState === "ready" ? t("screen.MotorGame.ui44") : t("screen.MotorGame.ui45")}</div>
           <div className="motor-practice-flow" aria-live="polite" aria-atomic="true">
-            {saved ? <div className="success-box"><Check size={20}/><div><strong>Движение засчитано</strong><span>Камера увидела нужное изменение мимики. Звезда — за выполненную попытку.</span></div></div> : practice.phase === "idle" ? <><button className="primary-button motor-start-button" onClick={startPractice} disabled={cameraState !== "ready" || detection.status === "loading"}><Play size={18} fill="currentColor"/> {detection.status === "loading" ? "Готовим проверку…" : "Начать проверку"}</button>{detection.message && <div className={`motor-detection-message ${detection.status === "error" ? "error" : ""}`} role={detection.status === "error" ? "alert" : "status"}>{detection.message}</div>}</> : practice.phase === "prepare" || practice.phase === "checking" ? <div className={`motor-practice-status ${practice.phase}`}><span>{practice.phase === "prepare" ? practice.seconds : `${detection.confidence}%`}</span><div><strong>{practice.phase === "prepare" ? "Калибровка" : detection.message}</strong><small>{practice.phase === "prepare" ? "Смотри прямо и расслабь лицо" : detection.status === "no_face" ? "Лицо должно быть целиком внутри рамки" : `Осталось ${practice.seconds} сек.`}</small>{practice.phase === "checking" && <i className="motor-signal-track"><b style={{ width: `${detection.confidence}%` }}/></i>}</div><button className="small-button" onClick={resetPractice}>Остановить</button></div> : practice.phase === "matched" ? <><div className="success-box"><Check size={20}/><div><strong>Движение распознано</strong><span>Теперь отметьте, понадобилась ли помощь взрослого.</span></div></div><div className="motor-finish-actions"><button className="primary-button" onClick={() => finishDetectedMovement("independent")}><Check size={17}/> Самостоятельно</button><button className="secondary-button" onClick={() => finishDetectedMovement("supported")}>С помощью</button></div><button className="secondary-button motor-repeat-button" onClick={startPractice}><RotateCcw size={16}/> Повторить проверку</button></> : <><div className="motor-not-found" role="status"><CircleAlert size={20}/><div><strong>Движение пока не найдено</strong><span>Эта попытка не засчитана. Проверь положение лица и повтори.</span></div></div><button className="primary-button motor-repeat-button" onClick={startPractice}><RotateCcw size={16}/> Попробовать ещё раз</button></>}
+            {saved ? <div className="success-box"><Check size={20}/><div><strong>{t("screen.MotorGame.ui46")}</strong><span>{t("screen.MotorGame.ui47")}</span></div></div> : practice.phase === "idle" ? <><button className="primary-button motor-start-button" onClick={startPractice} disabled={cameraState !== "ready" || detection.status === "loading"}><Play size={18} fill="currentColor"/> {detection.status === "loading" ? t("screen.MotorGame.ui48") : t("screen.MotorGame.ui49")}</button>{detection.message && <div className={`motor-detection-message ${detection.status === "error" ? "error" : ""}`} role={detection.status === "error" ? "alert" : "status"}>{detection.message}</div>}</> : practice.phase === "prepare" || practice.phase === "checking" ? <div className={`motor-practice-status ${practice.phase}`}><span>{practice.phase === "prepare" ? practice.seconds : `${detection.confidence}%`}</span><div><strong>{practice.phase === "prepare" ? t("screen.MotorGame.ui50") : detection.message}</strong><small>{practice.phase === "prepare" ? t("screen.MotorGame.ui6") : detection.status === "no_face" ? t("screen.MotorGame.ui51") : t("shell.template20", { v0: practice.seconds })}</small>{practice.phase === "checking" && <i className="motor-signal-track"><b style={{ width: `${detection.confidence}%` }}/></i>}</div><button className="small-button" onClick={resetPractice}>{t("screen.MotorGame.ui52")}</button></div> : practice.phase === "matched" ? <><div className="success-box"><Check size={20}/><div><strong>{t("screen.MotorGame.ui8")}</strong><span>{t("screen.MotorGame.ui53")}</span></div></div><div className="motor-finish-actions"><button className="primary-button" onClick={() => finishDetectedMovement("independent")}><Check size={17}/>  {t("screen.MotorGame.ui54")}</button><button className="secondary-button" onClick={() => finishDetectedMovement("supported")}>{t("screen.MotorGame.ui55")}</button></div><button className="secondary-button motor-repeat-button" onClick={startPractice}><RotateCcw size={16}/>  {t("screen.MotorGame.ui56")}</button></> : <><div className="motor-not-found" role="status"><CircleAlert size={20}/><div><strong>{t("screen.MotorGame.ui4")}</strong><span>{t("screen.MotorGame.ui57")}</span></div></div><button className="primary-button motor-repeat-button" onClick={startPractice}><RotateCcw size={16}/>  {t("screen.MotorGame.ui35")}</button></>}
           </div>
-          {!saved && <div className="motor-stop-actions"><button className="small-button" onClick={() => stopExercise("break")}><Pause size={15}/> Перерыв</button><button className="small-button" onClick={() => stopExercise("refused")}><CircleX size={15}/> Не хочу</button></div>}
-          {availableMotorExercises.length > 1 && <button className="secondary-button wide" onClick={changeExercise}>{saved ? "Следующее движение" : "Другое движение"}<ChevronRight size={18} /></button>}
+          {!saved && <div className="motor-stop-actions"><button className="small-button" onClick={() => stopExercise("break")}><Pause size={15}/>  {t("screen.MotorGame.ui58")}</button><button className="small-button" onClick={() => stopExercise("refused")}><CircleX size={15}/>  {t("screen.MotorGame.ui59")}</button></div>}
+          {availableMotorExercises.length > 1 && <button className="secondary-button wide" onClick={changeExercise}>{saved ? t("screen.MotorGame.ui60") : t("screen.MotorGame.ui61")}<ChevronRight size={18} /></button>}
         </div>
       </div>
     </div>
@@ -1471,6 +1482,7 @@ function SensoryVisual({ item }: { item: SensoryItem }) {
 type SensoryRound = { target: number; options: number[] };
 
 function SensoryGame({ exercise, soundEnabled, onBack, onComplete }: { exercise?: Exercise; soundEnabled: boolean; onBack: () => void; onComplete: (score: number, exerciseId: number, measurement: GameMeasurement, details?: Record<string, unknown>) => Promise<unknown> | void }) {
+  useLocale();
   const pet = useExercisePet();
   const sourceStimuli = exercise?.engine?.content.stimuli || [];
   const mixesVisualSystems = sourceStimuli.some((item) => Boolean(item.media_ref)) && sourceStimuli.some((item) => Boolean(item.visual_token));
@@ -1524,7 +1536,7 @@ function SensoryGame({ exercise, soundEnabled, onBack, onComplete }: { exercise?
     return () => window.cancelAnimationFrame(frame);
   }, [audioPending, phase, round]);
 
-  if (items.length < difficulty.option_count) return <div className="empty-state large" role="alert"><ShieldAlert size={28}/><strong>Задание пока недоступно</strong><span>Опубликованная версия не содержит достаточного числа проверенных стимулов.</span><button className="secondary-button" onClick={onBack}>Вернуться к занятиям</button></div>;
+  if (items.length < difficulty.option_count) return <div className="empty-state large" role="alert"><ShieldAlert size={28}/><strong>{t("screen.SensoryGame.ui1")}</strong><span>{t("screen.SensoryGame.ui2")}</span><button className="secondary-button" onClick={onBack}>{t("screen.SensoryGame.ui3")}</button></div>;
 
   const playWord = async (target = roundData?.target, repeat = true, encouragement?: string, encouragementProfile: "exercise" | "pet" = "exercise") => {
     if (target === undefined || audioLockRef.current || stoppedRef.current) return;
@@ -1623,7 +1635,7 @@ function SensoryGame({ exercise, soundEnabled, onBack, onComplete }: { exercise?
         first_response: evidenceRef.current.first_response,
       });
       setPhase("resolved");
-      setFeedback(independent ? "Ты нашёл картинку самостоятельно." : "Получилось. Подсказка помогла найти картинку.");
+      setFeedback(independent ? t("screen.SensoryGame.ui5") : t("screen.SensoryGame.ui6"));
       void speak(praise, speechRate, soundEnabled, language, "exercise", exercise?.engine?.version_id, "pet");
       return;
     }
@@ -1668,8 +1680,8 @@ function SensoryGame({ exercise, soundEnabled, onBack, onComplete }: { exercise?
         supports: evidenceRef.current.supports,
         first_response: evidenceRef.current.first_response,
       });
-      const modelText = exercise?.engine?.mechanic === "action_choice" ? `Ребёнок ${items[roundData.target].word.toLowerCase()}.` : `Это ${items[roundData.target].word.toLowerCase()}.`;
-      setFeedback(`Посмотрим вместе. ${modelText}`);
+      const modelText = exercise?.engine?.language === "kk" ? items[roundData.target].word : exercise?.engine?.mechanic === "action_choice" ? `Ребёнок ${items[roundData.target].word.toLowerCase()}.` : `Это ${items[roundData.target].word.toLowerCase()}.`;
+      setFeedback(t("game.modelTogether", { text: modelText }));
       void speak(modelText, 0.75, soundEnabled, exercise?.engine?.language || "ru", "exercise", exercise?.engine?.version_id);
     }
   };
@@ -1736,20 +1748,20 @@ function SensoryGame({ exercise, soundEnabled, onBack, onComplete }: { exercise?
   const visibleOptions = reducedOptions || roundData?.options || [];
   return (
     <div className={`page-enter game-page ${exercise?.engine?.mechanic === "action_choice" ? "action-choice" : ""}`}>
-      <GameHeader title={exercise?.title || "Слушай и находи"} subtitle="Слушаем слово - без чтения" step={phase === "demo" ? "Настройка" : `${round} из ${difficulty.rounds}`} onBack={onBack} />
+      <GameHeader title={exercise?.title || t("screen.SensoryGame.ui10")} subtitle={t("screen.SensoryGame.ui11")} step={phase === "demo" ? t("screen.SensoryGame.ui12") : t("shell.template23", { v0: round, v1: difficulty.rounds })} onBack={onBack} />
       <div className="listen-card">
-        {phase === "demo" ? <div className="sensory-demo"><SensoryVisual item={items[0]}/><span className="kicker">СНАЧАЛА ПОПРОБУЕМ</span><h2>Послушай. Потом покажи картинку.</h2><p>Слово прозвучит вслух. На карточках не будет подписей.</p><fieldset className="sensory-access-mode"><legend>Способ выполнения</legend><button type="button" className={!accessibleSupportMode ? "active" : ""} aria-pressed={!accessibleSupportMode} onClick={() => setAccessibleSupportMode(false)}><Eye size={17}/> Визуальный выбор</button><button type="button" className={accessibleSupportMode ? "active" : ""} aria-pressed={accessibleSupportMode} onClick={() => setAccessibleSupportMode(true)}><Volume2 size={17}/> Озвучивать все варианты</button></fieldset>{accessibleSupportMode && <p id="accessible-support-note" className="accessible-support-note"><ShieldAlert size={17}/> Это отдельный доступный режим: экранный диктор назовёт каждую карточку. Он фиксирует участие без оценки правильности и не влияет на адаптивный подбор.</p>}{exercise?.adaptive ? <div className="adaptive-runner-setting"><Target size={18}/><span><strong>{difficulty.option_count} картинки</strong><small>Выбрано по домашней практической цели; помощь доступна в любой момент.</small></span></div> : <div className="runner-levels" aria-label="Количество вариантов"><span>Картинок на экране:</span>{([1,2,3] as const).map((level) => { const value = resolveDifficulty(exercise?.engine?.content.difficulty_levels, level); return <button type="button" key={level} className={difficultyLevel === level ? "active" : ""} aria-pressed={difficultyLevel === level} onClick={() => setDifficultyLevel(level)}>{value.option_count}</button>; })}</div>}<>{exercise?.engine?.content.round_choices && <PracticeLength value={roundLimit} choices={exercise.engine.content.round_choices} bankSize={items.length} unit={exercise.engine.mechanic === "action_choice" ? "действий" : "слов"} onChange={setRoundLimit}/>}</><button className="primary-button" onClick={() => void beginRound()}>Понятно, начать <ChevronRight size={17}/></button></div> : phase === "technical" ? <div className="sensory-demo technical"><Volume2 size={42}/><span className="kicker">БЕЗ ОЦЕНКИ</span><h2>Звук сейчас недоступен</h2><p>Это задание проверяет понимание услышанного, поэтому без звука результат не считается.</p><button className="primary-button" onClick={recordTechnicalIssue}>Вернуться без оценки</button></div> : <>
-          <div className="sound-zone"><button ref={soundButtonRef} className="sound-button" disabled={audioPending} onClick={() => void playWord()} aria-label="Прослушать слово"><Volume2 size={34} strokeWidth={2} /></button><div><span className="kicker">ПОСЛУШАЙ</span><h2>{audioPending ? "Слово загружается…" : audioPlayed ? "Теперь покажи картинку" : "Нажми и послушай"}</h2><div className="wave"><i /><i /><i /><i /><i /><i /><i /></div><div className="speech-rate" aria-label="Скорость речи">{[{v:.65,l:"Медленно"},{v:.78,l:"Обычно"}].map((item)=><button key={item.v} className={speechRate===item.v?"active":""} aria-pressed={speechRate===item.v} onClick={()=>setSpeechRate(item.v)}>{item.l}</button>)}</div></div><button className="replay" disabled={audioPending} onClick={() => void playWord()}><RotateCcw size={17} /> Повторить</button></div>
-          {accessibleSupportMode && <p id="accessible-support-note" className="accessible-support-note in-game"><ShieldAlert size={17}/> Варианты озвучиваются. Эта попытка сохраняется без оценки правильности.</p>}
-          <h3 className="choose-title">Послушай. Покажи картинку.</h3>
-          {exercise?.engine?.content.bank_key?.startsWith("scene-words-") && phase === "playing" && <button className="secondary-button" disabled={!audioPlayed || audioPending} onClick={()=>void meaningHint()}><Sparkles size={18}/> Подсказка</button>}
+        {phase === "demo" ? <div className="sensory-demo"><SensoryVisual item={items[0]}/><span className="kicker">{t("screen.SensoryGame.ui13")}</span><h2>{t("screen.SensoryGame.ui14")}</h2><p>{t("screen.SensoryGame.ui15")}</p><fieldset className="sensory-access-mode"><legend>{t("screen.SensoryGame.ui16")}</legend><button type="button" className={!accessibleSupportMode ? "active" : ""} aria-pressed={!accessibleSupportMode} onClick={() => setAccessibleSupportMode(false)}><Eye size={17}/>  {t("screen.SensoryGame.ui17")}</button><button type="button" className={accessibleSupportMode ? "active" : ""} aria-pressed={accessibleSupportMode} onClick={() => setAccessibleSupportMode(true)}><Volume2 size={17}/>  {t("screen.SensoryGame.ui18")}</button></fieldset>{accessibleSupportMode && <p id="accessible-support-note" className="accessible-support-note"><ShieldAlert size={17}/>  {t("screen.SensoryGame.ui19")}</p>}{exercise?.adaptive ? <div className="adaptive-runner-setting"><Target size={18}/><span><strong>{difficulty.option_count}  {t("screen.SensoryGame.ui20")}</strong><small>{t("screen.SensoryGame.ui21")}</small></span></div> : <div className="runner-levels" aria-label={t("screen.SensoryGame.ui22")}><span>{t("screen.SensoryGame.ui23")}</span>{([1,2,3] as const).map((level) => { const value = resolveDifficulty(exercise?.engine?.content.difficulty_levels, level); return <button type="button" key={level} className={difficultyLevel === level ? "active" : ""} aria-pressed={difficultyLevel === level} onClick={() => setDifficultyLevel(level)}>{value.option_count}</button>; })}</div>}<>{exercise?.engine?.content.round_choices && <PracticeLength value={roundLimit} choices={exercise.engine.content.round_choices} bankSize={items.length} unit={exercise.engine.mechanic === "action_choice" ? t("screen.SensoryGame.ui24") : t("screen.SensoryGame.ui25")} onChange={setRoundLimit}/>}</><button className="primary-button" onClick={() => void beginRound()}>{t("screen.SensoryGame.ui26")} <ChevronRight size={17}/></button></div> : phase === "technical" ? <div className="sensory-demo technical"><Volume2 size={42}/><span className="kicker">{t("screen.SensoryGame.ui27")}</span><h2>{t("screen.SensoryGame.ui28")}</h2><p>{t("screen.SensoryGame.ui29")}</p><button className="primary-button" onClick={recordTechnicalIssue}>{t("screen.SensoryGame.ui30")}</button></div> : <>
+          <div className="sound-zone"><button ref={soundButtonRef} className="sound-button" disabled={audioPending} onClick={() => void playWord()} aria-label={t("screen.SensoryGame.ui31")}><Volume2 size={34} strokeWidth={2} /></button><div><span className="kicker">{t("screen.SensoryGame.ui32")}</span><h2>{audioPending ? t("screen.SensoryGame.ui33") : audioPlayed ? t("screen.SensoryGame.ui34") : t("screen.SensoryGame.ui35")}</h2><div className="wave"><i /><i /><i /><i /><i /><i /><i /></div><div className="speech-rate" aria-label={t("screen.SensoryGame.ui36")}>{[{v:.65,l:t("screen.SensoryGame.ui37")},{v:.78,l:t("screen.SensoryGame.ui38")}].map((item)=><button key={item.v} className={speechRate===item.v?"active":""} aria-pressed={speechRate===item.v} onClick={()=>setSpeechRate(item.v)}>{item.l}</button>)}</div></div><button className="replay" disabled={audioPending} onClick={() => void playWord()}><RotateCcw size={17} />  {t("screen.SensoryGame.ui39")}</button></div>
+          {accessibleSupportMode && <p id="accessible-support-note" className="accessible-support-note in-game"><ShieldAlert size={17}/>  {t("screen.SensoryGame.ui40")}</p>}
+          <h3 className="choose-title">{t("screen.SensoryGame.ui41")}</h3>
+          {exercise?.engine?.content.bank_key?.startsWith("scene-words-") && phase === "playing" && <button className="secondary-button" disabled={!audioPlayed || audioPending} onClick={()=>void meaningHint()}><Sparkles size={18}/>  {t("screen.SensoryGame.ui42")}</button>}
           <div className={`picture-options ${reducedOptions ? "reduced" : ""}`} data-option-count={visibleOptions.length}>
-            {visibleOptions.map((index) => { const item = items[index]; const isAnswer = roundData?.target === index; const revealed = phase === "resolved"; const optionNumber = visibleOptions.indexOf(index) + 1; return <button key={item.word} disabled={!audioPlayed || audioPending || phase === "resolved" || (!reducedOptions && wrongChoices.includes(index))} aria-label={revealed || accessibleSupportMode ? item.word : `Вариант ${optionNumber}`} aria-describedby={accessibleSupportMode ? "accessible-support-note" : undefined} onClick={() => choose(index)} className={`${wrongChoices.includes(index) ? "wrong" : ""} ${revealed && isAnswer ? "answer" : ""}`}><SensoryVisual item={item}/>{revealed && <strong>{item.word}</strong>}{revealed && isAnswer && <i><Check size={16}/></i>}</button>; })}
+            {visibleOptions.map((index) => { const item = items[index]; const isAnswer = roundData?.target === index; const revealed = phase === "resolved"; const optionNumber = visibleOptions.indexOf(index) + 1; return <button key={item.word} disabled={!audioPlayed || audioPending || phase === "resolved" || (!reducedOptions && wrongChoices.includes(index))} aria-label={revealed || accessibleSupportMode ? item.word : t("shell.template24", { v0: optionNumber })} aria-describedby={accessibleSupportMode ? "accessible-support-note" : undefined} onClick={() => choose(index)} className={`${wrongChoices.includes(index) ? "wrong" : ""} ${revealed && isAnswer ? "answer" : ""}`}><SensoryVisual item={item}/>{revealed && <strong>{item.word}</strong>}{revealed && isAnswer && <i><Check size={16}/></i>}</button>; })}
           </div>
-          {feedback && <div className={`answer-panel ${phase === "resolved" && roundCorrect ? "good" : "try"}`} role="status" aria-live="polite"><div className="answer-emoji">{phase === "resolved" && roundCorrect ? <Star fill="currentColor"/> : <Sparkles/>}</div><div><strong>{phase === "resolved" ? (roundCorrect ? "Получилось" : "Показываем вместе") : "Можно попробовать ещё"}</strong><span>{feedback}</span></div>{phase === "resolved" && round >= difficulty.rounds && roundLimit < (exercise?.engine?.content.max_rounds || roundLimit) && <button className="secondary-button" onClick={() => { setRoundLimit(value => Math.min(value + 6, exercise?.engine?.content.max_rounds || value)); setRound(value => value + 1); void beginRound(); }}>Ещё 6 заданий</button>}{phase === "resolved" && <button className="primary-button" onClick={next}>{round === difficulty.rounds ? "Завершить" : "Дальше"}<ChevronRight size={17}/></button>}</div>}
-          <div className="score-dots" role="progressbar" aria-label="Ход задания" aria-valuemin={1} aria-valuemax={difficulty.rounds} aria-valuenow={round} aria-valuetext={`Раунд ${round} из ${difficulty.rounds}`}>{Array.from({length:difficulty.rounds},(_,index)=>index+1).map((value) => <span key={value} className={value < round || (value === round && phase === "resolved") ? "filled" : ""}/>)}</div>
+          {feedback && <div className={`answer-panel ${phase === "resolved" && roundCorrect ? "good" : "try"}`} role="status" aria-live="polite"><div className="answer-emoji">{phase === "resolved" && roundCorrect ? <Star fill="currentColor"/> : <Sparkles/>}</div><div><strong>{phase === "resolved" ? (roundCorrect ? t("screen.SensoryGame.ui43") : t("screen.SensoryGame.ui44")) : t("screen.SensoryGame.ui45")}</strong><span>{feedback}</span></div>{phase === "resolved" && round >= difficulty.rounds && roundLimit < (exercise?.engine?.content.max_rounds || roundLimit) && <button className="secondary-button" onClick={() => { setRoundLimit(value => Math.min(value + 6, exercise?.engine?.content.max_rounds || value)); setRound(value => value + 1); void beginRound(); }}>{t("screen.SensoryGame.ui46")}</button>}{phase === "resolved" && <button className="primary-button" onClick={next}>{round === difficulty.rounds ? t("screen.SensoryGame.ui47") : t("screen.SensoryGame.ui48")}<ChevronRight size={17}/></button>}</div>}
+          <div className="score-dots" role="progressbar" aria-label={t("screen.SensoryGame.ui49")} aria-valuemin={1} aria-valuemax={difficulty.rounds} aria-valuenow={round} aria-valuetext={t("shell.template25", { v0: round, v1: difficulty.rounds })}>{Array.from({length:difficulty.rounds},(_,index)=>index+1).map((value) => <span key={value} className={value < round || (value === round && phase === "resolved") ? "filled" : ""}/>)}</div>
         </>}
-        <div className="sensory-stop-actions" aria-label="Остановить упражнение"><button className="small-button" onClick={() => void stopExercise("break")}><Pause size={16}/> Перерыв</button><button className="small-button" onClick={() => void stopExercise("refused")}><CircleX size={16}/> Не хочу</button></div>
+        <div className="sensory-stop-actions" aria-label={t("screen.SensoryGame.ui50")}><button className="small-button" onClick={() => void stopExercise("break")}><Pause size={16}/>  {t("screen.SensoryGame.ui51")}</button><button className="small-button" onClick={() => void stopExercise("refused")}><CircleX size={16}/>  {t("screen.SensoryGame.ui52")}</button></div>
       </div>
     </div>
   );
@@ -1855,7 +1867,7 @@ function PhraseGame({ childId, canManage, exercise, freeMode = false, soundEnabl
   const speechLifetime = useRef(0);
   useEffect(() => () => { speechLifetime.current += 1; stopCurrentSpeech(); }, [childId]);
   const composition = composeAACMessage(selected, freeMode ? "free" : "guided", languageOf(getLocale()));
-  const sentence = composition.valid ? composition.phrase : selected.map((item) => item.label).join(" + ");
+  const sentence = composition.valid ? composition.phrase : selected.map(scenarioCardLabel).join(" + ");
   const boardRequest = useRef(0);
   const loadBoard = useCallback(() => {
     const requestId = ++boardRequest.current;
@@ -1875,9 +1887,9 @@ function PhraseGame({ childId, canManage, exercise, freeMode = false, soundEnabl
   const normalizedCardQuery = cardQuery.trim().toLocaleLowerCase(aacLocale);
   const scenario = !freeMode && exercise ? exercise.engine?.content : undefined;
   const scenarioLabels = scenario?.labels?.length ? new Set(scenario.labels) : null;
-  const selectedLabels = selected.map((card) => card.label);
+  const selectedLabels = selected.map(scenarioCardLabel);
   const scenarioEvaluation = evaluateAACScenario(scenario, selectedLabels);
-  const canAddGuidedCard = (card: AACCard) => freeMode || canAddAACScenarioCard(scenario, selectedLabels, card.label);
+  const canAddGuidedCard = (card: AACCard) => freeMode || canAddAACScenarioCard(scenario, selectedLabels, scenarioCardLabel(card));
   const composerHint = freeMode
     ? selected.length
       ? composition.valid ? t("aac.copy000") : composition.reason
@@ -1885,7 +1897,7 @@ function PhraseGame({ childId, canManage, exercise, freeMode = false, soundEnabl
     : selected.length && !composition.valid
       ? composition.reason
       : scenarioEvaluation.hint;
-  const availableCards = scenarioLabels ? cards.filter((card) => scenarioLabels.has(card.label)) : cards;
+  const availableCards = scenarioLabels ? cards.filter((card) => scenarioLabels.has(scenarioCardLabel(card))) : cards;
   const visibleCards = (freeMode ? (category === "favorites" ? availableCards.filter((card) => card.favorite || card.is_core) : availableCards.filter((card) => card.category === category)) : availableCards).filter((card) => !normalizedCardQuery || `${card.label} ${card.speech}`.toLocaleLowerCase(aacLocale).includes(normalizedCardQuery));
   const safetyCards = ["Помоги", "Перерыв", "Стоп", "Не хочу"].flatMap((label) => scenarioLabels?.has(label) ? [] : cards.find((card) => card.label === label || card.concept_key === aacSafetyConcepts[label]) || []);
   const addCard = (card: AACCard) => {
@@ -2019,45 +2031,11 @@ function PhraseGame({ childId, canManage, exercise, freeMode = false, soundEnabl
   </div>;
 }
 
-function ProgressScreen({ childId, dashboard, onStartPractice }: { childId?: number; dashboard: Dashboard | null; onStartPractice: () => void }) {
-  const [data, setData] = useState<{ child?: Child; overall: number; total_sessions: number; skill_progress: SkillProgress[] } | null>(null);
-  const [progressError, setProgressError] = useState("");
-  const [progressReload, setProgressReload] = useState(0);
-  const [progressLoading, setProgressLoading] = useState(true);
-  useEffect(() => {
-    if (!childId) return;
-    api<typeof data>(`/api/progress/${childId}`).then((value) => { setData(value); setProgressError(""); }).catch((cause) => {
-      setProgressError(cause instanceof Error ? cause.message : "Не удалось загрузить историю практики");
-    }).finally(() => setProgressLoading(false));
-  }, [childId, progressReload]);
-  const skillColors = ["coral", "blue", "mint", "lavender", "coral", "blue"];
-  const skills = (data?.skill_progress || dashboard?.skill_progress || []).map((skill, index) => ({ ...skill, color: skillColors[index] }));
-  const chartDays = dashboard?.daily || [];
-  const daysWithData = chartDays.filter((point) => point.sensory !== null).length;
-  const chartCoordinates = (module: ModuleName) => chartDays.flatMap((point, index) => point[module] === null ? [] : [{ x: index * (700 / 6), y: 205 - Number(point[module]) * 1.7 }]);
-  const chartPoints = (module: ModuleName) => chartCoordinates(module).map((point) => `${point.x},${point.y}`).join(" ");
-  const totalSessions = dashboard?.total_sessions ?? data?.total_sessions ?? 0;
-  if (progressLoading && !data && !dashboard) return <div className="page-enter progress-loading-state" role="status"><Timer size={28}/><strong>Загружаем историю практики…</strong></div>;
-  if (!progressError && totalSessions === 0) return <div className="page-enter progress-empty-page"><PageTitle eyebrow="ИСТОРИЯ ПРАКТИКИ" title={`Занятия ${data?.child?.name || "ребёнка"}`} subtitle="Здесь появятся наблюдения после первых сохранённых занятий."/><section><span><BarChart3 size={34}/></span><h2>Пока недостаточно наблюдений</h2><p>Начните с одного короткого занятия. Söyle покажет участие и использованную помощь без диагноза и сравнения с другими детьми.</p><button className="primary-button" onClick={onStartPractice}><Play size={19} fill="currentColor"/> Выбрать занятие</button></section></div>;
-  return (
-    <div className="page-enter stack-xl progress-page">
-      {progressError && <div className="game-error" role="alert"><ShieldAlert size={18}/><span>{progressError}</span><button type="button" className="small-button" onClick={() => { setProgressLoading(true); setProgressReload((value) => value + 1); }}>Повторить</button></div>}
-      <section className="progress-hero"><div><span className="kicker">ИСТОРИЯ ПРАКТИКИ</span><h1>{`Занятия ${data?.child?.name || "ребёнка"}`}</h1><p>Процент справа означает только охват доступных заданий. Результаты игр, участие и помощь показываются отдельно и не оценивают развитие речи.</p></div><div className="progress-hero-score"><strong>{dashboard?.overall ?? data?.overall ?? 0}%</strong><span>охват заданий попытками</span></div></section>
-      <div className="stats-row"><StatCard icon={<TrendingUp/>} value={`${dashboard?.overall ?? data?.overall ?? 0}%`} label="охват доступных заданий" /><StatCard icon={<Timer/>} value={String(dashboard?.total_minutes || 0)} label="минут практики" /><StatCard icon={<Star/>} value={String(dashboard?.stars || 0)} label="звёзд за игры" /><StatCard icon={<Target/>} value={String(dashboard?.total_sessions ?? data?.total_sessions ?? 0)} label="игровых попыток" /></div>
-      <div className="progress-grid">
-        <section className="chart-card"><div className="card-heading"><div><span className="kicker">ИГРОВЫЕ ПОПЫТКИ</span><h3>Ответы в заданиях на слух за 7 дней</h3></div></div><div className="chart-area"><div className="chart-lines"><i/><i/><i/><i/></div>{daysWithData ? <><svg viewBox="0 0 700 230" preserveAspectRatio="none" aria-label="График ответов в заданиях на слух">{daysWithData >= 3 && <polyline points={chartPoints("sensory")} className="line blue-line"/>}{chartCoordinates("sensory").map((point, index) => <circle key={`sensory-${index}`} cx={point.x} cy={point.y} r="6" className="chart-point sensory-point"/>)}</svg>{daysWithData < 3 && <div className="chart-sparse-note">Пока есть результаты за {daysWithData === 1 ? "один день" : "два дня"}. Это история конкретной игры, а не оценка понимания речи.</div>}</> : <div className="chart-empty">Завершите задание на слух - здесь появится история ответов</div>}<div className="chart-labels">{chartDays.map((point) => <span key={point.date}>{point.label}</span>)}</div></div><div className="legend"><span><i className="blue-dot"/>Доля правильных выборов в игре</span></div></section>
-        <section className="skills-card"><span className="kicker">ПРАКТИКА ПО НАПРАВЛЕНИЯМ</span><h3>Игровые ответы и участие</h3>{skills.length ? skills.map((skill) => <div className="skill" key={skill.skill}><div><span>{skill.label}<small>{skill.average_game_score !== null ? `среднее по ${skill.sessions} игровым попыткам` : skill.participations ? "отмечено участие без оценки правильности" : "ещё нет попыток"}</small></span><strong>{skill.average_game_score !== null ? `${skill.average_game_score}% в игре` : `${skill.participations} участий`}</strong></div></div>) : <div className="empty-state">Завершите первое игровое задание - здесь появится история.</div>}<div className="insight-note"><ShieldCheck size={19}/><p>Локальный анализ учитывает последние результаты с повышенным весом свежих ответов, но не оценивает развитие речи и не ставит диагноз.</p></div></section>
-      </div>
-      <P1ResultsSummary childId={childId}/>
-      <section className="achievements"><div className="section-heading"><div><span className="kicker">ДОСТИЖЕНИЯ</span><h2>Значки за практику</h2></div></div><div className="badges"><Badge icon={<Star/>} title="Первая пятёрка" text="5 игровых попыток" unlocked={dashboard?.achievements.first_five}/><Badge icon={<Ear/>} title="Чуткое ушко" text="5 заданий на понимание" unlocked={dashboard?.achievements.good_listener}/><Badge icon={<MessageCircle/>} title="Мастер фраз" text="5 игр с фразами" unlocked={dashboard?.achievements.phrase_master}/><Badge icon={<Trophy/>} title="Неделя практики" text="7 дней с практикой" unlocked={dashboard?.achievements.week_streak}/></div></section>
-    </div>
-  );
-}
 
 function StatCard({ icon, value, label }: { icon: React.ReactNode; value: string; label: string }) { return <div className="stat-card"><span>{icon}</span><div><strong>{value}</strong><small>{label}</small></div></div>; }
-function Badge({ icon, title, text, unlocked = false }: { icon: React.ReactNode; title: string; text: string; unlocked?: boolean }) { return <div className={`badge-card ${unlocked ? "unlocked" : "locked"}`}><span>{unlocked ? icon : <LockKeyhole/>}</span><div><strong>{title}</strong><small>{unlocked ? "Получено" : text}</small></div></div>; }
 
 function AIParentScreen({ child }: { child?: Child }) {
+  useLocale();
   const [question, setQuestion] = useState("");
   const [submittedQuestion, setSubmittedQuestion] = useState("");
   const [answer, setAnswer] = useState<AIAnswer | null>(null);
@@ -2065,9 +2043,9 @@ function AIParentScreen({ child }: { child?: Child }) {
   const [error, setError] = useState("");
   const questionRef = useRef<HTMLTextAreaElement>(null);
   const quickQuestions = [
-    { title: "Мягко начать занятие", question: "Как мягко начать короткое занятие без давления?" },
-    { title: "Ребёнок отказывается", question: "Что делать, если ребёнок отказывается от занятия?" },
-    { title: "AAC дома", question: "Как использовать AAC-карточки в обычных домашних ситуациях?" },
+    { title: t("screen.AIParentScreen.ui1"), question: t("screen.AIParentScreen.ui2") },
+    { title: t("screen.AIParentScreen.ui3"), question: t("screen.AIParentScreen.ui4") },
+    { title: t("screen.AIParentScreen.ui5"), question: t("screen.AIParentScreen.ui6") },
   ];
   const ask = async (event?: React.FormEvent, preparedQuestion?: string) => {
     event?.preventDefault();
@@ -2076,7 +2054,7 @@ function AIParentScreen({ child }: { child?: Child }) {
     setSubmittedQuestion(value); setQuestion(""); setLoading(true); setError(""); setAnswer(null);
     try {
       setAnswer(await api<AIAnswer>(`/api/ai/ask/${child.id}`, { method: "POST", body: JSON.stringify({ question: value }) }));
-    } catch (cause) { setQuestion(value); setError(cause instanceof Error ? cause.message : "Не удалось получить ответ"); }
+    } catch (cause) { setQuestion(value); setError(cause instanceof Error ? cause.message : t("screen.AIParentScreen.ui7")); }
     finally { setLoading(false); }
   };
   const chooseQuestion = (value: string) => {
@@ -2092,44 +2070,44 @@ function AIParentScreen({ child }: { child?: Child }) {
   };
   return <div className="page-enter ai-parent-page redesigned-ai">
     <header className="ai-page-heading">
-      <div className="ai-page-title"><span className="ai-mark"><Bot size={24}/></span><div><span className="kicker">ЛОКАЛЬНЫЙ ПОМОЩНИК · ПРАВИЛА</span><h1>Спокойно разберём ситуацию</h1><p>Короткие подсказки выбираются внутри Söyle по прозрачным правилам, без внешней AI API. Решение всегда остаётся за вами.</p></div></div>
-      <span className="ai-status ready"><i/>Работает локально</span>
+      <div className="ai-page-title"><span className="ai-mark"><Bot size={24}/></span><div><span className="kicker">{t("screen.AIParentScreen.ui8")}</span><h1>{t("screen.AIParentScreen.ui9")}</h1><p>{t("screen.AIParentScreen.ui10")}</p></div></div>
+      <span className="ai-status ready"><i/>{t("screen.AIParentScreen.ui11")}</span>
     </header>
 
     <div className="ai-chat-layout">
-      <aside className="ai-prompt-panel" aria-label="Готовые вопросы">
-        <div><span className="kicker">С ЧЕГО НАЧАТЬ</span><h2>Готовые вопросы</h2><p>Выберите тему - вопрос появится в поле, и его можно изменить перед отправкой.</p></div>
+      <aside className="ai-prompt-panel" aria-label={t("screen.AIParentScreen.ui12")}>
+        <div><span className="kicker">{t("screen.AIParentScreen.ui13")}</span><h2>{t("screen.AIParentScreen.ui12")}</h2><p>{t("screen.AIParentScreen.ui14")}</p></div>
         <div className="ai-quick-questions">{quickQuestions.map((item) => <button type="button" key={item.title} onClick={() => chooseQuestion(item.question)}><span><MessageCircle size={17}/></span><strong>{item.title}</strong><ChevronRight size={16}/></button>)}</div>
-        <div className="ai-privacy-note"><ShieldCheck size={18}/><div><strong>Без внешней отправки данных</strong><span>Вопрос обрабатывается локальными правилами приложения и не передаётся поставщику модели.</span></div></div>
-        <div className="ai-limits"><strong>Что умеет помощник</strong><ul><li>Объясняет результаты простыми словами</li><li>Предлагает короткие безопасные шаги</li><li>Помогает использовать AAC дома</li></ul><small>Не ставит диагноз и не заменяет специалиста.</small></div>
+        <div className="ai-privacy-note"><ShieldCheck size={18}/><div><strong>{t("screen.AIParentScreen.ui15")}</strong><span>{t("screen.AIParentScreen.ui16")}</span></div></div>
+        <div className="ai-limits"><strong>{t("screen.AIParentScreen.ui17")}</strong><ul><li>{t("screen.AIParentScreen.ui18")}</li><li>{t("screen.AIParentScreen.ui19")}</li><li>{t("screen.AIParentScreen.ui20")}</li></ul><small>{t("screen.AIParentScreen.ui21")}</small></div>
       </aside>
 
-      <section className="ai-conversation" aria-label="Диалог с локальным помощником Söyle">
-        <div className="ai-conversation-head"><div><span className="ai-mini-avatar"><Bot size={18}/></span><span><strong>Локальный помощник</strong><small>Ответы основаны на заранее заданных безопасных правилах</small></span></div>{(answer || submittedQuestion) && <button type="button" className="ai-new-chat" onClick={resetConversation} disabled={loading}><Plus size={16}/>Новый вопрос</button>}</div>
+      <section className="ai-conversation" aria-label={t("screen.AIParentScreen.ui22")}>
+        <div className="ai-conversation-head"><div><span className="ai-mini-avatar"><Bot size={18}/></span><span><strong>{t("screen.AIParentScreen.ui23")}</strong><small>{t("screen.AIParentScreen.ui24")}</small></span></div>{(answer || submittedQuestion) && <button type="button" className="ai-new-chat" onClick={resetConversation} disabled={loading}><Plus size={16}/>{t("screen.AIParentScreen.ui25")}</button>}</div>
 
         <div className={`ai-thread ${!answer && !loading ? "empty" : ""}`} aria-live="polite" aria-busy={loading}>
-          {!answer && !loading && !submittedQuestion && <div className="ai-welcome"><span><Bot size={28}/></span><h2>Чем помочь сегодня?</h2><p>Опишите одну конкретную ситуацию. Чем проще вопрос, тем понятнее будет ответ.</p><div><ShieldCheck size={16}/> Ответ не является медицинской рекомендацией</div></div>}
+          {!answer && !loading && !submittedQuestion && <div className="ai-welcome"><span><Bot size={28}/></span><h2>{t("screen.AIParentScreen.ui26")}</h2><p>{t("screen.AIParentScreen.ui27")}</p><div><ShieldCheck size={16}/>  {t("screen.AIParentScreen.ui28")}</div></div>}
 
-          {submittedQuestion && <div className="ai-message user-message"><small>Вы</small><p>{submittedQuestion}</p></div>}
+          {submittedQuestion && <div className="ai-message user-message"><small>{t("screen.AIParentScreen.ui29")}</small><p>{submittedQuestion}</p></div>}
 
-          {loading && <div className="ai-message assistant-message ai-thinking" role="status"><div className="ai-message-meta"><span><Bot size={16}/></span><strong>Локальный помощник</strong></div><div className="ai-thinking-row"><i/><i/><i/><span>Подбираю подходящее правило…</span></div></div>}
+          {loading && <div className="ai-message assistant-message ai-thinking" role="status"><div className="ai-message-meta"><span><Bot size={16}/></span><strong>{t("screen.AIParentScreen.ui23")}</strong></div><div className="ai-thinking-row"><i/><i/><i/><span>{t("screen.AIParentScreen.ui30")}</span></div></div>}
 
           {answer && <article className="ai-message assistant-message ai-answer-card">
-            <div className="ai-message-meta"><span><Bot size={16}/></span><div><strong>Локальный помощник</strong><small>Ответ по проверяемым правилам · без внешней API</small></div></div>
+            <div className="ai-message-meta"><span><Bot size={16}/></span><div><strong>{t("screen.AIParentScreen.ui23")}</strong><small>{t("screen.AIParentScreen.ui31")}</small></div></div>
             {answer.provider_message && <div className="inline-error ai-provider-error" role="status"><ShieldAlert size={17} aria-hidden="true"/><span>{answer.provider_message}</span></div>}
             <p className="ai-answer-text">{answer.answer}</p>
-            {answer.suggested_actions.length > 0 && <div className="ai-action-plan"><strong>Что можно попробовать</strong><ol>{answer.suggested_actions.map((item, index) => <li key={item}><span>{index + 1}</span><p>{item}</p></li>)}</ol></div>}
+            {answer.suggested_actions.length > 0 && <div className="ai-action-plan"><strong>{t("screen.AIParentScreen.ui32")}</strong><ol>{answer.suggested_actions.map((item, index) => <li key={item}><span>{index + 1}</span><p>{item}</p></li>)}</ol></div>}
             <div className={answer.needs_professional_help ? "ai-safety warning" : "ai-safety"}><ShieldCheck size={18} aria-hidden="true"/><span>{answer.safety_note}</span></div>
             <small className="ai-disclaimer">{answer.disclaimer}</small>
-            <div className="ai-answer-actions"><button type="button" onClick={() => void ask(undefined, submittedQuestion)} disabled={loading}><RotateCcw size={15}/>Получить другой ответ</button><button type="button" onClick={resetConversation}><Plus size={15}/>Спросить ещё</button></div>
+            <div className="ai-answer-actions"><button type="button" onClick={() => void ask(undefined, submittedQuestion)} disabled={loading}><RotateCcw size={15}/>{t("screen.AIParentScreen.ui33")}</button><button type="button" onClick={resetConversation}><Plus size={15}/>{t("screen.AIParentScreen.ui34")}</button></div>
           </article>}
         </div>
 
         {error && <div className="inline-error ai-chat-error" role="alert"><CircleAlert size={17}/><span>{error}</span></div>}
         <form className="ai-composer" onSubmit={ask}>
-          <label className="sr-only" htmlFor="ai-parent-question">Вопрос для локального помощника Söyle</label>
-          <textarea id="ai-parent-question" ref={questionRef} value={question} onChange={(event) => setQuestion(event.target.value)} minLength={3} maxLength={600} rows={2} placeholder="Опишите ситуацию или задайте вопрос…"/>
-          <div className="ai-composer-footer"><span>{question.length}/600 · Не указывайте личные данные</span><button className="primary-button" aria-label="Отправить вопрос" disabled={loading || question.trim().length < 3}><ArrowUp size={19}/><span>Отправить</span></button></div>
+          <label className="sr-only" htmlFor="ai-parent-question">{t("screen.AIParentScreen.ui35")}</label>
+          <textarea id="ai-parent-question" ref={questionRef} value={question} onChange={(event) => setQuestion(event.target.value)} minLength={3} maxLength={600} rows={2} placeholder={t("screen.AIParentScreen.ui36")}/>
+          <div className="ai-composer-footer"><span>{question.length}{t("screen.AIParentScreen.ui37")}</span><button className="primary-button" aria-label={t("screen.AIParentScreen.ui38")} disabled={loading || question.trim().length < 3}><ArrowUp size={19}/><span>{t("screen.AIParentScreen.ui39")}</span></button></div>
         </form>
       </section>
     </div>
@@ -2137,29 +2115,32 @@ function AIParentScreen({ child }: { child?: Child }) {
 }
 
 function ChildMoreScreen({ onOpen }: { onOpen: (screen: Screen) => void }) {
+  useLocale();
   const items: Array<{ screen: Screen; title: string; text: string; icon: LucideIcon; image: string }> = [
-    { screen: "world", title: "Мой мир", text: "Знакомые фотографии и вещи", icon: ImageIcon, image: "/app-illustrations/more-world.webp" },
-    { screen: "skills", title: "Навыки", text: "Мои сохранённые шаги", icon: BarChart3, image: "/app-illustrations/more-skills.webp" },
-    { screen: "achievements", title: "Достижения", text: "Истории, задания и звёзды", icon: Trophy, image: "/app-illustrations/more-achievements.webp" },
-    { screen: "settings", title: "Настройки", text: "Звук и спокойный режим", icon: Settings, image: "/app-illustrations/more-settings.webp" },
+    { screen: "world", title: t("screen.ChildMoreScreen.ui1"), text: t("screen.ChildMoreScreen.ui2"), icon: ImageIcon, image: "/app-illustrations/more-world.webp" },
+    { screen: "skills", title: t("screen.ChildMoreScreen.ui3"), text: t("screen.ChildMoreScreen.ui4"), icon: BarChart3, image: "/app-illustrations/more-skills.webp" },
+    { screen: "achievements", title: t("screen.ChildMoreScreen.ui5"), text: t("screen.ChildMoreScreen.ui6"), icon: Trophy, image: "/app-illustrations/more-achievements.webp" },
+    { screen: "settings", title: t("screen.ChildMoreScreen.ui7"), text: t("screen.ChildMoreScreen.ui8"), icon: Settings, image: "/app-illustrations/more-settings.webp" },
   ];
-  return <div className="v2-screen v2-child-more page-enter"><header className="v2-page-heading"><Image src="/app-illustrations/more-hero.webp" alt="" fill unoptimized sizes="(max-width: 760px) 100vw, 1190px"/><span className="v2-child-more-heading-copy"><span className="v2-kicker">ТВОИ РАЗДЕЛЫ</span><h1>Ещё</h1><p>Твои фотографии, навыки и достижения — всё в одном месте.</p></span></header><div className="v2-child-more-grid">{items.map((item) => { const Icon = item.icon; return <button type="button" key={item.screen} onClick={() => onOpen(item.screen)}><span className="v2-child-more-icon"><Icon aria-hidden="true"/></span><span className="v2-child-more-copy"><strong>{item.title}</strong><small>{item.text}</small><span className="v2-child-more-arrow"><ChevronRight aria-hidden="true"/></span></span><span className="v2-child-more-art"><Image src={item.image} alt="" fill unoptimized sizes="(max-width: 760px) 115px, 150px"/></span></button>; })}</div></div>;
+  return <div className="v2-screen v2-child-more page-enter"><header className="v2-page-heading"><Image src="/app-illustrations/more-hero.webp" alt="" fill unoptimized sizes="(max-width: 760px) 100vw, 1190px"/><span className="v2-child-more-heading-copy"><span className="v2-kicker">{t("screen.ChildMoreScreen.ui9")}</span><h1>{t("screen.ChildMoreScreen.ui10")}</h1><p>{t("screen.ChildMoreScreen.ui11")}</p></span></header><div className="v2-child-more-grid">{items.map((item) => { const Icon = item.icon; return <button type="button" key={item.screen} onClick={() => onOpen(item.screen)}><span className="v2-child-more-icon"><Icon aria-hidden="true"/></span><span className="v2-child-more-copy"><strong>{item.title}</strong><small>{item.text}</small><span className="v2-child-more-arrow"><ChevronRight aria-hidden="true"/></span></span><span className="v2-child-more-art"><Image src={item.image} alt="" fill unoptimized sizes="(max-width: 760px) 115px, 150px"/></span></button>; })}</div></div>;
 }
 
 function ParentMoreScreen({ onOpen }: { onOpen: (screen: Screen) => void }) {
+  useLocale();
   const items: Array<{ screen: Screen; title: string; text: string; icon: LucideIcon }> = [
-    { screen: "goals", title: "Цели и занятия", text: "Индивидуальные цели, предпочтения и короткие планы", icon: Target },
-    { screen: "ai", title: "Локальный помощник", text: "Безопасные подсказки по прозрачным правилам", icon: Bot },
-    { screen: "parent", title: "Профиль ребёнка и данные", text: "Детский вход, согласия, экспорт и удаление", icon: UserRound },
-    { screen: "settings", title: "Настройки", text: "Камера, звук, язык и оформление", icon: Settings },
-    { screen: "profile", title: "Мой аккаунт", text: "Информация о текущем профиле", icon: CircleUserRound },
+    { screen: "goals", title: t("screen.ParentMoreScreen.ui1"), text: t("screen.ParentMoreScreen.ui2"), icon: Target },
+    { screen: "ai", title: t("screen.ParentMoreScreen.ui3"), text: t("screen.ParentMoreScreen.ui4"), icon: Bot },
+    { screen: "parent", title: t("screen.ParentMoreScreen.ui5"), text: t("screen.ParentMoreScreen.ui6"), icon: UserRound },
+    { screen: "settings", title: t("screen.ParentMoreScreen.ui7"), text: t("screen.ParentMoreScreen.ui8"), icon: Settings },
+    { screen: "profile", title: t("screen.ParentMoreScreen.ui9"), text: t("screen.ParentMoreScreen.ui10"), icon: CircleUserRound },
   ];
-  return <div className="page-enter parent-more-page"><PageTitle eyebrow="ЕЩЁ" title="Управление и поддержка" subtitle="Разделы, которые нужны не каждый день."/><div className="parent-more-grid">{items.map((item) => { const Icon = item.icon; return <button key={item.screen} aria-label={item.title} onClick={() => onOpen(item.screen)}><span><Icon size={25}/></span><div><strong>{item.title}</strong><small>{item.text}</small></div><ChevronRight size={23}/></button>; })}</div></div>;
+  return <div className="page-enter parent-more-page"><PageTitle eyebrow={t("screen.ParentMoreScreen.ui11")} title={t("screen.ParentMoreScreen.ui12")} subtitle={t("screen.ParentMoreScreen.ui13")}/><div className="parent-more-grid">{items.map((item) => { const Icon = item.icon; return <button key={item.screen} aria-label={item.title} onClick={() => onOpen(item.screen)}><span><Icon size={25}/></span><div><strong>{item.title}</strong><small>{item.text}</small></div><ChevronRight size={23}/></button>; })}</div></div>;
 }
 
-const parentSections = [{id: "overview", label: "Обзор"}, {id: "practice", label: "Практика"}, {id: "specialist", label: "Специалист"}, {id: "materials", label: "Материалы"}, {id: "access", label: "Доступ и данные"}] as const;
+const parentSections = [{id: "overview", get label() { return t("cabinet.overview"); }}, {id: "practice", get label() { return t("cabinet.practice"); }}, {id: "specialist", get label() { return t("cabinet.specialist"); }}, {id: "materials", get label() { return t("cabinet.materials"); }}, {id: "access", get label() { return t("cabinet.access"); }}] as const;
 
 function ParentScreen({ child, childProfiles, onSelectChild, onDeleted, dashboard, onConsentChange, onNavigate, onStartPlan }: { child?: Child; childProfiles: Child[]; onSelectChild: (id: number) => void; onDeleted: (id: number) => void; dashboard: Dashboard | null; onConsentChange: (consent: ChildConsent) => void; onNavigate: (screen: Screen) => void; onStartPlan: (plan: AdaptivePlan) => Promise<void> }) {
+  useLocale();
   const [section, navigate] = useCabinetSection("parent", parentSections);
   const [student, setStudent] = useState<{ username: string } | null>(null);
   const [studentForm, setStudentForm] = useState({ username: "", pin: "" });
@@ -2175,11 +2156,11 @@ function ParentScreen({ child, childProfiles, onSelectChild, onDeleted, dashboar
     let active = true;
     api<ChildConsent>(`/api/children/${child.id}/consent`).then((value) => { if (active) { setConsent(value); onConsentChange(value); setConsentReady(true); } }).catch((cause) => {
       if (!active) return;
-      setDataMessage(cause instanceof Error ? `Не удалось загрузить разрешения: ${cause.message}` : "Не удалось загрузить разрешения");
+      setDataMessage(cause instanceof Error ? t("screen.ParentScreen.template1", {v0: cause.message}) : t("screen.ParentScreen.ui1"));
     });
     api<{ username: string } | null>(`/api/children/${child.id}/student-account`).then((value) => { if (!active) return; setStudent(value); if (value) setStudentForm((current) => ({ ...current, username: value.username })); }).catch((cause) => {
       if (!active) return;
-      setAccountMessage(cause instanceof Error ? `Не удалось загрузить детский вход: ${cause.message}` : "Не удалось загрузить детский вход");
+      setAccountMessage(cause instanceof Error ? t("screen.ParentScreen.template2", {v0: cause.message}) : t("screen.ParentScreen.ui2"));
     });
     return () => { active = false; };
   }, [child?.id, onConsentChange]);
@@ -2188,8 +2169,8 @@ function ParentScreen({ child, childProfiles, onSelectChild, onDeleted, dashboar
     if (!child) return;
     try {
       const result = await api<{ username: string }>(`/api/children/${child.id}/student-account`, { method: "POST", body: JSON.stringify(studentForm) });
-      setStudent(result); setStudentForm((current) => ({ ...current, pin: "" })); setAccountMessage("Логин и PIN сохранены");
-    } catch (cause) { setAccountMessage(cause instanceof Error ? cause.message : "Не удалось сохранить"); }
+      setStudent(result); setStudentForm((current) => ({ ...current, pin: "" })); setAccountMessage(t("screen.ParentScreen.ui3"));
+    } catch (cause) { setAccountMessage(cause instanceof Error ? cause.message : t("screen.ParentScreen.ui4")); }
   };
   const exportData = async () => {
     if (!child) return;
@@ -2202,64 +2183,65 @@ function ParentScreen({ child, childProfiles, onSelectChild, onDeleted, dashboar
     setConsentSaving(true); setDataMessage("");
     try {
       const value = await api<ChildConsent>(`/api/children/${child.id}/consent`, { method: "PUT", body: JSON.stringify({ privacy_accepted: consent.privacy_accepted, camera_processing: consent.camera_processing, ai_processing: false, analytics_processing: consent.analytics_processing, specialist_sharing: Boolean(consent.specialist_sharing) }) });
-      setConsent(value); onConsentChange(value); setDataMessage("Настройки приватности сохранены");
-    } catch (cause) { setDataMessage(cause instanceof Error ? cause.message : "Не удалось сохранить настройки"); }
+      setConsent(value); onConsentChange(value); setDataMessage(t("screen.ParentScreen.ui5"));
+    } catch (cause) { setDataMessage(cause instanceof Error ? cause.message : t("screen.ParentScreen.ui6")); }
     finally { setConsentSaving(false); }
   };
   const deleteData = async (event: React.FormEvent) => {
     event.preventDefault(); if (!child) return; setDataMessage("");
     try { await api(`/api/children/${child.id}`, { method: "DELETE", body: JSON.stringify({ password: deletePassword }) }); onDeleted(child.id); }
-    catch (cause) { setDataMessage(cause instanceof Error ? cause.message : "Не удалось удалить данные"); }
+    catch (cause) { setDataMessage(cause instanceof Error ? cause.message : t("screen.ParentScreen.ui7")); }
   };
   const age = child ? (() => { const born = new Date(child.birth_date); const now = new Date(); let years = now.getFullYear() - born.getFullYear(); if (now.getMonth() < born.getMonth() || (now.getMonth() === born.getMonth() && now.getDate() < born.getDate())) years -= 1; return Math.max(0, years); })() : 0;
-  const sessionLabels: Record<ModuleName, [LucideIcon, string]> = { motor: [Mic2, "Практика перед зеркалом"], sensory: [Ear, "Слушай и находи"], mixed: [MessageCircle, "Собери фразу"] };
+  const sessionLabels: Record<ModuleName, [LucideIcon, string]> = { motor: [Mic2, t("product.ui52")], sensory: [Ear, t("screen.ParentScreen.ui9")], mixed: [MessageCircle, t("screen.ParentScreen.ui10")] };
   return <div className="page-enter stack-xl parent-page">
-    <PageTitle eyebrow="КАБИНЕТ РОДИТЕЛЯ" title={child?.name || "Кабинет родителя"} subtitle="Практика, материалы и поддержка семьи — всё по разделам." />
+    <PageTitle eyebrow={t("screen.ParentScreen.ui11")} title={child?.name || t("nav.parent")} subtitle={t("screen.ParentScreen.ui13")} />
     <CabinetNavigation cabinet="parent" sections={parentSections} active={section} onNavigate={navigate}/>
-    {childProfiles.length > 1 && <label className="cabinet-child-picker">Профиль ребёнка<select value={child?.id || ""} onChange={event => { const url = new URL(window.location.href); url.searchParams.set("child", event.target.value); window.history.replaceState(null, "", url); onSelectChild(Number(event.target.value)); }}>{childProfiles.map(item => <option key={item.id} value={item.id}>{item.name}</option>)}</select></label>}
+    {childProfiles.length > 1 && <label className="cabinet-child-picker">{t("specialist.copy035")}<select value={child?.id || ""} onChange={event => { const url = new URL(window.location.href); url.searchParams.set("child", event.target.value); window.history.replaceState(null, "", url); onSelectChild(Number(event.target.value)); }}>{childProfiles.map(item => <option key={item.id} value={item.id}>{item.name}</option>)}</select></label>}
     <div className="cabinet-page" hidden={section !== "materials"}>
-    <nav className="v2-parent-cabinet-links" aria-label="Материалы ребёнка"><button onClick={() => onNavigate("world")}><ImageIcon/> Фотографии ребёнка <ChevronRight/></button><button onClick={() => onNavigate("aac")}><MessageCircle/> Карточки AAC <ChevronRight/></button><button onClick={() => onNavigate("progress")}><TrendingUp/> История практики <ChevronRight/></button><button onClick={() => onNavigate("goals")}><Target/> Цели и план <ChevronRight/></button></nav>
-    <section className="storybook-preview-entry"><div><span className="kicker">КОМИКС · DRAFT</span><h2>Пикник для мишки</h2><p>12 сцен: выберем игрушку, попросим помощь, устроим пикник. Выборы сохраняются; можно читать частями.</p></div><button className="primary-button" onClick={() => onNavigate("comic-preview")}><BookOpen/> Открыть комикс <ChevronRight/></button></section>
-    <section className="storybook-preview-entry"><div><span className="kicker">МАСТЕРСКАЯ ИСТОРИЙ · DRAFT</span><h2>Любимая игрушка</h2><p>Интерактивная книга: найди мишку, попроси помощь и запусти поезд. Шесть цельных иллюстрированных страниц с маленькими играми.</p></div><button className="primary-button" onClick={() => onNavigate("story-preview")}><BookOpen/> Открыть книгу с играми <ChevronRight/></button></section>
+    <nav className="v2-parent-cabinet-links" aria-label={t("screen.ParentScreen.ui15")}><button onClick={() => onNavigate("world")}><ImageIcon/>  {t("screen.ParentScreen.ui16")} <ChevronRight/></button><button onClick={() => onNavigate("aac")}><MessageCircle/>  {t("parentOverview.ui19")} <ChevronRight/></button><button onClick={() => onNavigate("progress")}><TrendingUp/>  {t("auth.history")} <ChevronRight/></button><button onClick={() => onNavigate("goals")}><Target/>  {t("landing.copy096")} <ChevronRight/></button></nav>
+    <section className="storybook-preview-entry"><div><span className="kicker">{t("screen.ParentScreen.ui20")}</span><h2>{t("screen.ParentScreen.ui21")}</h2><p>{t("screen.ParentScreen.ui22")}</p></div><button className="primary-button" onClick={() => onNavigate("comic-preview")}><BookOpen/>  {t("screen.ParentScreen.ui23")} <ChevronRight/></button></section>
+    <section className="storybook-preview-entry"><div><span className="kicker">{t("screen.ParentScreen.ui24")}</span><h2>{t("screen.ParentScreen.ui25")}</h2><p>{t("screen.ParentScreen.ui26")}</p></div><button className="primary-button" onClick={() => onNavigate("story-preview")}><BookOpen/>  {t("screen.ParentScreen.ui27")} <ChevronRight/></button></section>
     </div>
     <div className="cabinet-page" hidden={section !== "overview"}>
-    <section className="parent-cabinet-welcome"><div><span className="kicker">ВСЁ ПОД РУКОЙ</span><h2>С чего начнём сегодня?</h2><p>Продолжите практику или пригласите специалиста, чтобы вместе поддерживать ребёнка.</p></div><div className="cabinet-actions"><button className="primary-button" onClick={() => onNavigate("goals")}>Открыть цели и план <ChevronRight size={18}/></button><button className="secondary-button" onClick={() => navigate("specialist")}>Пригласить специалиста</button></div></section>
+    <section className="parent-cabinet-welcome"><div><span className="kicker">{t("screen.ParentScreen.ui28")}</span><h2>{t("screen.ParentScreen.ui29")}</h2><p>{t("screen.ParentScreen.ui30")}</p></div><div className="cabinet-actions"><button className="primary-button" onClick={() => onNavigate("goals")}>{t("screen.ParentScreen.ui31")} <ChevronRight size={18}/></button><button className="secondary-button" onClick={() => navigate("specialist")}>{t("screen.ParentScreen.ui32")}</button></div></section>
     <section className="parent-overview">
-      <div className="parent-profile"><div className="avatar large">{child?.name[0] || "Р"}</div><div><span className="kicker">ПРОФИЛЬ РЕБЁНКА</span><h2>{child?.name || "Ребёнок"}, {age} лет</h2><p>{dashboard?.total_sessions || 0} игровых попыток · {dashboard?.total_minutes || 0} минут практики</p></div></div>
-      <div className="parent-progress"><div><span>Охват доступных заданий</span><strong>{dashboard?.overall || 0}%</strong></div><div className="parent-progress-track" role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.min(dashboard?.overall || 0, 100)} aria-label={`Есть попытки по ${dashboard?.overall || 0}% доступных заданий`}><i style={{width:`${Math.min(dashboard?.overall || 0,100)}%`}}/></div><small><Activity size={15}/> {dashboard?.week_sessions || 0} занятий за неделю</small></div>
+      <div className="parent-profile"><div className="avatar large">{child?.name[0] || t("screen.ParentScreen.ui33")}</div><div><span className="kicker">{t("screen.ParentScreen.ui34")}</span><h2>{child?.name || t("auth.kid")}, {age}  {t("screen.ParentScreen.ui36")}</h2><p>{dashboard?.total_sessions || 0}  {t("screen.ParentScreen.ui37")} {dashboard?.total_minutes || 0}  {t("screen.ParentScreen.ui38")}</p></div></div>
+      <div className="parent-progress"><div><span>{t("screen.ParentScreen.ui39")}</span><strong>{dashboard?.overall || 0}%</strong></div><div className="parent-progress-track" role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.min(dashboard?.overall || 0, 100)} aria-label={t("screen.ParentScreen.template3", {v0: dashboard?.overall || 0})}><i style={{width:`${Math.min(dashboard?.overall || 0,100)}%`}}/></div><small><Activity size={15}/> {dashboard?.week_sessions || 0}  {t("landing.copy092")}</small></div>
     </section>
-    <div className="stats-row parent-stats"><StatCard icon={<Check/>} value={String(dashboard?.today_sessions || 0)} label="заданий сегодня"/><StatCard icon={<Gamepad2/>} value={String(dashboard?.week_sessions || 0)} label="заданий за неделю"/><StatCard icon={<Timer/>} value={`${dashboard?.week_minutes || 0} мин`} label="практики за неделю"/><StatCard icon={<Bot/>} value="Локально" label="адаптивный анализ"/></div>
+    <div className="stats-row parent-stats"><StatCard icon={<Check/>} value={String(dashboard?.today_sessions || 0)} label={t("screen.ParentScreen.ui41")}/><StatCard icon={<Gamepad2/>} value={String(dashboard?.week_sessions || 0)} label={t("screen.ParentScreen.ui42")}/><StatCard icon={<Timer/>} value={t("screen.ParentScreen.template4", {v0: dashboard?.week_minutes || 0})} label={t("screen.ParentScreen.ui43")}/><StatCard icon={<Bot/>} value={t("screen.ParentScreen.ui44")} label={t("screen.ParentScreen.ui45")}/></div>
     </div>
     <div className="cabinet-page" hidden={section !== "practice"}>
-    <div className="cabinet-intro"><h2>Практика в обычной жизни</h2><p>Замечайте конкретные действия ребёнка. Бытовые наблюдения хранятся отдельно от результатов игр.</p><button className="secondary-button" onClick={() => onNavigate("goals")}>Перейти к целям и плану</button></div>
-    <section className="admin-card family-support-guide"><div className="admin-card-head"><div><span className="kicker">КАК БЫТЬ РЯДОМ</span><h3>Короткая памятка для занятия</h3><p>Цель - дать ребёнку понятный способ ответить, а не добиться ответа любой ценой.</p></div></div><div><article><span>1</span><div><strong>Подготовьте</strong><p>Проверьте звук, уберите лишние раздражители и предложите выбрать длительность.</p></div></article><article><span>2</span><div><strong>Подождите</strong><p>После инструкции оставьте не меньше пяти спокойных секунд на ответ.</p></div></article><article><span>3</span><div><strong>Помогайте по одному шагу</strong><p>Сначала повторите, затем сократите выбор. Не ведите руку ребёнка без согласия.</p></div></article><article className="stop"><Pause size={18}/><div><strong>Остановитесь сразу</strong><p>«Нет», «не хочу», «перерыв», боль, усталость или заметный дискомфорт - достаточная причина завершить действие без ошибки и уговоров.</p></div></article></div></section>
+    <div className="cabinet-intro"><h2>{t("screen.ParentScreen.ui46")}</h2><p>{t("screen.ParentScreen.ui47")}</p><button className="secondary-button" onClick={() => onNavigate("goals")}>{t("screen.ParentScreen.ui48")}</button></div>
+    <section className="admin-card family-support-guide"><div className="admin-card-head"><div><span className="kicker">{t("screen.ParentScreen.ui49")}</span><h3>{t("screen.ParentScreen.ui50")}</h3><p>{t("screen.ParentScreen.ui51")}</p></div></div><div><article><span>1</span><div><strong>{t("screen.ParentScreen.ui52")}</strong><p>{t("screen.ParentScreen.ui53")}</p></div></article><article><span>2</span><div><strong>{t("screen.ParentScreen.ui54")}</strong><p>{t("screen.ParentScreen.ui55")}</p></div></article><article><span>3</span><div><strong>{t("screen.ParentScreen.ui56")}</strong><p>{t("screen.ParentScreen.ui57")}</p></div></article><article className="stop"><Pause size={18}/><div><strong>{t("screen.ParentScreen.ui58")}</strong><p>{t("screen.ParentScreen.ui59")}</p></div></article></div></section>
     {child&&<VocabularyProgress key={child.id} childId={child.id} refreshKey={dashboard?.total_sessions||0}/>}
     <FunctionalSkillMap childId={child?.id}/>
     <HomePracticeLibrary childId={child?.id}/>
-    <details className="cabinet-method-note"><summary>Как работает подбор заданий</summary>
-      <section className="recommend-card"><div className="recommend-icon"><Bot /></div><span className="kicker">ЛОКАЛЬНЫЙ АНАЛИЗ</span><h2>Подсказки для родителя</h2><p>Алгоритм собирает короткий план по последним ответам и проверенным правилам, не отправляя данные во внешнюю AI API.</p><ul><li><Check size={16}/>Учитывает 8 последних результатов</li><li><Check size={16}/>Не повторяет задания до ротации</li><li><Check size={16}/>Уважает отказ и AAC-ответ</li></ul></section>
+    <details className="cabinet-method-note"><summary>{t("screen.ParentScreen.ui60")}</summary>
+      <section className="recommend-card"><div className="recommend-icon"><Bot /></div><span className="kicker">{t("screen.ParentScreen.ui61")}</span><h2>{t("screen.ParentScreen.ui62")}</h2><p>{t("screen.ParentScreen.ui63")}</p><ul><li><Check size={16}/>{t("screen.ParentScreen.ui64")}</li><li><Check size={16}/>{t("screen.ParentScreen.ui65")}</li><li><Check size={16}/>{t("screen.ParentScreen.ui66")}</li></ul></section>
     </details>
     </div>
     <div className="cabinet-page" hidden={section !== "overview"}>
     <div className="parent-grid parent-overview-history">
-      <section className="sessions-card"><div className="card-heading"><div><span className="kicker">ПОСЛЕДНИЕ ПОПЫТКИ</span><h3>История игровых заданий</h3></div></div>{dashboard?.recent.length ? dashboard.recent.map((item) => { const SessionIcon = sessionLabels[item.module][0]; return <div className="session-row" key={item.id}><span><SessionIcon size={24}/></span><div><strong>{sessionLabels[item.module][1]}</strong><small>{new Date(item.created_at).toLocaleString("ru-RU", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}{item.attempts_count ? ` · ${item.correct_answers || 0} из ${item.attempts_count}` : ""}</small></div><b>{item.attempt_status === "technical_error" ? "Техническая ошибка" : item.attempt_status === "participated" ? "Участие отмечено" : item.attempt_status === "refused" ? "Отказ" : item.attempt_status === "break" ? "Перерыв" : `${item.score}% в игре`}</b></div>; }) : <p>Игровых попыток пока нет.</p>}</section>
+      <section className="sessions-card"><div className="card-heading"><div><span className="kicker">{t("screen.ParentScreen.ui67")}</span><h3>{t("screen.ParentScreen.ui68")}</h3></div></div>{dashboard?.recent.length ? dashboard.recent.map((item) => { const SessionIcon = sessionLabels[item.module][0]; return <div className="session-row" key={item.id}><span><SessionIcon size={24}/></span><div><strong>{sessionLabels[item.module][1]}</strong><small>{new Date(item.created_at).toLocaleString("ru-RU", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}{item.attempts_count ? t("screen.ParentScreen.template5", {v0: item.correct_answers || 0, v1: item.attempts_count}) : ""}</small></div><b>{item.attempt_status === "technical_error" ? t("specialist.copy007") : item.attempt_status === "participated" ? t("screen.ParentScreen.ui70") : item.attempt_status === "refused" ? t("specialist.copy005") : item.attempt_status === "break" ? t("specialist.copy006") : t("screen.ProgressScreen.template4", {v0: item.score})}</b></div>; }) : <p>{t("screen.ParentScreen.ui73")}</p>}</section>
     </div>
     </div>
     <div className="cabinet-page" hidden={section !== "access"}>
-    <div className="cabinet-intro"><h2>Доступ и данные ребёнка</h2><p>Управляйте детским входом, разрешениями и сохранённой историей.</p></div>
+    <div className="cabinet-intro"><h2>{t("screen.ParentScreen.ui74")}</h2><p>{t("screen.ParentScreen.ui75")}</p></div>
     <div className="parent-management-grid">
-      <section className="admin-card student-access"><div className="admin-card-head"><div><span className="kicker">ДОСТУП РЕБЁНКА</span><h3>{student ? "Изменить ученический вход" : "Создать вход для ученика"}</h3><p>Отдельный безопасный вход без электронной почты.</p></div><span className="period-pill">Только логин и PIN</span></div><form className="student-access-form" onSubmit={saveStudent}><label>Логин ученика<input value={studentForm.username} onChange={(e) => setStudentForm({...studentForm, username:e.target.value})} placeholder="Например, alikhan" pattern={"[A-Za-z0-9_.\\-]+"} minLength={3} required/></label><label>Новый PIN<input value={studentForm.pin} onChange={(e) => setStudentForm({...studentForm, pin:e.target.value.replace(/\D/g, "")})} placeholder="4-12 цифр" inputMode="numeric" minLength={4} maxLength={12} required/></label><button className="primary-button">Сохранить доступ</button></form>{accountMessage && <div className="usage-note" role="status"><Check size={18}/><p>{accountMessage}</p></div>}</section>
-      <section className="admin-card privacy-control"><div className="admin-card-head"><div><span className="kicker">ПРИВАТНОСТЬ И ДАННЫЕ</span><h3>Разрешения семьи</h3><p>Каждое необязательное разрешение включается отдельно и может быть отозвано. Адаптивный анализ работает внутри платформы и не отправляет ответы во внешнюю AI API.</p></div></div><div className="consent-options"><label><input type="checkbox" disabled={!consentReady || consentSaving} checked={consent.privacy_accepted} onChange={(e)=>setConsent(e.target.checked ? {...consent,privacy_accepted:true} : {...consent,privacy_accepted:false,camera_processing:false,ai_processing:false,analytics_processing:false,specialist_sharing:false})}/><span><b>Сохранение программы и результатов</b><small>Нужно для занятий и истории игровых попыток.</small></span></label><label className={!consent.privacy_accepted ? "disabled" : ""}><input type="checkbox" disabled={!consentReady || consentSaving || !consent.privacy_accepted} checked={consent.camera_processing} onChange={(e)=>setConsent({...consent,camera_processing:e.target.checked})}/><span><b>Локальная проверка движения камерой</b><small>Кадры анализируются только в этом браузере для проверки движения. Они не записываются, не отправляются и не используются для распознавания личности.</small></span></label><label className={!consent.privacy_accepted ? "disabled" : ""}><input type="checkbox" disabled={!consentReady || consentSaving || !consent.privacy_accepted} checked={consent.analytics_processing} onChange={(e)=>setConsent({...consent,analytics_processing:e.target.checked})}/><span><b>Описательная история и AAC</b><small>Сохраняет AAC-фразы и участие без клинических выводов.</small></span></label><label className={!consent.privacy_accepted ? "disabled" : ""}><input type="checkbox" disabled={!consentReady || consentSaving || !consent.privacy_accepted} checked={Boolean(consent.specialist_sharing)} onChange={(e)=>setConsent({...consent,specialist_sharing:e.target.checked})}/><span><b>Доступ выбранного специалиста</b><small>Только после отдельного добавления по логину. Отзыв разрешения закрывает все связи со специалистами.</small></span></label></div><div className="privacy-actions"><button className="primary-button" disabled={!consentReady || consentSaving} onClick={saveConsent}>Сохранить разрешения</button>{consent.updated_at && <small className="consent-updated">Изменено {new Date(consent.updated_at).toLocaleString("ru-RU")}</small>}</div></section>
+      <section className="admin-card student-access"><div className="admin-card-head"><div><span className="kicker">{t("screen.ParentScreen.ui76")}</span><h3>{student ? t("screen.ParentScreen.ui77") : t("screen.ParentScreen.ui78")}</h3><p>{t("screen.ParentScreen.ui79")}</p></div><span className="period-pill">{t("screen.ParentScreen.ui80")}</span></div><form className="student-access-form" onSubmit={saveStudent}><label>{t("screen.ParentScreen.ui81")}<input value={studentForm.username} onChange={(e) => setStudentForm({...studentForm, username:e.target.value})} placeholder={t("screen.ParentScreen.ui82")} pattern={"[A-Za-z0-9_.\\-]+"} minLength={3} required/></label><label>{t("screen.ParentScreen.ui83")}<input value={studentForm.pin} onChange={(e) => setStudentForm({...studentForm, pin:e.target.value.replace(/\D/g, "")})} placeholder={t("auth.pinLength")} inputMode="numeric" minLength={4} maxLength={12} required/></label><button className="primary-button">{t("screen.ParentScreen.ui85")}</button></form>{accountMessage && <div className="usage-note" role="status"><Check size={18}/><p>{accountMessage}</p></div>}</section>
+      <section className="admin-card privacy-control"><div className="admin-card-head"><div><span className="kicker">{t("screen.ParentScreen.ui86")}</span><h3>{t("screen.ParentScreen.ui87")}</h3><p>{t("screen.ParentScreen.ui88")}</p></div></div><div className="consent-options"><label><input type="checkbox" disabled={!consentReady || consentSaving} checked={consent.privacy_accepted} onChange={(e)=>setConsent(e.target.checked ? {...consent,privacy_accepted:true} : {...consent,privacy_accepted:false,camera_processing:false,ai_processing:false,analytics_processing:false,specialist_sharing:false})}/><span><b>{t("screen.ParentScreen.ui89")}</b><small>{t("screen.ParentScreen.ui90")}</small></span></label><label className={!consent.privacy_accepted ? "disabled" : ""}><input type="checkbox" disabled={!consentReady || consentSaving || !consent.privacy_accepted} checked={consent.camera_processing} onChange={(e)=>setConsent({...consent,camera_processing:e.target.checked})}/><span><b>{t("screen.ParentScreen.ui91")}</b><small>{t("screen.ParentScreen.ui92")}</small></span></label><label className={!consent.privacy_accepted ? "disabled" : ""}><input type="checkbox" disabled={!consentReady || consentSaving || !consent.privacy_accepted} checked={consent.analytics_processing} onChange={(e)=>setConsent({...consent,analytics_processing:e.target.checked})}/><span><b>{t("screen.ParentScreen.ui93")}</b><small>{t("screen.ParentScreen.ui94")}</small></span></label><label className={!consent.privacy_accepted ? "disabled" : ""}><input type="checkbox" disabled={!consentReady || consentSaving || !consent.privacy_accepted} checked={Boolean(consent.specialist_sharing)} onChange={(e)=>setConsent({...consent,specialist_sharing:e.target.checked})}/><span><b>{t("screen.ParentScreen.ui95")}</b><small>{t("screen.ParentScreen.ui96")}</small></span></label></div><div className="privacy-actions"><button className="primary-button" disabled={!consentReady || consentSaving} onClick={saveConsent}>{t("screen.ParentScreen.ui97")}</button>{consent.updated_at && <small className="consent-updated">{t("screen.ParentScreen.ui98")} {new Date(consent.updated_at).toLocaleString("ru-RU")}</small>}</div></section>
     </div>
 
-    <section className="data-control"><div><ShieldCheck/><span><strong>Данные ребёнка принадлежат семье</strong><small>Экспорт включает профиль, занятия, истории, фотографии «Моего мира», AAC-карточки, избранное и историю практики.</small></span></div><div className="data-actions"><button className="secondary-button" onClick={exportData}>Скачать данные</button><button className="small-button danger-button" onClick={() => setDeleteOpen(!deleteOpen)}>Удалить данные</button></div></section>{deleteOpen && <form className="delete-data-form" onSubmit={deleteData}><div><strong>Удалить профиль и все связанные данные?</strong><p>Действие необратимо. Введите пароль родительского аккаунта для подтверждения.</p></div><input type="password" value={deletePassword} onChange={(e)=>setDeletePassword(e.target.value)} placeholder="Пароль" required/><button className="small-button danger-button">Удалить навсегда</button></form>}{dataMessage && <div className="usage-note"><Check size={18}/><p>{dataMessage}</p></div>}
+    <section className="data-control"><div><ShieldCheck/><span><strong>{t("screen.ParentScreen.ui99")}</strong><small>{t("screen.ParentScreen.ui100")}</small></span></div><div className="data-actions"><button className="secondary-button" onClick={exportData}>{t("screen.ParentScreen.ui101")}</button><button className="small-button danger-button" onClick={() => setDeleteOpen(!deleteOpen)}>{t("screen.ParentScreen.ui102")}</button></div></section>{deleteOpen && <form className="delete-data-form" onSubmit={deleteData}><div><strong>{t("screen.ParentScreen.ui103")}</strong><p>{t("screen.ParentScreen.ui104")}</p></div><input type="password" value={deletePassword} onChange={(e)=>setDeletePassword(e.target.value)} placeholder={t("auth.password")} required/><button className="small-button danger-button">{t("screen.ParentScreen.ui106")}</button></form>}{dataMessage && <div className="usage-note"><Check size={18}/><p>{dataMessage}</p></div>}
     </div>
     <div className="cabinet-page" hidden={section !== "specialist"}>{child && <FamilySpecialistAccess key={child.id} childId={child.id} enabled={consentReady && Boolean(consent.specialist_sharing)} onManagePermissions={() => navigate("access")} onStartPlan={onStartPlan}/>}</div>
-    <div className="medical-note"><ShieldCheck size={25}/><div><strong>Söyle - помощник, а не врач</strong><p>Платформа не ставит диагноз и не заменяет занятия с логопедом или консультацию специалиста.</p></div></div>
+    <div className="medical-note"><ShieldCheck size={25}/><div><strong>{t("screen.ParentScreen.ui107")}</strong><p>{t("screen.ParentScreen.ui108")}</p></div></div>
   </div>;
 }
 
 function AdminScreen() {
+  useLocale();
   type StudentAccount = { id: number; username: string; child_name: string; parent_name: string; is_active: number | boolean };
   type UsageDaily = { date: string; requests: number; input_tokens: number; output_tokens: number; total_tokens: number; estimated_cost_usd: number };
   type UsageEvent = { id: number; actor_id: number; actor_type: "user" | "student"; actor_name: string; actor_username: string; actor_role: Role | "unknown"; child_id: number | null; child_name: string | null; provider: string; model: string; feature: string; input_tokens: number; output_tokens: number; total_tokens: number; estimated_cost_usd: number; created_at: string };
@@ -2308,7 +2290,7 @@ function AdminScreen() {
     if (results[6].status === "fulfilled") setHomeDrafts(results[6].value);
     setApiHealthy(results[7].status === "fulfilled" && results[7].value.status === "ok");
     setContentLoading(false);
-    if (results.some((result) => result.status === "rejected")) setAdminError("Часть данных не загрузилась. Проверьте соединение и повторите запрос.");
+    if (results.some((result) => result.status === "rejected")) setAdminError(t("screen.AdminScreen.ui1"));
   }, []);
   useEffect(() => {
     const timer = window.setTimeout(() => void load(), 0);
@@ -2320,13 +2302,13 @@ function AdminScreen() {
     try {
       setUsage(await api<UsageData>(`/api/admin/usage?days=${days}&limit=50`));
     } catch (error) {
-      setUsageError(error instanceof Error ? error.message : "Не удалось загрузить расход токенов");
+      setUsageError(error instanceof Error ? error.message : t("screen.AdminScreen.ui2"));
     } finally {
       setUsageLoading(false);
     }
   }, []);
-  const changeRole = async (id: number, role: Exclude<Role, "student">) => { try { await api(`/api/admin/users/${id}/role`, { method: "PATCH", body: JSON.stringify({ role }) }); await load(); } catch (cause) { setAdminError(cause instanceof Error ? cause.message : "Не удалось изменить роль"); } };
-  const toggleUser = async (item: User) => { try { await api(`/api/admin/users/${item.id}/active`, { method: "PATCH", body: JSON.stringify({ is_active: !item.is_active }) }); await load(); } catch (cause) { setAdminError(cause instanceof Error ? cause.message : "Не удалось изменить статус"); } };
+  const changeRole = async (id: number, role: Exclude<Role, "student">) => { try { await api(`/api/admin/users/${id}/role`, { method: "PATCH", body: JSON.stringify({ role }) }); await load(); } catch (cause) { setAdminError(cause instanceof Error ? cause.message : t("screen.AdminScreen.ui3")); } };
+  const toggleUser = async (item: User) => { try { await api(`/api/admin/users/${item.id}/active`, { method: "PATCH", body: JSON.stringify({ is_active: !item.is_active }) }); await load(); } catch (cause) { setAdminError(cause instanceof Error ? cause.message : t("screen.AdminScreen.ui4")); } };
   const addExercise = async (event: React.FormEvent) => {
     event.preventDefault(); setFormMessage("");
     const stimuli = form.stimuli.split("\n").map((line) => line.trim()).filter(Boolean).map((line) => {
@@ -2360,16 +2342,16 @@ function AdminScreen() {
           methodology_review_status: "pending",
         },
       }) });
-      setFormMessage(preview.valid ? "Черновик сохранён. Просмотрите его и опубликуйте, если всё подходит." : `Черновик сохранён, но требует исправлений: ${preview.errors.join("; ")}`);
+      setFormMessage(preview.valid ? t("screen.AdminScreen.ui33") : t("screen.AdminScreen.template1", { v0: preview.errors.join("; ") }));
       setForm({ title: "", objective: "", instruction: "", difficulty: 1, stimuli: "" });
       await load();
-    } catch (cause) { setFormMessage(cause instanceof Error ? cause.message : "Не удалось сохранить черновик"); }
+    } catch (cause) { setFormMessage(cause instanceof Error ? cause.message : t("screen.AdminScreen.ui34")); }
   };
   const openReview = async (versionId: number) => {
     setAdminError("");
     reviewReturnScrollRef.current = window.scrollY;
     try { setReviewWorkspace(await api<ContentReviewWorkspaceData>(`/api/admin/exercise-drafts/${versionId}/preview`)); window.scrollTo({ top: 0 }); }
-    catch (cause) { setAdminError(cause instanceof Error ? cause.message : "Не удалось открыть проверку"); }
+    catch (cause) { setAdminError(cause instanceof Error ? cause.message : t("screen.AdminScreen.ui35")); }
   };
   const closeReviewWorkspace = () => {
     setReviewWorkspace(null);
@@ -2402,71 +2384,71 @@ function AdminScreen() {
     closeHomePreview();
     await load();
   };
-  const archiveExercise = async (id: number) => { try { await api(`/api/admin/exercises/${id}`, { method: "DELETE" }); await load(); } catch (cause) { setAdminError(cause instanceof Error ? cause.message : "Не удалось архивировать задание"); } };
-  const featureLabel = (feature: string) => ({ home_practice_plan: "План занятия", parent_support_answer: "Ответ родителю" }[feature] || feature);
-  const actorRoleLabel = (role: UsageEvent["actor_role"]) => ({ parent: "родитель", student: "ученик", admin: "администратор", specialist: "специалист", unknown: "аккаунт удалён" }[role]);
-  const formatTokens = (value: number) => value.toLocaleString("ru-RU");
+  const archiveExercise = async (id: number) => { try { await api(`/api/admin/exercises/${id}`, { method: "DELETE" }); await load(); } catch (cause) { setAdminError(cause instanceof Error ? cause.message : t("screen.AdminScreen.ui36")); } };
+  const featureLabel = (feature: string) => ({ home_practice_plan: t("screen.AdminScreen.ui37"), parent_support_answer: t("screen.AdminScreen.ui38") }[feature] || feature);
+  const actorRoleLabel = (role: UsageEvent["actor_role"]) => ({ parent: t("screen.AdminScreen.ui39"), student: t("screen.AdminScreen.ui40"), admin: t("screen.AdminScreen.ui41"), specialist: t("screen.AdminScreen.ui42"), unknown: t("screen.AdminScreen.ui43") }[role]);
+  const formatTokens = (value: number) => value.toLocaleString(getLocale());
   const formatCost = (value: number) => new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", minimumFractionDigits: 4, maximumFractionDigits: 6 }).format(value);
   const maxDailyTokens = Math.max(0, ...usage.daily.map((item) => item.total_tokens));
   if (tab === "exercises" && reviewWorkspace) return <div className="page-enter admin-review-page"><ContentReviewWorkspace data={reviewWorkspace} onClose={closeReviewWorkspace} onSpeak={(text, rate) => speak(text, rate, true, reviewWorkspace.version.language || "ru", "exercise", reviewWorkspace.version.id)} onReview={reviewContent} onPublish={publishContent}/></div>;
   if (tab === "exercises" && homePreview) return <div className="page-enter admin-review-page"><HomeActivityReviewPreview activity={homePreview} onClose={closeHomePreview} onPublish={publishHomeContent}/></div>;
   return <div className="page-enter stack-xl admin-page">
-    <div className="admin-heading"><PageTitle eyebrow="УПРАВЛЕНИЕ ПЛАТФОРМОЙ" title="Админ-панель" subtitle="Проверка заданий, управление доступом и история решений."/><span className={`system-status ${apiHealthy === false ? "blocked" : ""}`}><i/> {apiHealthy === null ? "Проверяем API" : apiHealthy ? "API доступен" : "API недоступен"}</span></div>
-    {adminError && <div className="game-error" role="alert"><ShieldAlert size={18}/><span>{adminError}</span><button className="small-button" onClick={() => void load()}>Повторить</button></div>}
-    {tab === "users" && <div className="stats-row admin-stats"><StatCard icon={<Users/>} value={String(stats.users)} label="аккаунтов"/><StatCard icon={<UserRound/>} value={String(stats.children)} label="профилей детей"/><StatCard icon={<Target/>} value={String(stats.sessions)} label="сохранённых попыток"/><StatCard icon={<Gamepad2/>} value={String(stats.exercises)} label="активных заданий"/></div>}
-    <div className="admin-tabs" role="tablist" aria-label="Разделы админ-панели"><button type="button" role="tab" aria-selected={tab === "users"} className={tab === "users" ? "active" : ""} onClick={() => setTab("users")}><Users size={17}/>Пользователи</button><button type="button" role="tab" aria-selected={tab === "exercises"} className={tab === "exercises" ? "active" : ""} onClick={() => setTab("exercises")}><Gamepad2 size={17}/>Задания</button><button type="button" role="tab" aria-selected={tab === "usage"} className={tab === "usage" ? "active" : ""} onClick={() => { setTab("usage"); void loadUsage(usageDays); }}><BarChart3 size={17}/>Архив API</button><button type="button" role="tab" aria-selected={tab === "audit"} className={tab === "audit" ? "active" : ""} onClick={() => setTab("audit")}><ShieldCheck size={17}/>Журнал</button></div>
-    {tab === "users" && <section className="admin-card"><div className="admin-card-head"><div><span className="kicker">ДОСТУП И РОЛИ</span><h3>Взрослые аккаунты</h3><p>Роль определяет доступ к семейным и административным разделам.</p></div></div><div className="admin-table-wrap"><table className="account-table"><caption className="sr-only">Взрослые аккаунты и их права доступа</caption><thead><tr><th scope="col">Пользователь</th><th scope="col">Роль</th><th scope="col">Статус</th><th scope="col">Действие</th></tr></thead><tbody>{users.map((item) => <tr key={item.id}><td data-label="Пользователь"><b>{item.full_name}</b><small>{item.email}</small></td><td data-label="Роль"><select aria-label={`Роль пользователя ${item.full_name}`} value={item.role} onChange={(e) => changeRole(item.id, e.target.value as Exclude<Role,"student">)}><option value="parent">Родитель</option><option value="specialist">Специалист</option><option value="admin">Администратор</option></select></td><td data-label="Статус"><i className={`status ${item.is_active ? "active" : "blocked"}`}>{item.is_active ? "Активен" : "Отключён"}</i></td><td data-label="Действие"><button type="button" className="small-button" onClick={() => toggleUser(item)}>{item.is_active ? "Отключить" : "Включить"}</button></td></tr>)}</tbody></table></div><div className="student-accounts"><div className="student-accounts-head"><span className="kicker">УЧЕНИЧЕСКИЕ АККАУНТЫ</span><small>{students.length} всего</small></div><div className="student-account-grid">{students.map((item) => <article key={item.id}><span className="student-icon"><Backpack/></span><div><strong>{item.child_name}</strong><small>Логин: {item.username}</small><small>Родитель: {item.parent_name}</small></div><i className="status active">Ученик</i></article>)}</div></div></section>}
+    <div className="admin-heading"><PageTitle eyebrow={t("screen.AdminScreen.ui44")} title={t("screen.AdminScreen.ui45")} subtitle={t("screen.AdminScreen.ui46")}/><span className={`system-status ${apiHealthy === false ? "blocked" : ""}`}><i/> {apiHealthy === null ? t("screen.AdminScreen.ui47") : apiHealthy ? t("screen.AdminScreen.ui48") : t("screen.AdminScreen.ui49")}</span></div>
+    {adminError && <div className="game-error" role="alert"><ShieldAlert size={18}/><span>{adminError}</span><button className="small-button" onClick={() => void load()}>{t("screen.AdminScreen.ui50")}</button></div>}
+    {tab === "users" && <div className="stats-row admin-stats"><StatCard icon={<Users/>} value={String(stats.users)} label={t("screen.AdminScreen.ui51")}/><StatCard icon={<UserRound/>} value={String(stats.children)} label={t("screen.AdminScreen.ui52")}/><StatCard icon={<Target/>} value={String(stats.sessions)} label={t("screen.AdminScreen.ui53")}/><StatCard icon={<Gamepad2/>} value={String(stats.exercises)} label={t("screen.AdminScreen.ui54")}/></div>}
+    <div className="admin-tabs" role="tablist" aria-label={t("screen.AdminScreen.ui55")}><button type="button" role="tab" aria-selected={tab === "users"} className={tab === "users" ? "active" : ""} onClick={() => setTab("users")}><Users size={17}/>{t("screen.AdminScreen.ui56")}</button><button type="button" role="tab" aria-selected={tab === "exercises"} className={tab === "exercises" ? "active" : ""} onClick={() => setTab("exercises")}><Gamepad2 size={17}/>{t("screen.AdminScreen.ui57")}</button><button type="button" role="tab" aria-selected={tab === "usage"} className={tab === "usage" ? "active" : ""} onClick={() => { setTab("usage"); void loadUsage(usageDays); }}><BarChart3 size={17}/>{t("screen.AdminScreen.ui58")}</button><button type="button" role="tab" aria-selected={tab === "audit"} className={tab === "audit" ? "active" : ""} onClick={() => setTab("audit")}><ShieldCheck size={17}/>{t("screen.AdminScreen.ui59")}</button></div>
+    {tab === "users" && <section className="admin-card"><div className="admin-card-head"><div><span className="kicker">{t("screen.AdminScreen.ui60")}</span><h3>{t("screen.AdminScreen.ui61")}</h3><p>{t("screen.AdminScreen.ui62")}</p></div></div><div className="admin-table-wrap"><table className="account-table"><caption className="sr-only">{t("screen.AdminScreen.ui63")}</caption><thead><tr><th scope="col">{t("screen.AdminScreen.ui64")}</th><th scope="col">{t("screen.AdminScreen.ui65")}</th><th scope="col">{t("screen.AdminScreen.ui66")}</th><th scope="col">{t("screen.AdminScreen.ui67")}</th></tr></thead><tbody>{users.map((item) => <tr key={item.id}><td data-label={t("screen.AdminScreen.ui64")}><b>{item.full_name}</b><small>{item.email}</small></td><td data-label={t("screen.AdminScreen.ui65")}><select aria-label={t("screen.AdminScreen.template2", { v0: item.full_name })} value={item.role} onChange={(e) => changeRole(item.id, e.target.value as Exclude<Role,"student">)}><option value="parent">{t("screen.AdminScreen.ui68")}</option><option value="specialist">{t("screen.AdminScreen.ui69")}</option><option value="admin">{t("screen.AdminScreen.ui70")}</option></select></td><td data-label={t("screen.AdminScreen.ui66")}><i className={`status ${item.is_active ? "active" : "blocked"}`}>{item.is_active ? t("screen.AdminScreen.ui71") : t("screen.AdminScreen.ui72")}</i></td><td data-label={t("screen.AdminScreen.ui67")}><button type="button" className="small-button" onClick={() => toggleUser(item)}>{item.is_active ? t("screen.AdminScreen.ui73") : t("screen.AdminScreen.ui74")}</button></td></tr>)}</tbody></table></div><div className="student-accounts"><div className="student-accounts-head"><span className="kicker">{t("screen.AdminScreen.ui75")}</span><small>{students.length}  {t("screen.AdminScreen.ui76")}</small></div><div className="student-account-grid">{students.map((item) => <article key={item.id}><span className="student-icon"><Backpack/></span><div><strong>{item.child_name}</strong><small>{t("screen.AdminScreen.ui77")} {item.username}</small><small>{t("screen.AdminScreen.ui78")} {item.parent_name}</small></div><i className="status active">{t("screen.AdminScreen.ui79")}</i></article>)}</div></div></section>}
     {tab === "exercises" && <section className="admin-card admin-content-panel">
-      <div className="admin-card-head"><div><span className="kicker">ВЕРСИОНИРУЕМЫЙ КОНТЕНТ</span><h2>Задания и проверка</h2><p>Черновики, материалы на проверке и доступная библиотека.</p></div><button type="button" className="primary-button" aria-expanded={formOpen} onClick={() => setFormOpen(!formOpen)}>{formOpen ? "Закрыть форму" : "+ Новый черновик"}</button></div>
-      {formOpen && <form className="exercise-form exercise-draft-form" onSubmit={addExercise}><label>Название<input placeholder="Например, Предметы на кухне" value={form.title} onChange={(e) => setForm({...form,title:e.target.value})} required/></label><label>Наблюдаемый навык<input placeholder="Сопоставляет услышанное слово с изображением" value={form.objective} onChange={(e) => setForm({...form,objective:e.target.value})} required/></label><label>Инструкция<input placeholder="Послушай и выбери картинку" value={form.instruction} onChange={(e) => setForm({...form,instruction:e.target.value})} required/></label><label>Уровень<select value={form.difficulty} onChange={(e) => setForm({...form,difficulty:Number(e.target.value)})}><option value={1}>1 — начальный</option><option value={2}>2 — средний</option><option value={3}>3 — сложный</option></select></label><label className="draft-stimuli">Стимулы<textarea value={form.stimuli} onChange={(e) => setForm({...form,stimuli:e.target.value})} placeholder={'cup | Чашка | Чашка | /learning-core/words/cup-a.webp\nspoon | Ложка | Ложка | /learning-core/words/spoon-a.webp\nbook | Книга | Книга | /learning-core/words/book-a.webp\nchair | Стул | Стул | /learning-cards/chair.png'} required/><small>Одна строка: стабильный key | подпись | озвучка | локальный путь. После создания заполненная методическая карточка откроется в рабочем пространстве проверки.</small></label><div className="draft-form-actions"><button className="primary-button">Сохранить черновик</button><span>Создаётся только DRAFT. Автопроверка не является утверждением.</span></div></form>}
+      <div className="admin-card-head"><div><span className="kicker">{t("screen.AdminScreen.ui80")}</span><h2>{t("screen.AdminScreen.ui81")}</h2><p>{t("screen.AdminScreen.ui82")}</p></div><button type="button" className="primary-button" aria-expanded={formOpen} onClick={() => setFormOpen(!formOpen)}>{formOpen ? t("screen.AdminScreen.ui83") : t("screen.AdminScreen.ui84")}</button></div>
+      {formOpen && <form className="exercise-form exercise-draft-form" onSubmit={addExercise}><label>{t("screen.AdminScreen.ui85")}<input placeholder={t("screen.AdminScreen.ui86")} value={form.title} onChange={(e) => setForm({...form,title:e.target.value})} required/></label><label>{t("screen.AdminScreen.ui87")}<input placeholder={t("screen.AdminScreen.ui88")} value={form.objective} onChange={(e) => setForm({...form,objective:e.target.value})} required/></label><label>{t("screen.AdminScreen.ui89")}<input placeholder={t("screen.AdminScreen.ui90")} value={form.instruction} onChange={(e) => setForm({...form,instruction:e.target.value})} required/></label><label>{t("screen.AdminScreen.ui91")}<select value={form.difficulty} onChange={(e) => setForm({...form,difficulty:Number(e.target.value)})}><option value={1}>{t("screen.AdminScreen.ui92")}</option><option value={2}>{t("screen.AdminScreen.ui93")}</option><option value={3}>{t("screen.AdminScreen.ui94")}</option></select></label><label className="draft-stimuli">{t("screen.AdminScreen.ui95")}<textarea value={form.stimuli} onChange={(e) => setForm({...form,stimuli:e.target.value})} placeholder={t("screen.AdminScreen.ui96")} required/><small>{t("screen.AdminScreen.ui97")}</small></label><div className="draft-form-actions"><button className="primary-button">{t("screen.AdminScreen.ui98")}</button><span>{t("screen.AdminScreen.ui99")}</span></div></form>}
       {formMessage && <div className="usage-note" role="status"><ShieldCheck size={18}/><p>{formMessage}</p></div>}
       <AdminContentQueue drafts={drafts} exercises={exercises} homeDrafts={homeDrafts} loading={contentLoading} onReview={id => void openReview(id)} onHomePreview={openHomePreview} onArchive={id => void archiveExercise(id)}/>
     </section>}
     {tab === "usage" && <section className="usage-dashboard" aria-busy={usageLoading}>
       <div className="usage-toolbar">
-        <div><span className="kicker">ВНЕШНЯЯ API ОТКЛЮЧЕНА</span><h2>Архив прежних запросов</h2><p>Новые планы и подсказки работают локально. Здесь остаётся только исторический технический журнал.</p></div>
-        <div className="usage-periods" aria-label="Период отчёта">{([7, 30, 90] as const).map((days) => <button key={days} className={usageDays === days ? "active" : ""} aria-pressed={usageDays === days} onClick={() => { setUsageDays(days); void loadUsage(days); }}>{days} дней</button>)}</div>
+        <div><span className="kicker">{t("screen.AdminScreen.ui100")}</span><h2>{t("screen.AdminScreen.ui101")}</h2><p>{t("screen.AdminScreen.ui102")}</p></div>
+        <div className="usage-periods" aria-label={t("screen.AdminScreen.ui103")}>{([7, 30, 90] as const).map((days) => <button key={days} className={usageDays === days ? "active" : ""} aria-pressed={usageDays === days} onClick={() => { setUsageDays(days); void loadUsage(days); }}>{days}  {t("screen.AdminScreen.ui104")}</button>)}</div>
       </div>
-      {usageLoading ? <div className="admin-card usage-loading" role="status"><span className="sr-only">Загрузка статистики токенов</span>{[1,2,3,4].map((item) => <i key={item}/>)}</div> : usageError ? <div className="admin-card usage-error" role="alert"><CircleAlert/><div><strong>Не удалось загрузить статистику</strong><p>{usageError}</p></div><button className="secondary-button" onClick={() => void loadUsage(usageDays)}><RotateCcw size={16}/>Повторить</button></div> : <>
+      {usageLoading ? <div className="admin-card usage-loading" role="status"><span className="sr-only">{t("screen.AdminScreen.ui105")}</span>{[1,2,3,4].map((item) => <i key={item}/>)}</div> : usageError ? <div className="admin-card usage-error" role="alert"><CircleAlert/><div><strong>{t("screen.AdminScreen.ui106")}</strong><p>{usageError}</p></div><button className="secondary-button" onClick={() => void loadUsage(usageDays)}><RotateCcw size={16}/>{t("screen.AdminScreen.ui50")}</button></div> : <>
         <div className="usage-cards">
-          <StatCard icon={<Bot/>} value={formatTokens(usage.requests)} label="старых внешних запросов"/>
-          <StatCard icon={<BarChart3/>} value={formatTokens(usage.total_tokens)} label="токенов всего"/>
-          <StatCard icon={<ArrowUp/>} value={formatTokens(usage.input_tokens)} label="входных токенов"/>
-          <StatCard icon={<ArrowDown/>} value={formatTokens(usage.output_tokens)} label="выходных токенов"/>
-          <StatCard icon={<CreditCard/>} value={formatCost(usage.estimated_cost_usd)} label="примерная стоимость"/>
+          <StatCard icon={<Bot/>} value={formatTokens(usage.requests)} label={t("screen.AdminScreen.ui107")}/>
+          <StatCard icon={<BarChart3/>} value={formatTokens(usage.total_tokens)} label={t("screen.AdminScreen.ui108")}/>
+          <StatCard icon={<ArrowUp/>} value={formatTokens(usage.input_tokens)} label={t("screen.AdminScreen.ui109")}/>
+          <StatCard icon={<ArrowDown/>} value={formatTokens(usage.output_tokens)} label={t("screen.AdminScreen.ui110")}/>
+          <StatCard icon={<CreditCard/>} value={formatCost(usage.estimated_cost_usd)} label={t("screen.AdminScreen.ui111")}/>
         </div>
         <div className="usage-insights-grid">
           <section className="admin-card usage-chart-card">
-            <div className="admin-card-head"><div><span className="kicker">КОГДА ТРАТИЛИСЬ ТОКЕНЫ</span><h3>Расход по дням</h3></div><span className="period-pill">{usage.period_days} дней</span></div>
-            {maxDailyTokens > 0 ? <figure className="usage-chart" role="img" aria-label={`Расход токенов по дням. Максимум за день: ${formatTokens(maxDailyTokens)}`}>
+            <div className="admin-card-head"><div><span className="kicker">{t("screen.AdminScreen.ui112")}</span><h3>{t("screen.AdminScreen.ui113")}</h3></div><span className="period-pill">{usage.period_days}  {t("screen.AdminScreen.ui104")}</span></div>
+            {maxDailyTokens > 0 ? <figure className="usage-chart" role="img" aria-label={t("screen.AdminScreen.template3", { v0: formatTokens(maxDailyTokens) })}>
               <div className="usage-chart-bars">{usage.daily.map((item) => {
-                const label = new Date(item.date).toLocaleDateString("ru-RU", { day: "numeric", month: "short" });
+                const label = formatDate(item.date, {day: "numeric", month: "short"});
                 const height = item.total_tokens ? Math.max(3, Math.round(item.total_tokens / maxDailyTokens * 100)) : 0;
-                return <span className="usage-chart-day" key={item.date} title={`${label}: ${formatTokens(item.total_tokens)} токенов, ${item.requests} запросов`}><i style={{height: `${height}%`}}/><small>{label}</small></span>;
+                return <span className="usage-chart-day" key={item.date} title={t("screen.AdminScreen.template4", { v0: label, v1: formatTokens(item.total_tokens), v2: item.requests })}><i style={{height: `${height}%`}}/><small>{label}</small></span>;
               })}</div>
-              <figcaption>Высота столбца - общее число входных и выходных токенов за день.</figcaption>
-            </figure> : <div className="usage-empty"><BarChart3/><strong>Внешних запросов нет</strong><p>Локальный анализ не расходует токены и не обращается к поставщику модели.</p></div>}
+              <figcaption>{t("screen.AdminScreen.ui114")}</figcaption>
+            </figure> : <div className="usage-empty"><BarChart3/><strong>{t("screen.AdminScreen.ui115")}</strong><p>{t("screen.AdminScreen.ui116")}</p></div>}
           </section>
           <section className="admin-card usage-breakdown-card">
-            <div className="admin-card-head"><div><span className="kicker">НА ЧТО УШЛИ ТОКЕНЫ</span><h3>По функциям</h3></div></div>
-            {usage.breakdown.length ? <div className="usage-table"><div className="usage-row header"><span>Функция и модель</span><span>Запросы</span><span>Токены</span><span>Стоимость</span></div>{usage.breakdown.map((item) => <div className="usage-row" key={`${item.model}-${item.feature}`}><span><b>{featureLabel(item.feature)}</b><small>{item.provider} · {item.model}</small></span><span>{formatTokens(item.requests)}</span><span>{formatTokens(item.input_tokens + item.output_tokens)}</span><span>{formatCost(Number(item.cost || 0))}</span></div>)}</div> : <div className="usage-empty compact"><PackageOpen/><strong>Нет данных для разбивки</strong></div>}
+            <div className="admin-card-head"><div><span className="kicker">{t("screen.AdminScreen.ui117")}</span><h3>{t("screen.AdminScreen.ui118")}</h3></div></div>
+            {usage.breakdown.length ? <div className="usage-table"><div className="usage-row header"><span>{t("screen.AdminScreen.ui119")}</span><span>{t("screen.AdminScreen.ui120")}</span><span>{t("screen.AdminScreen.ui121")}</span><span>{t("screen.AdminScreen.ui122")}</span></div>{usage.breakdown.map((item) => <div className="usage-row" key={`${item.model}-${item.feature}`}><span><b>{featureLabel(item.feature)}</b><small>{item.provider} · {item.model}</small></span><span>{formatTokens(item.requests)}</span><span>{formatTokens(item.input_tokens + item.output_tokens)}</span><span>{formatCost(Number(item.cost || 0))}</span></div>)}</div> : <div className="usage-empty compact"><PackageOpen/><strong>{t("screen.AdminScreen.ui123")}</strong></div>}
           </section>
         </div>
         <section className="admin-card usage-history-card">
-          <div className="admin-card-head"><div><span className="kicker">ИСТОРИЧЕСКИЕ ДАННЫЕ</span><h3>Прежние внешние запросы</h3><p>Показаны последние {usage.recent.length} сохранённых событий за выбранный период.</p></div><button className="small-button" onClick={() => void loadUsage(usageDays)} aria-label="Обновить архив"><RotateCcw size={15}/>Обновить</button></div>
-          {usage.recent.length ? <div className="usage-history-wrap"><table className="usage-history-table"><caption className="sr-only">Архив прежних внешних запросов по пользователям и времени</caption><thead><tr><th scope="col">Когда</th><th scope="col">Кто запустил</th><th scope="col">Профиль ребёнка</th><th scope="col">Функция</th><th scope="col">Токены</th><th scope="col">Стоимость</th></tr></thead><tbody>{usage.recent.map((event) => <tr key={event.id}>
-            <td data-label="Когда"><time dateTime={event.created_at}>{new Date(event.created_at).toLocaleString("ru-RU", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" })}</time></td>
-            <td data-label="Кто запустил"><strong>{event.actor_name}</strong><small>{event.actor_username ? `@${event.actor_username} · ` : ""}{actorRoleLabel(event.actor_role)}</small></td>
-            <td data-label="Профиль ребёнка">{event.child_name || "Профиль удалён"}</td>
-            <td data-label="Функция"><strong>{featureLabel(event.feature)}</strong><small>{event.provider} · {event.model}</small></td>
-            <td data-label="Токены"><strong>{formatTokens(event.total_tokens)}</strong><small>{formatTokens(event.input_tokens)} вход · {formatTokens(event.output_tokens)} выход</small></td>
-            <td data-label="Стоимость">{formatCost(event.estimated_cost_usd)}</td>
-          </tr>)}</tbody></table></div> : <div className="usage-empty"><Bot/><strong>История пока пуста</strong><p>Локальные резервные ответы сюда не попадают и ничего не стоят.</p></div>}
+          <div className="admin-card-head"><div><span className="kicker">{t("screen.AdminScreen.ui124")}</span><h3>{t("screen.AdminScreen.ui125")}</h3><p>{t("screen.AdminScreen.ui126")} {usage.recent.length}  {t("screen.AdminScreen.ui127")}</p></div><button className="small-button" onClick={() => void loadUsage(usageDays)} aria-label={t("screen.AdminScreen.ui128")}><RotateCcw size={15}/>{t("screen.AdminScreen.ui129")}</button></div>
+          {usage.recent.length ? <div className="usage-history-wrap"><table className="usage-history-table"><caption className="sr-only">{t("screen.AdminScreen.ui130")}</caption><thead><tr><th scope="col">{t("screen.AdminScreen.ui131")}</th><th scope="col">{t("screen.AdminScreen.ui132")}</th><th scope="col">{t("screen.AdminScreen.ui133")}</th><th scope="col">{t("screen.AdminScreen.ui134")}</th><th scope="col">{t("screen.AdminScreen.ui121")}</th><th scope="col">{t("screen.AdminScreen.ui122")}</th></tr></thead><tbody>{usage.recent.map((event) => <tr key={event.id}>
+            <td data-label={t("screen.AdminScreen.ui131")}><time dateTime={event.created_at}>{formatDate(event.created_at, {day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit"})}</time></td>
+            <td data-label={t("screen.AdminScreen.ui132")}><strong>{event.actor_name}</strong><small>{event.actor_username ? `@${event.actor_username} · ` : ""}{actorRoleLabel(event.actor_role)}</small></td>
+            <td data-label={t("screen.AdminScreen.ui133")}>{event.child_name || t("screen.AdminScreen.ui135")}</td>
+            <td data-label={t("screen.AdminScreen.ui134")}><strong>{featureLabel(event.feature)}</strong><small>{event.provider} · {event.model}</small></td>
+            <td data-label={t("screen.AdminScreen.ui121")}><strong>{formatTokens(event.total_tokens)}</strong><small>{formatTokens(event.input_tokens)}  {t("screen.AdminScreen.ui136")} {formatTokens(event.output_tokens)}  {t("screen.AdminScreen.ui137")}</small></td>
+            <td data-label={t("screen.AdminScreen.ui122")}>{formatCost(event.estimated_cost_usd)}</td>
+          </tr>)}</tbody></table></div> : <div className="usage-empty"><Bot/><strong>{t("screen.AdminScreen.ui138")}</strong><p>{t("screen.AdminScreen.ui139")}</p></div>}
           <div className="usage-note"><Sparkles size={19}/><p>{usage.note}</p></div>
         </section>
       </>}
     </section>}
-    {tab === "audit" && <section className="admin-card"><div className="admin-card-head"><div><span className="kicker">БЕЗОПАСНОСТЬ</span><h3>Журнал критичных действий</h3></div><span className="period-pill">Последние 100 записей</span></div><div className="data-table audit-table"><div className="table-row header"><span>Действие</span><span>Объект</span><span>Автор</span><span>Время</span></div>{auditEvents.length ? auditEvents.map((event) => <div className="table-row" key={event.id}><span><b>{event.action}</b><small>{Object.keys(event.metadata).length ? JSON.stringify(event.metadata) : "Без дополнительных данных"}</small></span><span>{event.object_type}{event.object_id ? ` #${event.object_id}` : ""}</span><span>{event.actor_key}</span><span>{new Date(event.created_at).toLocaleString("ru-RU", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" })}</span></div>) : <div className="empty-state">Критичных действий пока не было.</div>}</div></section>}
+    {tab === "audit" && <section className="admin-card"><div className="admin-card-head"><div><span className="kicker">{t("screen.AdminScreen.ui140")}</span><h3>{t("screen.AdminScreen.ui141")}</h3></div><span className="period-pill">{t("screen.AdminScreen.ui142")}</span></div><div className="data-table audit-table"><div className="table-row header"><span>{t("screen.AdminScreen.ui67")}</span><span>{t("screen.AdminScreen.ui143")}</span><span>{t("screen.AdminScreen.ui144")}</span><span>{t("screen.AdminScreen.ui145")}</span></div>{auditEvents.length ? auditEvents.map((event) => <div className="table-row" key={event.id}><span><b>{event.action}</b><small>{Object.keys(event.metadata).length ? JSON.stringify(event.metadata) : t("screen.AdminScreen.ui146")}</small></span><span>{event.object_type}{event.object_id ? ` #${event.object_id}` : ""}</span><span>{event.actor_key}</span><span>{formatDate(event.created_at, { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" })}</span></div>) : <div className="empty-state">{t("screen.AdminScreen.ui147")}</div>}</div></section>}
   </div>;
 }
 
@@ -2474,37 +2456,37 @@ function ProfileScreen({ user, child, dashboard, settings, onOpen, onLogout }: {
   useLocale();
   const age = child ? Math.max(0, new Date().getFullYear() - new Date(child.birth_date).getFullYear() - (new Date() < new Date(new Date().getFullYear(), new Date(child.birth_date).getMonth(), new Date(child.birth_date).getDate()) ? 1 : 0)) : null;
   const primaryModule = child ? modules.find((item) => item.id === child.primary_module)?.title : null;
-  const languageName = { ru: t("landing.copy146"), en: "English", kk: "Қазақша" }[settings.language];
-  const themeName = { peach: t("theme.calm"), ocean: t("theme.ocean"), lavender: t("theme.lavender"), contrast: "Высокий контраст" }[settings.theme];
+  const languageName = { ru: t("landing.copy146"), en: "English", kk: t("screen.ProfileScreen.ui1") }[settings.language];
+  const themeName = { peach: t("theme.calm"), ocean: t("theme.ocean"), lavender: t("theme.lavender"), contrast: t("screen.ProfileScreen.ui2") }[settings.theme];
   if (user.role === "student") return <div className="v2-screen v2-child-profile page-enter">
     <header className="v2-child-profile-hero">
       <Image src="/app-illustrations/profile-child-hero.webp" alt="" fill priority unoptimized sizes="(max-width: 760px) 100vw, 75vw"/>
-      <div className="v2-child-profile-hero-copy"><span className="v2-kicker">МОЙ КАБИНЕТ</span><h1>Привет, {child?.name || user.full_name.split(" ")[0]}!</h1><p>Твои истории, маленькие победы и любимые вещи — здесь.</p><button type="button" onClick={() => onOpen("achievements")}>Посмотреть достижения <ArrowRight/></button></div>
+      <div className="v2-child-profile-hero-copy"><span className="v2-kicker">{t("screen.ProfileScreen.ui3")}</span><h1>{t("screen.ProfileScreen.ui4")} {child?.name || user.full_name.split(" ")[0]}!</h1><p>{t("screen.ProfileScreen.ui5")}</p><button type="button" onClick={() => onOpen("achievements")}>{t("screen.ProfileScreen.ui6")} <ArrowRight/></button></div>
     </header>
-    <section className="v2-child-profile-stats" aria-label="Мои сохранённые результаты">
-      <article><span><Star/></span><strong>{dashboard?.stars || 0}</strong><small>звёзд за игры</small></article>
-      <article><span><Gamepad2/></span><strong>{dashboard?.total_sessions || 0}</strong><small>сохранённых занятий</small></article>
-      <article><span><Clock3/></span><strong>{dashboard?.total_minutes || 0}</strong><small>минут практики</small></article>
+    <section className="v2-child-profile-stats" aria-label={t("screen.ProfileScreen.ui7")}>
+      <article><span><Star/></span><strong>{dashboard?.stars || 0}</strong><small>{t("screen.ProfileScreen.ui8")}</small></article>
+      <article><span><Gamepad2/></span><strong>{dashboard?.total_sessions || 0}</strong><small>{t("screen.ProfileScreen.ui9")}</small></article>
+      <article><span><Clock3/></span><strong>{dashboard?.total_minutes || 0}</strong><small>{t("screen.ProfileScreen.ui10")}</small></article>
     </section>
-    <section className="v2-child-profile-destinations"><div><span className="v2-kicker">ЧТО ПОСМОТРЕТЬ</span><h2>Моё пространство</h2></div><div className="v2-child-profile-links"><button type="button" onClick={() => onOpen("stories")}><BookOpen/><span><strong>{t("nav.stories")}</strong><small>Читать и выбирать</small></span><ChevronRight/></button><button type="button" onClick={() => onOpen("world")}><ImageIcon/><span><strong>{t("nav.world")}</strong><small>Знакомые фотографии</small></span><ChevronRight/></button><button type="button" onClick={() => onOpen("aac")}><MessageCircle/><span><strong>{t("nav.words")}</strong><small>Сказать, что нужно</small></span><ChevronRight/></button><button type="button" onClick={() => onOpen("settings")}><Settings/><span><strong>{t("nav.settings")}</strong><small>Звук и оформление</small></span><ChevronRight/></button></div></section>
-    <section className="v2-child-profile-account"><div><span className="v2-kicker">МОИ ДАННЫЕ</span><h2>Об аккаунте</h2><p>Имя: <strong>{user.full_name}</strong> · Логин: <strong>{user.username}</strong>{age !== null ? <> · Возраст: <strong>{age} лет</strong></> : null}</p><p>Язык: <strong>{languageName}</strong> · Оформление: <strong>{themeName}</strong></p></div><button type="button" onClick={onLogout}><LogOut/> {t("common.logoutAccount")}</button></section>
+    <section className="v2-child-profile-destinations"><div><span className="v2-kicker">{t("screen.ProfileScreen.ui11")}</span><h2>{t("screen.ProfileScreen.ui12")}</h2></div><div className="v2-child-profile-links"><button type="button" onClick={() => onOpen("stories")}><BookOpen/><span><strong>{t("nav.stories")}</strong><small>{t("screen.ProfileScreen.ui13")}</small></span><ChevronRight/></button><button type="button" onClick={() => onOpen("world")}><ImageIcon/><span><strong>{t("nav.world")}</strong><small>{t("screen.ProfileScreen.ui14")}</small></span><ChevronRight/></button><button type="button" onClick={() => onOpen("aac")}><MessageCircle/><span><strong>{t("nav.words")}</strong><small>{t("screen.ProfileScreen.ui15")}</small></span><ChevronRight/></button><button type="button" onClick={() => onOpen("settings")}><Settings/><span><strong>{t("nav.settings")}</strong><small>{t("screen.ProfileScreen.ui16")}</small></span><ChevronRight/></button></div></section>
+    <section className="v2-child-profile-account"><div><span className="v2-kicker">{t("screen.ProfileScreen.ui17")}</span><h2>{t("screen.ProfileScreen.ui18")}</h2><p>{t("screen.ProfileScreen.ui19")} <strong>{user.full_name}</strong>  {t("screen.ProfileScreen.ui20")} <strong>{user.username}</strong>{age !== null ? <>  {t("screen.ProfileScreen.ui21")} <strong>{age}  {t("screen.ProfileScreen.ui22")}</strong></> : null}</p><p>{t("screen.ProfileScreen.ui23")} <strong>{languageName}</strong>  {t("screen.ProfileScreen.ui24")} <strong>{themeName}</strong></p></div><button type="button" onClick={onLogout}><LogOut/> {t("common.logoutAccount")}</button></section>
   </div>;
   return <div className="page-enter profile-page">
-    <PageTitle eyebrow="ПРОФИЛЬ" title="Личный кабинет" subtitle="Информация об аккаунте, ребёнке и текущих настройках."/>
+    <PageTitle eyebrow={t("screen.ProfileScreen.ui25")} title={t("screen.ProfileScreen.ui26")} subtitle={t("screen.ProfileScreen.ui27")}/>
     <section className="profile-hero-card">
       <div className="profile-avatar-large">{user.full_name[0]}</div>
       <div><span className="kicker">{roleLabel(user.role)}</span><h2>{user.full_name}</h2><p>@{user.username}</p></div>
       <button className="small-button" onClick={() => onOpen("settings")}><Settings size={16}/> {t("nav.settings")}</button>
     </section>
     <div className="profile-grid">
-      <section className="profile-info-card"><div className="profile-card-title"><UserRound size={20}/><div><span className="kicker">{t("settings.account")}</span><h3>Основная информация</h3></div></div><dl><div><dt>{t("common.name")}</dt><dd>{user.full_name}</dd></div><div><dt>{t("common.login")}</dt><dd>{user.username}</dd></div><div><dt>{t("common.role")}</dt><dd>{roleLabel(user.role)}</dd></div><div><dt>{t("settings.language")}</dt><dd>{languageName}</dd></div><div><dt>Оформление</dt><dd>{themeName}</dd></div></dl></section>
-      {child && <section className="profile-info-card child-profile-card"><div className="profile-card-title"><Baby size={20}/><div><span className="kicker">ПРОФИЛЬ РЕБЁНКА</span><h3>{child.name}</h3></div></div><dl><div><dt>Возраст</dt><dd>{age} лет</dd></div><div><dt>Основное направление</dt><dd>{primaryModule}</dd></div><div><dt>Всего занятий</dt><dd>{dashboard?.total_sessions || 0}</dd></div><div><dt>Минут практики</dt><dd>{dashboard?.total_minutes || 0}</dd></div><div><dt>Звёзд</dt><dd>{dashboard?.stars || 0}</dd></div></dl>{user.role === "parent" && <button className="secondary-button wide" onClick={() => onOpen("parent")}>Открыть кабинет родителя <ChevronRight size={16}/></button>}</section>}
+      <section className="profile-info-card"><div className="profile-card-title"><UserRound size={20}/><div><span className="kicker">{t("settings.account")}</span><h3>{t("screen.ProfileScreen.ui28")}</h3></div></div><dl><div><dt>{t("common.name")}</dt><dd>{user.full_name}</dd></div><div><dt>{t("common.login")}</dt><dd>{user.username}</dd></div><div><dt>{t("common.role")}</dt><dd>{roleLabel(user.role)}</dd></div><div><dt>{t("settings.language")}</dt><dd>{languageName}</dd></div><div><dt>{t("screen.ProfileScreen.ui29")}</dt><dd>{themeName}</dd></div></dl></section>
+      {child && <section className="profile-info-card child-profile-card"><div className="profile-card-title"><Baby size={20}/><div><span className="kicker">{t("screen.ProfileScreen.ui30")}</span><h3>{child.name}</h3></div></div><dl><div><dt>{t("screen.ProfileScreen.ui31")}</dt><dd>{age}  {t("screen.ProfileScreen.ui22")}</dd></div><div><dt>{t("screen.ProfileScreen.ui32")}</dt><dd>{primaryModule}</dd></div><div><dt>{t("screen.ProfileScreen.ui33")}</dt><dd>{dashboard?.total_sessions || 0}</dd></div><div><dt>{t("screen.ProfileScreen.ui34")}</dt><dd>{dashboard?.total_minutes || 0}</dd></div><div><dt>{t("screen.ProfileScreen.ui35")}</dt><dd>{dashboard?.stars || 0}</dd></div></dl>{user.role === "parent" && <button className="secondary-button wide" onClick={() => onOpen("parent")}>{t("screen.ProfileScreen.ui36")} <ChevronRight size={16}/></button>}</section>}
     </div>
-    {user.role === "parent" && <section className="parent-more-grid profile-quick-links" aria-label="Дополнительные возможности">
-      <button onClick={() => onOpen("goals")}><span><Target/></span><div><strong>Цели и занятия</strong><small>Индивидуальные цели и короткие планы</small></div><ChevronRight/></button>
-      <button onClick={() => onOpen("ai")}><span><Bot/></span><div><strong>Локальный помощник</strong><small>Подсказки по прозрачным безопасным правилам</small></div><ChevronRight/></button>
-      <button onClick={() => onOpen("parent")}><span><ShieldCheck/></span><div><strong>Данные ребёнка</strong><small>Доступ, согласия, экспорт и приватность</small></div><ChevronRight/></button>
-      <button onClick={() => onOpen("settings")}><span><Settings/></span><div><strong>{t("nav.settings")}</strong><small>Звук, спокойный режим и оформление</small></div><ChevronRight/></button>
+    {user.role === "parent" && <section className="parent-more-grid profile-quick-links" aria-label={t("screen.ProfileScreen.ui37")}>
+      <button onClick={() => onOpen("goals")}><span><Target/></span><div><strong>{t("screen.ProfileScreen.ui38")}</strong><small>{t("screen.ProfileScreen.ui39")}</small></div><ChevronRight/></button>
+      <button onClick={() => onOpen("ai")}><span><Bot/></span><div><strong>{t("screen.ProfileScreen.ui40")}</strong><small>{t("screen.ProfileScreen.ui41")}</small></div><ChevronRight/></button>
+      <button onClick={() => onOpen("parent")}><span><ShieldCheck/></span><div><strong>{t("screen.ProfileScreen.ui42")}</strong><small>{t("screen.ProfileScreen.ui43")}</small></div><ChevronRight/></button>
+      <button onClick={() => onOpen("settings")}><span><Settings/></span><div><strong>{t("nav.settings")}</strong><small>{t("screen.ProfileScreen.ui44")}</small></div><ChevronRight/></button>
     </section>}
     <button className="profile-logout" onClick={onLogout}><LogOut size={17}/> {t("common.logoutAccount")}</button>
   </div>;
@@ -2518,34 +2500,24 @@ function SettingsScreen({ petPreferences, role, settings, saving, onChange, onLo
     { id: "lavender", name: t("theme.lavender"), description: t("theme.lavenderDescription"), colors: ["#6759aa", "#f0eef8", "#ffffff"] },
     { id: "contrast", name: t("theme.contrast"), description: t("theme.contrastDescription"), colors: ["#164f91", "#dcecff", "#ffffff"] },
   ] as const;
-  const languages = [{id:"ru",short:"RU",name:t("landing.copy146")}, {id:"kk",short:"ҚАЗ",name:"Қазақша"}] as const;
   const update = <K extends keyof AppSettings>(key: K, value: AppSettings[K]) => onChange({ ...settings, [key]: value });
-  const activeTheme = themes.find((item) => item.id === settings.theme) || themes[0];
   if (role === "student") return <div className="page-enter child-settings-page">
     <PageTitle eyebrow={t("settings.childHeading")} title={t("settings.childTitle")} subtitle={t("settings.childDescription")}/>
     <div className="child-settings-grid">
       <section className="child-settings-section"><div className="settings-section-heading"><span className="kicker">{t("settings.during")}</span><h2>{t("settings.soundMotion")}</h2></div><ChildSettingToggle title={t("settings.soundHints")} description={t("settings.listen")} value={settings.sound_enabled} onChange={(value) => update("sound_enabled", value)}/><ChildSettingToggle title={t("settings.calm")} description={t("settings.lessMotion")} value={settings.calm_mode} onChange={(value) => update("calm_mode", value)}/></section>
-      <section className="child-settings-section"><LanguagePicker value={normalizeLocale(settings.language)} onChange={locale => update("language", languageOf(locale))}/></section>
+      <section className="child-settings-section"><div className="settings-section-heading"><h2>{t("settings.languageHeading")}</h2><p>{t("settings.languageHelp")}</p></div><LanguagePicker value={normalizeLocale(settings.language)} onChange={locale => update("language", languageOf(locale))}/></section>
       <PetSettings preferences={petPreferences}/>
     </div>
     <div className="child-settings-footer"><span aria-live="polite">{saving ? t("common.saving") : t("common.saved")}</span><button type="button" className="profile-logout" onClick={onLogout}><LogOut size={18}/> {t("common.logout")}</button></div>
   </div>;
   return <div className="page-enter settings-page redesigned-settings">
-    <PageTitle eyebrow={t("settings.heading")} title={t("settings.family")} subtitle={t("settings.description")}/>
+    <div className="settings-page-header"><PageTitle eyebrow={t("settings.heading")} title={t("settings.family")} subtitle={t("settings.description")}/><span className="settings-save-status" role="status">{saving ? <Timer size={16}/> : <CircleCheck size={16}/>} {saving ? t("settings.savingChanges") : t("settings.allSaved")}</span></div>
     <div className="settings-layout">
-      <aside className="settings-summary" aria-label={t("settings.current")}>
-        <span className="settings-summary-icon"><Paintbrush size={24}/></span>
-        <span className="kicker">{t("settings.enabledNow")}</span>
-        <h2>{activeTheme.name}</h2>
-        <p>{activeTheme.description}</p>
-        <dl>
-          <div><dt>{t("settings.language")}</dt><dd>{settings.language === "kk" ? "Қазақша" : t("landing.copy146")}</dd></div>
-          <div><dt>{t("settings.sound")}</dt><dd>{settings.sound_enabled ? t("common.enabled") : t("common.disabled")}</dd></div>
-          <div><dt>{t("settings.animation")}</dt><dd>{settings.calm_mode ? t("settings.reduced") : t("settings.normal")}</dd></div>
-        </dl>
-        <small aria-live="polite">{saving ? <Timer size={15}/> : <CircleCheck size={15}/>} {saving ? t("settings.savingChanges") : t("settings.allSaved")}</small>
-      </aside>
       <div className="settings-sections">
+        <section className="settings-section language-setting">
+          <div className="settings-section-heading"><span className="kicker">{t("settings.content")}</span><h3>{t("settings.languageHeading")}</h3><p>{t("settings.languageHelp")}</p></div>
+          <LanguagePicker value={normalizeLocale(settings.language)} onChange={locale => update("language", languageOf(locale))}/>
+        </section>
         {(role === "admin" || role === "specialist") && <><TranslationEditor specialist={role === "specialist"}/><TranslationEditor resource="aac" specialist={role === "specialist"}/></>}
         <section className="settings-section theme-setting">
           <div className="settings-section-heading"><div><span className="kicker">{t("settings.appearance")}</span><h3>{t("settings.color")}</h3><p>{t("settings.colorDescription")}</p></div></div>
@@ -2556,10 +2528,6 @@ function SettingsScreen({ petPreferences, role, settings, saving, onChange, onLo
           <SettingRow icon={<Volume2/>} title={t("settings.soundHints")} text={t("settings.soundDescription")} value={settings.sound_enabled} onChange={(value) => update("sound_enabled", value)}/>
           <SettingRow icon={<Camera/>} title={t("settings.camera")} text={t("settings.cameraDescription")} value={settings.camera_enabled} onChange={(value) => update("camera_enabled", value)}/>
           <SettingRow icon={<Sparkles/>} title={t("settings.calm")} text={t("settings.calmDescription")} value={settings.calm_mode} onChange={(value) => update("calm_mode", value)}/>
-        </section>
-        <section className="settings-section language-setting">
-          <div className="settings-section-heading"><span className="kicker">{t("settings.content")}</span><h3>{t("settings.languageHeading")}</h3><p>{t("settings.languageHelp")}</p></div>
-          <div className="language-options">{languages.map((item) => <button type="button" key={item.id} className={settings.language === item.id ? "active" : ""} aria-pressed={settings.language === item.id} onClick={() => update("language", item.id)}><b>{item.short}</b><span>{item.name}</span><Check size={16}/></button>)}</div>
         </section>
         <section className="settings-section account-setting">
           <div className="settings-section-heading"><span className="kicker">{t("settings.account")}</span><h3>{t("settings.session")}</h3></div>
@@ -2573,5 +2541,42 @@ function SettingsScreen({ petPreferences, role, settings, saving, onChange, onLo
 }
 
 function SettingRow({ icon, title, text, value, onChange }: { icon: React.ReactNode; title: string; text: string; value: boolean; onChange: (v: boolean) => void }) {
-  return <div className="setting-row"><div className="setting-icon">{icon}</div><div><strong>{title}</strong><span>{text}</span></div><button type="button" className={`toggle ${value ? "on" : ""}`} onClick={() => onChange(!value)} aria-label={`${title}: ${value ? "включено" : "выключено"}`} aria-pressed={value}><i/></button></div>;
+  return <div className="setting-row"><div className="setting-icon">{icon}</div><div><strong>{title}</strong><span>{text}</span></div><button type="button" className={`toggle ${value ? "on" : ""}`} onClick={() => onChange(!value)} aria-label={title} role="switch" aria-checked={value}><i/></button></div>;
 }
+
+function ProgressScreen({ childId, dashboard, onStartPractice }: { childId?: number; dashboard: Dashboard | null; onStartPractice: () => void }) {
+  const [data, setData] = useState<{ child?: Child; overall: number; total_sessions: number; skill_progress: SkillProgress[] } | null>(null);
+  const [progressError, setProgressError] = useState("");
+  const [progressReload, setProgressReload] = useState(0);
+  const [progressLoading, setProgressLoading] = useState(true);
+  useEffect(() => {
+    if (!childId) return;
+    api<typeof data>(`/api/progress/${childId}`).then((value) => { setData(value); setProgressError(""); }).catch((cause) => {
+      setProgressError(cause instanceof Error ? cause.message : t("screen.ProgressScreen.ui1"));
+    }).finally(() => setProgressLoading(false));
+  }, [childId, progressReload]);
+  const skillColors = ["coral", "blue", "mint", "lavender", "coral", "blue"];
+  const skills = (data?.skill_progress || dashboard?.skill_progress || []).map((skill, index) => ({ ...skill, color: skillColors[index] }));
+  const chartDays = dashboard?.daily || [];
+  const daysWithData = chartDays.filter((point) => point.sensory !== null).length;
+  const chartCoordinates = (module: ModuleName) => chartDays.flatMap((point, index) => point[module] === null ? [] : [{ x: index * (700 / 6), y: 205 - Number(point[module]) * 1.7 }]);
+  const chartPoints = (module: ModuleName) => chartCoordinates(module).map((point) => `${point.x},${point.y}`).join(" ");
+  const totalSessions = dashboard?.total_sessions ?? data?.total_sessions ?? 0;
+  if (progressLoading && !data && !dashboard) return <div className="page-enter progress-loading-state" role="status"><Timer size={28}/><strong>{t("screen.ProgressScreen.ui2")}</strong></div>;
+  if (!progressError && totalSessions === 0) return <div className="page-enter progress-empty-page"><PageTitle eyebrow={t("screen.ProgressScreen.ui3")} title={t("screen.ProgressScreen.template2", {v0: data?.child?.name || t("localization.childFallback")})} subtitle={t("screen.ProgressScreen.ui5")}/><section><span><BarChart3 size={34}/></span><h2>{t("screen.ProgressScreen.ui6")}</h2><p>{t("screen.ProgressScreen.ui7")}</p><button className="primary-button" onClick={onStartPractice}><Play size={19} fill="currentColor"/>  {t("achievements.ui20")}</button></section></div>;
+  return (
+    <div className="page-enter stack-xl progress-page">
+      {progressError && <div className="game-error" role="alert"><ShieldAlert size={18}/><span>{progressError}</span><button type="button" className="small-button" onClick={() => { setProgressLoading(true); setProgressReload((value) => value + 1); }}>{t("game.repeat")}</button></div>}
+      <section className="progress-hero"><div><span className="kicker">{t("screen.ProgressScreen.ui3")}</span><h1>{t("screen.ProgressScreen.template2", {v0: data?.child?.name || t("localization.childFallback")})}</h1><p>{t("screen.ProgressScreen.ui10")}</p></div><div className="progress-hero-score"><strong>{dashboard?.overall ?? data?.overall ?? 0}%</strong><span>{t("screen.ProgressScreen.ui11")}</span></div></section>
+      <div className="stats-row"><StatCard icon={<TrendingUp/>} value={`${dashboard?.overall ?? data?.overall ?? 0}%`} label={t("screen.ProgressScreen.ui12")} /><StatCard icon={<Timer/>} value={String(dashboard?.total_minutes || 0)} label={t("screen.ParentScreen.ui38")} /><StatCard icon={<Star/>} value={String(dashboard?.stars || 0)} label={t("achievements.ui15")} /><StatCard icon={<Target/>} value={String(dashboard?.total_sessions ?? data?.total_sessions ?? 0)} label={t("screen.ProgressScreen.ui15")} /></div>
+      <div className="progress-grid">
+        <section className="chart-card"><div className="card-heading"><div><span className="kicker">{t("screen.ProgressScreen.ui16")}</span><h3>{t("screen.ProgressScreen.ui17")}</h3></div></div><div className="chart-area"><div className="chart-lines"><i/><i/><i/><i/></div>{daysWithData ? <><svg viewBox="0 0 700 230" preserveAspectRatio="none" aria-label={t("screen.ProgressScreen.ui18")}>{daysWithData >= 3 && <polyline points={chartPoints("sensory")} className="line blue-line"/>}{chartCoordinates("sensory").map((point, index) => <circle key={`sensory-${index}`} cx={point.x} cy={point.y} r="6" className="chart-point sensory-point"/>)}</svg>{daysWithData < 3 && <div className="chart-sparse-note">{t("screen.ProgressScreen.ui19")} {daysWithData === 1 ? t("screen.ProgressScreen.ui20") : t("screen.ProgressScreen.ui21")}{t("screen.ProgressScreen.ui22")}</div>}</> : <div className="chart-empty">{t("screen.ProgressScreen.ui23")}</div>}<div className="chart-labels">{chartDays.map((point) => <span key={point.date}>{point.label}</span>)}</div></div><div className="legend"><span><i className="blue-dot"/>{t("screen.ProgressScreen.ui24")}</span></div></section>
+        <section className="skills-card"><span className="kicker">{t("screen.ProgressScreen.ui25")}</span><h3>{t("screen.ProgressScreen.ui26")}</h3>{skills.length ? skills.map((skill) => <div className="skill" key={skill.skill}><div><span>{skill.label}<small>{skill.average_game_score !== null ? t("screen.ProgressScreen.template3", {v0: skill.sessions}) : skill.participations ? t("screen.ProgressScreen.ui27") : t("screen.ProgressScreen.ui28")}</small></span><strong>{skill.average_game_score !== null ? t("screen.ProgressScreen.template4", {v0: skill.average_game_score}) : t("screen.ProgressScreen.template5", {v0: skill.participations})}</strong></div></div>) : <div className="empty-state">{t("screen.ProgressScreen.ui29")}</div>}<div className="insight-note"><ShieldCheck size={19}/><p>{t("screen.ProgressScreen.ui30")}</p></div></section>
+      </div>
+      <P1ResultsSummary childId={childId}/>
+      <section className="achievements"><div className="section-heading"><div><span className="kicker">{t("screen.ProgressScreen.ui31")}</span><h2>{t("screen.ProgressScreen.ui32")}</h2></div></div><div className="badges"><Badge icon={<Star/>} title={t("screen.ProgressScreen.ui33")} text={t("screen.ProgressScreen.ui34")} unlocked={dashboard?.achievements.first_five}/><Badge icon={<Ear/>} title={t("achievements.ui5")} text={t("screen.ProgressScreen.ui36")} unlocked={dashboard?.achievements.good_listener}/><Badge icon={<MessageCircle/>} title={t("achievements.ui7")} text={t("screen.ProgressScreen.ui38")} unlocked={dashboard?.achievements.phrase_master}/><Badge icon={<Trophy/>} title={t("screen.ProgressScreen.ui39")} text={t("screen.ProgressScreen.ui40")} unlocked={dashboard?.achievements.week_streak}/></div></section>
+    </div>
+  );
+}
+
+function Badge({ icon, title, text, unlocked = false }: { icon: React.ReactNode; title: string; text: string; unlocked?: boolean }) { return <div className={`badge-card ${unlocked ? "unlocked" : "locked"}`}><span>{unlocked ? icon : <LockKeyhole/>}</span><div><strong>{title}</strong><small>{unlocked ? t("achievements.ui17") : text}</small></div></div>; }

@@ -15,7 +15,7 @@ SAFETY_NOTE = (
 )
 
 
-def generate_plan(context: dict) -> dict:
+def _generate_plan(context: dict) -> dict:
     """Select a stable, duplicate-free subset from an approved list.
 
     The adaptive planner is preferred for normal lessons. This helper is kept
@@ -37,11 +37,12 @@ def generate_plan(context: dict) -> dict:
     }
 
 
-def answer_parent(context: dict) -> dict:
+def _answer_parent(context: dict) -> dict:
     """Return a reviewed local answer based on transparent keyword groups."""
     question = str(context.get("parent_question", "")).casefold()
     urgent = any(word in question for word in (
         "боль", "болит", "дыш", "дыхани", "глот", "подав", "внезап", "потерял", "ухудш",
+        "ауырып", "ауырсын", "дем ал", "тыныс", "жұтын", "қақал", "кенет", "жоғалт", "нашарла",
     ))
     if urgent:
         return {
@@ -54,7 +55,7 @@ def answer_parent(context: dict) -> dict:
             "needs_professional_help": True,
             "safety_note": SAFETY_NOTE,
         }
-    if any(word in question for word in ("не хочет", "отказ", "стоп", "устал", "перерыв")):
+    if any(word in question for word in ("не хочет", "отказ", "стоп", "устал", "перерыв", "қаламай", "бас тарт", "тоқта", "шарша", "үзіліс")):
         return {
             "answer": "Отказ, «стоп» и просьба о перерыве — полноценные сообщения. Примите их сразу, завершите текущую попытку и вернитесь к практике позже без давления.",
             "suggested_actions": [
@@ -65,7 +66,7 @@ def answer_parent(context: dict) -> dict:
             "needs_professional_help": False,
             "safety_note": SAFETY_NOTE,
         }
-    if any(word in question for word in ("aac", "карточ", "просьб", "попрос", "выбор", "сообщ")):
+    if any(word in question for word in ("aac", "карточ", "просьб", "попрос", "выбор", "сообщ", "өтініш", "сұра", "таңдау", "хабарлама")):
         return {
             "answer": "Сделайте нужные карточки видимыми и предложите не больше двух понятных вариантов. Жест, взгляд, карточка или слово могут быть приняты как доступный ответ.",
             "suggested_actions": [
@@ -86,3 +87,16 @@ def answer_parent(context: dict) -> dict:
         "needs_professional_help": False,
         "safety_note": SAFETY_NOTE,
     }
+
+
+def _localize_reply(result):
+    from .practice_localization import practice_text
+    return {key: [practice_text(text) for text in value] if key == 'suggested_actions' else practice_text(value) if isinstance(value, str) else value for key, value in result.items()}
+
+
+def generate_plan(context: dict) -> dict:
+    return _localize_reply(_generate_plan(context))
+
+
+def answer_parent(context: dict) -> dict:
+    return _localize_reply(_answer_parent(context))

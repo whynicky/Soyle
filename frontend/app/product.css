@@ -847,3 +847,55 @@
 .storybook-preview-entry { margin: 0 0 24px; padding: 22px; display: flex; align-items: center; gap: 24px; background: #edf6ee; border: 1px solid #d1e5d4; border-radius: 24px; }
 .storybook-preview-entry > div { flex: 1; }.storybook-preview-entry h2 { margin: 6px 0; font-size: 26px; }.storybook-preview-entry p { color: var(--v2-copy); max-width: 650px; line-height: 1.5; }.storybook-preview-entry > button { flex: 0 0 auto; }
 @media (max-width: 760px) { .storybook-preview-entry { flex-direction: column; align-items: stretch; padding: 18px; gap: 10px; }.storybook-preview-entry > button { white-space: normal; } }
+
+/* Authentication uses the same compact language control as the landing header. */
+.auth-form-wrap > .locale-picker--compact {
+  position: absolute;
+  inset-block-start: 24px;
+  inset-inline-end: 32px;
+}
+.auth-page .auth-form-wrap { padding-block-start: 96px; }
+
+/* Preferences: a readable single column, with save feedback beside the title. */
+.redesigned-settings { max-width: 960px; }
+.settings-page-header { display: flex; align-items: center; justify-content: space-between; gap: 24px; margin-bottom: 24px; }
+.settings-page-header .page-title { padding: 0; }
+.settings-page-header .page-title p { font-size: 16px; line-height: 1.5; }
+.settings-save-status { display: inline-flex; align-items: center; gap: 8px; flex-shrink: 0; color: var(--forest); font-size: 14px; }
+.redesigned-settings .settings-layout { display: block; }
+.redesigned-settings .settings-sections { gap: 24px; }
+.redesigned-settings .settings-section { padding: 28px; border-radius: 20px; box-shadow: none; }
+.redesigned-settings .settings-section-heading h3 { font-size: 22px; }
+.redesigned-settings .settings-section-heading p { max-width: 60ch; font-size: 16px; line-height: 1.5; }
+.redesigned-settings .language-setting { display: flex; align-items: center; justify-content: space-between; gap: 24px; }
+.redesigned-settings .locale-picker { display: flex; flex-shrink: 0; gap: 8px; margin: 0; }
+.redesigned-settings .locale-picker button { min-width: 112px; min-height: 48px; font-size: 16px; padding: 12px 16px; }
+.redesigned-settings .locale-picker button.active { border-color: var(--forest); background: var(--blue-soft); box-shadow: none; }
+.redesigned-settings .setting-row { display: grid; grid-template-columns: 44px minmax(0,1fr) auto; gap: 16px; min-height: 96px; padding-block: 20px; }
+.redesigned-settings .setting-row strong { font-size: 16px; line-height: 1.4; }
+.redesigned-settings .setting-row span { font-size: 14px; line-height: 1.5; }
+.redesigned-settings .setting-icon { width: 44px; height: 44px; background: var(--blue-soft); }
+.redesigned-settings .theme-options { gap: 12px; }
+.redesigned-settings .theme-options button { min-height: 132px; grid-template-rows: 1fr auto; padding: 16px; }
+.redesigned-settings .theme-options .theme-copy { height: auto; overflow: visible; }
+.redesigned-settings .theme-copy strong { font-size: 16px; }
+.redesigned-settings .theme-copy small { font-size: 14px; line-height: 1.5; }
+.redesigned-settings .theme-options .theme-selected { height: auto; font-size: 12px; }
+.redesigned-settings .theme-selected svg { position: static; flex-shrink: 0; }
+.redesigned-settings .theme-options button.active { border-color: var(--forest); background: var(--blue-soft); box-shadow: none; }
+.redesigned-settings .small-button { min-height: 44px; font-size: 14px; }
+.redesigned-settings button:focus-visible, .child-settings-page button:focus-visible { outline: 3px solid var(--forest); outline-offset: 4px; }
+@media (max-width: 760px) {
+  .auth-form-wrap > .locale-picker--compact { inset-block-start: 16px; inset-inline-end: 14px; }
+  .auth-page .auth-back-home { top: 18px; left: 10px; }
+  .settings-page-header { align-items: flex-start; flex-direction: column; gap: 12px; }
+  .redesigned-settings .settings-section { padding: 20px; }
+  .redesigned-settings .language-setting { flex-direction: column; align-items: stretch; gap: 16px; }
+  .redesigned-settings .locale-picker button { flex: 1; min-width: 0; }
+  .redesigned-settings .theme-options { grid-template-columns: 1fr; }
+  .redesigned-settings .setting-row { grid-template-columns: minmax(0,1fr) auto; gap: 12px; }
+  .redesigned-settings .setting-icon { display: none; }
+  .redesigned-settings .account-setting .setting-row > .small-button,
+  .redesigned-settings .account-setting .setting-row > .status { grid-column: 1 / -1; justify-self: start; }
+}
+.redesigned-settings .language-setting .settings-section-heading p { font-size: 16px; }

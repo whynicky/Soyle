@@ -1,4 +1,5 @@
 "use client";
+
 import { t, useLocale, languageOf, getLocale } from "@/lib/i18n";
 import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from "react";
 import Image from "next/image";
@@ -11,8 +12,8 @@ type PetReaction = { event: PetEvent; phrase: string; id: number; mood: number; 
 const tapReactions = ["greeting", "correct", "hint", "incorrect", "complete"] as const;
 type PetReactionOptions = { phrase?: string; silent?: boolean };
 const PetContext = createContext<(event: PetEvent, options?: PetReactionOptions) => void>(() => {});
-const PetMessageContext = createContext("Поиграем?");
-export const usePetMessage = () => useContext(PetMessageContext);
+const PetMessageContext = createContext("");
+export const usePetMessage = () => useContext(PetMessageContext) || t("pet.question");
 const PetDisplayContext = createContext<ReactNode>(null);
 export const useExercisePet = () => useContext(PetContext);
 export const ExercisePet = () => useContext(PetDisplayContext);
@@ -111,6 +112,6 @@ function PetCompanion({ reaction, motion, onTap, showBubble }: { showBubble: boo
   const showStill = still || failed || !ready;
   return <div ref={dragRef} className="exercise-pet" data-draggable={showBubble} data-dragging={dragging} style={showBubble ? {transform:`translate(${offset.x}px, ${offset.y}px)`,position:"relative",zIndex:offset.x || offset.y || dragging ? 20 : undefined} : undefined} data-pet-renderer={showStill ? "static" : "rive"} data-pet-state={reaction?.event || "idle"} data-pet-motion={still ? "off" : reduced ? "reduced" : "full"} data-pet-ready={ready} data-rive-state={riveState}>
     {showBubble && <div key={reaction?.id || "idle"} style={reaction ? { animationDelay: `${reaction.duration - 250}ms` } : undefined} className={`pet-bubble ${reaction ? "visible" : ""}`} role="status" aria-live="polite" aria-atomic="true">{reaction?.phrase}</div>}
-    <button type="button" className="pet-button" {...handlers} title={showBubble ? "Перетащи пингвина. Стрелки — двигать, Home — вернуть на место." : undefined} aria-label="Поздороваться с пингвином" ><canvas ref={canvas} aria-hidden="true" style={{visibility:showStill ? "hidden" : "visible"}}/>{showStill && <Image className="pet-still" src="/mascot/soyle-mascot-still.png" width={561} height={630} unoptimized alt="" aria-hidden="true"/>}</button>
+    <button type="button" className="pet-button" {...handlers} title={showBubble ? t("finish.ui10") : undefined} aria-label={t("finish.ui11")} ><canvas ref={canvas} aria-hidden="true" style={{visibility:showStill ? "hidden" : "visible"}}/>{showStill && <Image className="pet-still" src="/mascot/soyle-mascot-still.png" width={561} height={630} unoptimized alt="" aria-hidden="true"/>}</button>
   </div>;
 }

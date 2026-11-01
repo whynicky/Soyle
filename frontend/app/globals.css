@@ -1376,3 +1376,44 @@ dialog.locale-welcome { width: 100%; max-width: none; height: 100%; max-height: 
 .soyle-local-brand > span { font: 800 36px var(--font-display); line-height: 1.2; }
 .soyle-local-brand small { display: block; font: 700 8px var(--font-display); line-height: 1.4; letter-spacing: .04em; }
 .auth-card-brand > .soyle-local-brand { display: inline-flex; }
+
+/* Compact language control shares the header baseline and never wraps. */
+.locale-picker--compact {
+  display: inline-flex;
+  flex: 0 0 auto;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 2px;
+  margin: 0;
+  padding: 3px;
+  border: 1px solid #dce6e1;
+  border-radius: 14px;
+  background: #edf3ee;
+}
+.locale-picker--compact button {
+  appearance: none;
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  min-width: 48px;
+  min-height: 38px;
+  margin: 0;
+  padding: 8px 10px;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  color: #61746c;
+  box-shadow: none;
+  font: 800 12px/1 var(--font-display);
+  letter-spacing: .03em;
+  cursor: pointer;
+}
+.locale-picker--compact button.active {
+  background: #fff;
+  color: #176d59;
+  box-shadow: 0 1px 4px #183b2414;
+}
+.locale-picker--compact button:focus-visible {
+  outline: 2px solid #176d59;
+  outline-offset: 2px;
+}

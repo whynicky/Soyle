@@ -18,6 +18,8 @@ export function setLocale(value: unknown, persist = true) {
     if (persist) { try { localStorage.setItem("soyle-language", next); } catch { /* Storage may be disabled. */ } }
     document.documentElement.lang = next;
     document.title = dictionaries[next]["app.title"];
+    document.querySelector?.('link[rel="manifest"]')?.setAttribute("href", `/localized-manifest?lang=${next}`);
+    document.querySelector?.('meta[name="description"]')?.setAttribute("content", dictionaries[next]["app.description"]);
     if (next !== currentLocale) window.dispatchEvent(new Event("soyle-locale-changing"));
   }
   if (next === currentLocale) return;

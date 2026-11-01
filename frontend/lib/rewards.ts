@@ -1,4 +1,6 @@
+import { getLocale } from "./locale.ts";
 export function starLabel(count: number): string {
+  if (getLocale() === "kk-KZ") return "жұлдыз";
   const mod100 = count % 100;
   return mod100 >= 11 && mod100 <= 14 ? 'звёзд' : count % 10 === 1 ? 'звезда' : count % 10 >= 2 && count % 10 <= 4 ? 'звезды' : 'звёзд';
 }

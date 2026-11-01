@@ -1,4 +1,6 @@
 "use client";
+import { t } from "@/lib/i18n";
+
 
 import { useEffect, useState } from "react";
 
@@ -26,5 +28,5 @@ export function useCabinetSection(cabinet: string, sections: ReadonlyArray<{ id:
 }
 
 export function CabinetNavigation({ cabinet, sections, active, onNavigate }: { cabinet: string; sections: ReadonlyArray<{id: string; label: string}>; active: string; onNavigate: (next: string) => void }) {
-  return <nav className="cabinet-sections" aria-label="Разделы кабинета">{sections.map(item => <a key={item.id} href={(() => { const params = new URLSearchParams(window.location.search); params.set("cabinet", cabinet); params.set("section", item.id); return `?${params}`; })()} aria-current={active === item.id ? "page" : undefined} onClick={event => { if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return; event.preventDefault(); onNavigate(item.id); }}>{item.label}</a>)}</nav>;
+  return <nav className="cabinet-sections" aria-label={t("finish.ui9")}>{sections.map(item => <a key={item.id} href={(() => { const params = new URLSearchParams(window.location.search); params.set("cabinet", cabinet); params.set("section", item.id); return `?${params}`; })()} aria-current={active === item.id ? "page" : undefined} onClick={event => { if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return; event.preventDefault(); onNavigate(item.id); }}>{item.label}</a>)}</nav>;
 }

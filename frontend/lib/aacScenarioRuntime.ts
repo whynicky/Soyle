@@ -1,3 +1,10 @@
+import { t } from "./locale.ts";
+import canonicalLabels from "../locales/aac-concepts.json" with { type: "json" };
+
+export function scenarioCardLabel(card: { label: string; concept_key?: string }): string {
+  return card.concept_key && card.concept_key in canonicalLabels ? canonicalLabels[card.concept_key as keyof typeof canonicalLabels] : card.label;
+}
+
 export type AACScenarioContent = {
   scenario_key?: string;
   title?: string;
@@ -83,16 +90,16 @@ export function evaluateAACScenario(
   const complete = sequences.some((sequence) => isSameSequence(selectedLabels, sequence));
   const validPrefix = sequences.some((sequence) => isSequencePrefix(selectedLabels, sequence));
   const hint = !selectedLabels.length
-    ? content?.empty_hint || "Сначала выбери карточку для задания."
+    ? content?.empty_hint || t("scenario.empty")
     : complete
-      ? content?.success_hint || "Сообщение готово. Теперь нажми кнопку справа."
+      ? content?.success_hint || t("scenario.ready")
       : validPrefix
-        ? content?.incomplete_hint || "Добавь карточку, которая отвечает на задание."
-        : "Убери лишнюю карточку и собери сообщение по шагам задания.";
+        ? content?.incomplete_hint || t("scenario.add")
+        : t("scenario.remove");
   return {
     complete,
     hint,
-    actionLabel: content?.action_label || "Сказать и закончить",
-    stepLabel: complete ? "Шаг 2 из 2" : "Шаг 1 из 2",
+    actionLabel: content?.action_label || t("scenario.finish"),
+    stepLabel: complete ? t("scenario.step2") : t("scenario.step1"),
   };
 }

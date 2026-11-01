@@ -25,13 +25,13 @@ export function ChildRoomHome({dashboard,exercises,currentSession,busy,error,can
   async function greet() {
     if (speaking) return;
     setSpeaking(true);
-    try {if (!await speak(petMessage,.7,soundEnabled,languageOf(getLocale()),"pet")) setMessage(soundEnabled?'Звук не включился. Попробуй ещё.':'Звук можно включить в настройках.');}
+    try {if (!await speak(petMessage,.7,soundEnabled,languageOf(getLocale()),"pet")) setMessage(soundEnabled?t("child.soundError"):t("child.soundSettings"));}
     finally {setSpeaking(false);}
   }
   return <div className="child-room-home">
-    <section ref={roomRef} className="child-room" aria-label="Моя комната">
+    <section ref={roomRef} className="child-room" aria-label={t("childRoomHome.ui3")}>
       <Image className="room-background room-wide" src="/child-room/room-detail.webp" alt="" fill priority unoptimized sizes="(max-width: 760px) 0px, (max-width: 1050px) 100vw, calc(100vw - 276px)"/>
-      <header className="room-header"><div className="room-welcome room-guide"><div className="room-welcome-copy"><h1 aria-live="polite">{petMessage}</h1><p>Готов(а) говорить, играть и узнавать новое?</p><button className="room-guide-audio" type="button" disabled={speaking} aria-label="Послушать пингвина" onClick={() => void greet()}><Volume2 size={24}/><span>{speaking?'Слушаем…':t("game.listen")}</span></button></div><div className="room-home-pet"><ExercisePet/></div></div></header>
+      <header className="room-header"><div className="room-welcome room-guide"><div className="room-welcome-copy"><h1 aria-live="polite">{petMessage}</h1><p>{t("childRoomHome.ui4")}</p><button className="room-guide-audio" type="button" disabled={speaking} aria-label={t("childRoomHome.ui5")} onClick={() => void greet()}><Volume2 size={24}/><span>{speaking?t("varied.copy036"):t("game.listen")}</span></button></div><div className="room-home-pet"><ExercisePet/></div></div></header>
       <figure className="room-mobile-art"><Image src="/child-room/room-detail.webp" alt={t("child.room")} width={1536} height={1024} priority unoptimized sizes="(max-width: 760px) 100vw, 0px"/></figure>
       <div className="room-start"><button type="button" className="room-start-button" disabled={busy} onClick={start}><Play fill="currentColor" size={30}/><span>{busy ? t("child.wait") : actionLabel}</span><ArrowRight size={26}/></button></div>
       <nav className="room-doors" aria-label={t("child.chooseActivity")}>{[

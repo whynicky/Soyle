@@ -13,6 +13,10 @@ export function canContinue(scene: StorySceneDefinition, state: StoryState): boo
 }
 
 export const objectLabels: Record<StoryObject, string> = { teddy: "Мишка", train: "Поезд", ball: "Мяч", basket: "Корзина", misha: "Миша", mother: "Мама", chosen: "Игрушка" };
+export function objectLabel(object: StoryObject, language: "ru" | "kk" = "ru"): string {
+  const kazakh: Record<StoryObject,string> = {teddy:"Қонжық",train:"Пойыз",ball:"Доп",basket:"Себет",misha:"Миша",mother:"Ана",chosen:"Ойыншық"};
+  return (language === "kk" ? kazakh : objectLabels)[object];
+}
 export const spriteCells: Record<string, number> = { teddy: 0, train: 1, ball: 2, basket: 3 };
 
 /** Merge authored layers with state-triggered reactions; rendering does not know the plot. */

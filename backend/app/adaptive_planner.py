@@ -15,6 +15,7 @@ from datetime import datetime, timedelta, timezone
 from fastapi import HTTPException
 
 from .database import now_iso
+from .practice_localization import localize_plan, localize_plan_message
 from .exercise_engine import published_exercise_rows
 from .practice_goals import decode_goal, exercise_matches_goal, get_preferences
 from .recommendations import recommendations
@@ -355,7 +356,7 @@ def _decode_plan(db, plan_id: int) -> dict:
     plan["items"] = items
     plan["notices"] = _loads(plan.pop("notices_json"), [])
     plan["thresholds"] = _loads(plan.pop("thresholds_json"), {})
-    return plan
+    return localize_plan(db, plan)
 
 
 def create_plan(db, child_id: int, target_minutes: int, user_id: int, thresholds: PlannerThresholds = DEFAULT_THRESHOLDS, *, persist: bool = True, recommendation_id: int | None = None) -> dict:
@@ -472,7 +473,7 @@ def create_plan(db, child_id: int, target_minutes: int, user_id: int, thresholds
     if not goals:
         notices.append({"goal_id": None, "goal_title": None, "message": "Сначала добавьте хотя бы одну домашнюю практическую цель из подготовленного каталога."})
     if not persist:
-        return {"exercises": [exercise for _, exercise, _, _ in selected], "notices": notices}
+        return {"exercises": [exercise for _, exercise, _, _ in selected], "notices": [{**notice, "message": localize_plan_message(notice["message"]), "goal_title": localize_plan_message(notice["goal_title"]) if notice.get("goal_title") else None} for notice in notices]}
     stamp = now_iso()
     cursor = db.execute(
         """INSERT INTO adaptive_practice_plans(

@@ -59,6 +59,9 @@ def phrases(version):
             if item.get("label"):
                 prefix = "Ребёнок" if version["mechanic"] == "action_choice" else "Это"
                 add(f"{prefix} {item['label'].lower()}.")
+    if language == "kk" and content.get("presentation") == "picture_description":
+        from .observation_localization import scene_speech
+        for text in scene_speech(content.get("scenes", []), "kk"): add(text)
     if language == "ru" and content.get("presentation") == "picture_description":
         for text in ("Кто на картинке?", "Рассмотри картинку. Кто на ней?", "Посмотри ещё раз. Можно послушать слова или посмотреть образец."):
             add(text)
@@ -71,6 +74,9 @@ def phrases(version):
                 for length in range(1, len(parts) + 1): add(" ".join(parts[:length]))
             for group in scene.get("options", []):
                 for word in group: add(word)
+    if language == "kk" and version.get("mechanic") == "scene_search":
+        from .exploration_localization import scene_speech
+        for text in scene_speech(content.get("exploration", {})): add(text)
     if language == "ru" and version.get("mechanic") == "scene_search":
         add("Давай попробуем ещё раз.")
         for item in content.get("exploration", {}).get("objects", []):

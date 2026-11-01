@@ -1,4 +1,6 @@
 "use client";
+import { t } from "@/lib/i18n";
+
 import { useCallback, useEffect, useRef, useState } from "react";
 import { api } from "@/lib/api";
 import { defaultPetPreferences, type PetPreferences } from "@/lib/pet";
@@ -14,7 +16,7 @@ export function usePetPreferences(childId?: number) {
     void api<PetPreferences>(`/api/children/${childId}/pet-settings`).then(value => {
       if (generation.current === epoch) setState({ childId, value, ready: true, saving: false, error: "" });
     }).catch(() => {
-      if (generation.current === epoch) setState({ childId, value: defaultPetPreferences, ready: false, saving: false, error: "Не удалось загрузить настройки питомца. Обнови страницу после восстановления связи." });
+      if (generation.current === epoch) setState({ childId, value: defaultPetPreferences, ready: false, saving: false, error: t("finish.ui12") });
     });
     return () => { generation.current = epoch + 1; };
   }, [childId]);
@@ -31,7 +33,7 @@ export function usePetPreferences(childId?: number) {
         if (generation.current !== epoch || revision !== version.current) return;
         // Reconcile after an uncertain write; do not claim unsaved settings are persistent.
         const saved = await api<PetPreferences>(`/api/children/${childId}/pet-settings`).catch(() => null);
-        if (generation.current === epoch && revision === version.current) setState(current => ({ ...current, value: saved || current.value, saving: false, error: "Не удалось сохранить настройки питомца. Попробуй ещё раз." }));
+        if (generation.current === epoch && revision === version.current) setState(current => ({ ...current, value: saved || current.value, saving: false, error: t("finish.ui13") }));
       }
     });
   }, [childId]);

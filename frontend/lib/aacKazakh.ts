@@ -2,6 +2,8 @@ import rules from "../locales/kk-KZ-aac-rules.json" with { type: "json" };
 export function composeKazakhAAC(cards: Array<{concept_key?:string}>): string | null {
   const keys=cards.map(card=>card.concept_key);
   if (![2,3].includes(keys.length)||keys.some(key=>!key)) return null;
+  const past = keys.at(-1);
+  if (keys[0] === "me" && past && past in rules.past_actions && (keys.length === 2 || (keys.length === 3 && keys[1] === "yesterday"))) return `Мен ${keys.length === 3 ? "кеше " : ""}${rules.past_actions[past as keyof typeof rules.past_actions]}.`;
   const intents=keys.filter(key=>key==='want'||key==='see'||key==='love');
   if (intents.length!==1) return null;
   const intent=intents[0] as 'want'|'see'|'love';

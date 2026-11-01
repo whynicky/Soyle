@@ -1,4 +1,5 @@
 "use client";
+
 import { t, useLocale } from "@/lib/i18n";
 
 
@@ -47,7 +48,7 @@ export function ExerciseFocusShell({
   return (
     <div className="exercise-focus-shell student-mode soyle-parent-v2 soyle-unified">
       <header className="exercise-focus-header">
-        <button type="button" className="focus-back" onClick={onBack} aria-label="Вернуться к занятиям">
+        <button type="button" className="focus-back" onClick={onBack} aria-label={t("finish.ui6")}>
           <ArrowLeft size={23}/><span>{t("common.back")}</span>
         </button>
         <div className="focus-heading">
@@ -55,9 +56,9 @@ export function ExerciseFocusShell({
           <strong>{title}</strong>
         </div>
         <button type="button" className="focus-sound" onClick={onToggleSound} aria-pressed={soundEnabled} aria-label={soundEnabled ? t("cinema.copy024") : t("cinema.copy025")}>
-          {soundEnabled ? <Volume2 size={23}/> : <VolumeX size={23}/>}<span>{soundEnabled ? t("settings.sound") : "Без звука"}</span>
+          {soundEnabled ? <Volume2 size={23}/> : <VolumeX size={23}/>}<span>{soundEnabled ? t("settings.sound") : t("finish.ui7")}</span>
         </button>
-        <div className="focus-safety-actions" aria-label="Можно остановиться в любой момент">
+        <div className="focus-safety-actions" aria-label={t("finish.ui8")}>
           <button type="button" disabled={stopping} onClick={onBreak}><Pause size={20}/><span>{t("specialist.copy006")}</span></button>
           <button type="button" disabled={stopping} onClick={onRefuse}><CircleX size={20}/><span>{t("cinema.copy042")}</span></button>
         </div>

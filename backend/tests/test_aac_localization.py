@@ -84,3 +84,27 @@ def test_kazakh_composition_is_not_russian_word_order(keys,expected):
 def test_frontend_backend_rules_are_identical():
     root=Path(__file__).resolve().parents[2]
     assert json.loads((root/'backend/app/locales/kk-KZ-aac-rules.json').read_text())==json.loads((root/'frontend/locales/kk-KZ-aac-rules.json').read_text())
+
+
+def test_guided_source_keys_are_preserved_and_past_phrase_is_kazakh(client):
+    import json
+    from pathlib import Path
+    from app.aac_localization import library
+    from app.aac_scenario_localization import can_adapt
+    from app.aac_kazakh import compose
+    from app.localization import get_translation, validate_translation
+    from app.database import connect
+    source_labels = {card['concept_key']:card['source_label'] for card in library()}
+    assert json.loads((Path(__file__).parents[2]/'frontend/locales/aac-concepts.json').read_text()) == source_labels
+    assert compose([{'concept_key':'me'},{'concept_key':'played'}]) == 'Мен ойнадым.'
+    assert compose([{'concept_key':'me'},{'concept_key':'yesterday'},{'concept_key':'walked'}]) == 'Мен кеше серуендедім.'
+    with connect() as db:
+        rows = db.execute("SELECT id FROM exercise_versions WHERE mechanic='guided_aac' AND content_json LIKE '%labels%'").fetchall()
+        assert rows
+        for row in rows:
+            translated = get_translation(db,row['id'])
+            assert translated['status'] == 'needs_review' and translated['reviewed_by'] is None
+            validate_translation(translated['source'],translated['payload'])
+            assert translated['source']['content']['labels'] == translated['payload']['content']['labels']
+        assert can_adapt({'scenario_key':'request','labels':['Хочу','Вода']})
+        assert not can_adapt({'scenario_key':'family','labels':[]})

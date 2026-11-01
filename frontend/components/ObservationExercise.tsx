@@ -1,4 +1,6 @@
 "use client";
+
+import { t, useLocale } from "@/lib/i18n";
 import { useExercisePet } from "./pet/ExercisePet";
 
 import Image from 'next/image';
@@ -6,15 +8,16 @@ import { useEffect, useImperativeHandle, useMemo, useRef, useState, type Ref } f
 import { Volume2, RotateCcw, Pause, CircleX } from 'lucide-react';
 import { PracticeLength } from './PracticeLength';
 import { shuffleWithRandom } from '@/lib/exerciseRuntime';
-import { descriptionQuestion, observationRounds, type ObservationContent } from '@/lib/observationRuntime';
+import { descriptionPhrase, descriptionQuestion, observationRounds, type ObservationContent } from '@/lib/observationRuntime';
 import { stopCurrentSpeech } from '@/lib/speech';
 
 type Measurement = {attempt_status: 'participated' | 'break' | 'refused' | 'technical_error'; prompts_used: number; gameplay_choices: number; prompt_level: 'independent' | 'minimal' | 'full'; communication_initiatives: number};
 type Description = {scene_key: string; theme: string; phrase: string; parts_count: number; target_parts: number; responses: {step: number; label: string; matches: boolean}[]; supports: string[]};
-type Props = {content: ObservationContent; soundEnabled: boolean; defaultRounds?: number; onSpeak: (text: string, rate?: number) => Promise<boolean>; onBack: () => void;
+type Props = {language?: "ru" | "kk"; content: ObservationContent; soundEnabled: boolean; defaultRounds?: number; onSpeak: (text: string, rate?: number) => Promise<boolean>; onBack: () => void;
   onComplete: (measurement: Measurement, details: Record<string, unknown>) => Promise<unknown> | void; stopRef?: Ref<(status: 'break' | 'refused') => Promise<void>>};
 
-export function ObservationExercise({content, soundEnabled, defaultRounds, onSpeak, onBack, onComplete, stopRef}: Props) {
+export function ObservationExercise({language = "ru", content, soundEnabled, defaultRounds, onSpeak, onBack, onComplete, stopRef}: Props) {
+  useLocale();
   const pet = useExercisePet();
   const rounds = useMemo(() => observationRounds(content.scenes || []), [content]);
   const [limit, setLimit] = useState(Math.min(defaultRounds || content.default_rounds || 12, rounds.length));
@@ -37,7 +40,7 @@ export function ObservationExercise({content, soundEnabled, defaultRounds, onSpe
   const audioEpoch = useRef(0);
   useEffect(() => () => {audioEpoch.current++; stopCurrentSpeech();}, []);
   const inactive = busy || saving;
-  const phrase = words.join(' ');
+  const phrase = descriptionPhrase(words, language);
   async function play(text: string, support?: 'listen_word' | 'repeat_question') {
     if (audioLock.current || lock.current) return false;
     audioLock.current = true; setBusy(true);
@@ -46,9 +49,9 @@ export function ObservationExercise({content, soundEnabled, defaultRounds, onSpe
     try {
       const played = soundEnabled && await onSpeak(text, .76);
       if (epoch !== audioEpoch.current) return false;
-      if (!played) { setTechnical('Озвучка недоступна. Результат без звука не засчитывается.'); setPhase('technical'); return false; }
+      if (!played) { setTechnical(t("observationExercise.ui1")); setPhase('technical'); return false; }
       return true;
-    } catch { if (epoch === audioEpoch.current) {setTechnical('Не удалось включить озвучку.'); setPhase('technical');} return false; }
+    } catch { if (epoch === audioEpoch.current) {setTechnical(t("observationExercise.ui2")); setPhase('technical');} return false; }
     finally { audioLock.current = false; setBusy(false); }
   }
   async function choose(label: string) {
@@ -58,20 +61,20 @@ export function ObservationExercise({content, soundEnabled, defaultRounds, onSpe
     pet(matches ? "correct" : "incorrect");
     if (!matches) {
       evidence.current.supports.push('retry');
-      setNotice('Посмотри ещё раз. Можно послушать слова или посмотреть образец.');
-      await play('Посмотри ещё раз. Можно послушать слова или посмотреть образец.');
+      setNotice(t("observationExercise.ui3"));
+      await play(language === "kk" ? "Қайта қара. Сөздерді тыңдауға немесе үлгіні көруге болады." : "Посмотри ещё раз. Можно послушать слова или посмотреть образец.");
       return;
     }
     const next = [...words, label]; setWords(next); setNotice('');
     if (next.length >= target) setPhase('ready');
-    await play(next.length >= target ? next.join(' ') : descriptionQuestion(scene, next.length));
+    await play(next.length >= target ? descriptionPhrase(next, language) : descriptionQuestion(scene, next.length, language));
   }
   async function model() {
     if (inactive || audioLock.current) return;
     pet('hint');
     evidence.current.supports.push('model');
-    const next = scene.parts.slice(0, target); setWords(next); setPhase('ready'); setNotice('Это образец полной фразы. Можно убрать последнюю часть и попробовать самому.');
-    await play(next.join(' '));
+    const next = scene.parts.slice(0, target); setWords(next); setPhase('ready'); setNotice(t("observationExercise.ui4"));
+    await play(descriptionPhrase(next, language));
   }
   function remember() {
     descriptions.current = descriptions.current.filter(item => item.scene_key !== scene.key);
@@ -95,8 +98,8 @@ export function ObservationExercise({content, soundEnabled, defaultRounds, onSpe
           unfinished_description: phase === 'ready' ? null : {scene_key: scene.key, words, ...evidence.current},
           ...(status === 'technical_error' ? {reason: technical} : {})});
       if (result) {setDoneCount(done.length);setPhase('done'); if (status !== 'participated') onBack();}
-      else { lock.current = false; setNotice('Результат не сохранён. Нажми ещё раз.'); }
-    } catch { lock.current = false; setNotice('Результат не сохранён. Нажми ещё раз.'); }
+      else { lock.current = false; setNotice(t("observationExercise.ui5")); }
+    } catch { lock.current = false; setNotice(t("observationExercise.ui5")); }
     finally {setSaving(false);}
   }
   useImperativeHandle(stopRef, () => async status => {await save(status);});
@@ -107,26 +110,26 @@ export function ObservationExercise({content, soundEnabled, defaultRounds, onSpe
     if (extend) setLimit(Math.min(rounds.length, limit + 6));
     evidence.current = {responses: [], supports: []};
     setWords([]); setIndex(index + 1); setNotice(''); setPhase('playing');
-    await play('Кто на картинке?');
+    await play(descriptionQuestion(scene, 0, language));
   }
-  if (!scene) return <p role="alert">Картинки недоступны. <button onClick={onBack}>Назад</button></p>;
-  if (phase === 'done') return <div className="runner-intro"><h3>Серия завершена</h3><p>Описано картинок: {doneCount}.</p><button className="primary-button" onClick={onBack}>Назад</button></div>;
-  return <section className="observation-exercise" aria-label="Описание картинки">
-    {phase === 'intro' ? <div className="runner-intro observation-intro"><h2>Я вижу: опиши картинку</h2><p>На каждой картинке собери полную фразу: кто на ней, что делает и с чем или где. Например: «Папа запускает воздушного змея».</p>
-      <PracticeLength value={limit} choices={content.round_choices || [12,18,24]} bankSize={rounds.length} unit="картинки" onChange={setLimit}/>
-      <p>Выбирай по одной части. После «Папа» добавь «запускает», затем «воздушного змея». Перейти дальше можно, когда фраза собрана целиком.</p>
-      <button className="primary-button" disabled={inactive} onClick={() => {setPhase('playing'); void play('Рассмотри картинку. Кто на ней?');}}>Послушать и начать</button></div> : phase === 'technical' ? <div className="runner-intro" role="alert"><h3>Не удалось продолжить</h3><p>{technical}</p><button className="primary-button" disabled={saving} onClick={() => void save('technical_error')}>Вернуться без оценки</button></div> : <>
-      <header className="observation-heading"><div><span className="kicker">КАРТИНКА {index + 1} ИЗ {limit} · {scene.theme}</span><h2>{phase === 'ready' ? 'Фраза готова' : descriptionQuestion(scene, words.length)}</h2></div><button className="small-button" disabled={inactive} onClick={() => void play(phase === 'ready' ? phrase : descriptionQuestion(scene, words.length), 'repeat_question')}><Volume2 size={18}/> {phase === 'ready' ? 'Послушать фразу' : 'Повторить вопрос'}</button></header>
-      <div className="observation-workspace"><figure className="observation-scene"><Image src={scene.media_ref} alt="Картинка для описания. Кого ты видишь и что происходит?" width={1440} height={1080} sizes="(max-width: 760px) 100vw, 55vw" priority onError={() => {setTechnical('Не загрузилась картинка. Попробуй открыть задание позже.');setPhase('technical');}}/></figure>
-      <div className="observation-compose"><ol className="description-slots" aria-label="Твоя фраза">{Array.from({length: Math.max(target, words.length)}, (_, position) => <li key={position} className={words[position] ? 'filled' : ''}>{words[position] || (position === 0 ? 'Кто?' : position === 1 ? 'Что делает?' : scene.detail_question)}</li>)}</ol>
-        <div className="observation-live" aria-live="polite">{busy ? 'Слушаем…' : notice}</div>
-        {phase === 'playing' && <div className="description-options" role="group" aria-label={descriptionQuestion(scene, words.length)}>{options.map(label => <div key={label}><button className="description-word" disabled={inactive} onClick={() => void choose(label)}>{label}</button><button className="description-listen" disabled={inactive} aria-label={`Послушать вариант: ${label}`} onClick={() => void play(label, 'listen_word')}><Volume2 size={21}/></button></div>)}</div>}
-        {words.length > 0 && <button className="small-button" disabled={inactive} onClick={() => {setWords(words.slice(0,-1));setPhase('playing');setNotice('');}}><RotateCcw size={17}/> Убрать последнюю часть</button>}
-        {phase === 'ready' && <div className="description-actions"><button className="primary-button" disabled={inactive} onClick={() => void advance()}>{saving ? 'Сохраняем…' : index === limit - 1 ? 'Завершить серию' : 'Следующая картинка'}</button>{index === limit - 1 && limit < rounds.length && <button className="secondary-button" disabled={inactive} onClick={() => void advance(true)}>Ещё 6 новых картинок</button>}</div>}
+  if (!scene) return <p role="alert">{t("observationExercise.ui7")} <button onClick={onBack}>{t("observationExercise.ui8")}</button></p>;
+  if (phase === 'done') return <div className="runner-intro"><h3>{t("observationExercise.ui9")}</h3><p>{t("observationExercise.ui10")} {doneCount}.</p><button className="primary-button" onClick={onBack}>{t("observationExercise.ui8")}</button></div>;
+  return <section className="observation-exercise" aria-label={t("observationExercise.ui11")}>
+    {phase === 'intro' ? <div className="runner-intro observation-intro"><h2>{t("observationExercise.ui12")}</h2><p>{t("observationExercise.ui13")}</p>
+      <PracticeLength value={limit} choices={content.round_choices || [12,18,24]} bankSize={rounds.length} unit={t("observationExercise.ui14")} onChange={setLimit}/>
+      <p>{t("observationExercise.ui15")}</p>
+      <button className="primary-button" disabled={inactive} onClick={() => {setPhase('playing'); void play(language === "kk" ? "Суретке қара. Онда кім бар?" : "Рассмотри картинку. Кто на ней?");}}>{t("observationExercise.ui17")}</button></div> : phase === 'technical' ? <div className="runner-intro" role="alert"><h3>{t("observationExercise.ui18")}</h3><p>{technical}</p><button className="primary-button" disabled={saving} onClick={() => void save('technical_error')}>{t("observationExercise.ui19")}</button></div> : <>
+      <header className="observation-heading"><div><span className="kicker">{t("observationExercise.round", { current: index + 1, total: limit, theme: scene.theme })}</span><h2>{phase === 'ready' ? t("observationExercise.ui22") : descriptionQuestion(scene, words.length, language)}</h2></div><button className="small-button" disabled={inactive} onClick={() => void play(phase === 'ready' ? phrase : descriptionQuestion(scene, words.length, language), 'repeat_question')}><Volume2 size={18}/> {phase === 'ready' ? t("observationExercise.ui23") : t("observationExercise.ui24")}</button></header>
+      <div className="observation-workspace"><figure className="observation-scene"><Image src={scene.media_ref} alt={t("observationExercise.ui25")} width={1440} height={1080} sizes="(max-width: 760px) 100vw, 55vw" priority onError={() => {setTechnical(t("observationExercise.ui26"));setPhase('technical');}}/></figure>
+      <div className="observation-compose"><ol className="description-slots" aria-label={t("observationExercise.ui27")}>{(language === "kk" ? [0, 2, 1] : [0, 1, 2]).map((position) => <li key={position} className={words[position] ? 'filled' : ''}>{words[position] || (position === 0 ? t("observationExercise.ui28") : position === 1 ? t("observationExercise.ui29") : scene.detail_question)}</li>)}</ol>
+        <div className="observation-live" aria-live="polite">{busy ? t("observationExercise.ui30") : notice}</div>
+        {phase === 'playing' && <div className="description-options" role="group" aria-label={descriptionQuestion(scene, words.length, language)}>{options.map(label => <div key={label}><button className="description-word" disabled={inactive} onClick={() => void choose(label)}>{label}</button><button className="description-listen" disabled={inactive} aria-label={t("observationExercise.listen", { label })} onClick={() => void play(label, 'listen_word')}><Volume2 size={21}/></button></div>)}</div>}
+        {words.length > 0 && <button className="small-button" disabled={inactive} onClick={() => {setWords(words.slice(0,-1));setPhase('playing');setNotice('');}}><RotateCcw size={17}/>  {t("observationExercise.ui31")}</button>}
+        {phase === 'ready' && <div className="description-actions"><button className="primary-button" disabled={inactive} onClick={() => void advance()}>{saving ? t("observationExercise.ui32") : index === limit - 1 ? t("observationExercise.ui33") : t("observationExercise.ui34")}</button>{index === limit - 1 && limit < rounds.length && <button className="secondary-button" disabled={inactive} onClick={() => void advance(true)}>{t("observationExercise.ui35")}</button>}</div>}
 
-        {phase === 'playing' && <button className="small-button" disabled={inactive} onClick={() => void model()}>Показать образец</button>}
+        {phase === 'playing' && <button className="small-button" disabled={inactive} onClick={() => void model()}>{t("observationExercise.ui36")}</button>}
       </div></div>
     </>}
-    <div className="runner-stop-actions"><button className="small-button" disabled={saving} onClick={() => void save('break')}><Pause size={16}/> Перерыв</button><button className="small-button" disabled={saving} onClick={() => void save('refused')}><CircleX size={16}/> Не хочу</button></div>
+    <div className="runner-stop-actions"><button className="small-button" disabled={saving} onClick={() => void save('break')}><Pause size={16}/>  {t("observationExercise.ui37")}</button><button className="small-button" disabled={saving} onClick={() => void save('refused')}><CircleX size={16}/>  {t("observationExercise.ui38")}</button></div>
   </section>;
 }

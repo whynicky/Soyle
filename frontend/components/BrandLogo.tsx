@@ -49,9 +49,9 @@ export function BrandLogo({
   const displayWidth = width ?? asset.display;
   const file =
     tone === "light" && variant === "primary" ? "soyle-logo-light" : asset.file;
-  if (locale === "kk-KZ" && variant !== "icon" && variant !== "small") return <span className={`soyle-local-brand ${className}`} style={{width:displayWidth}} aria-label={decorative ? undefined : "Söyle — қарым-қатынас пен жаттығу"} aria-hidden={decorative || undefined}>
+  if (locale === "kk-KZ" && variant !== "icon" && variant !== "small") return <span className={`soyle-local-brand soyle-local-brand--${variant} ${className}`} style={{width:displayWidth}} aria-label={decorative ? undefined : (variant === "compact" ? "Söyle" : "Söyle — қарым-қатынас пен жаттығу")} aria-hidden={decorative || undefined}>
     <Image src="/branding/soyle-mascot.webp" width={80} height={80} alt="" {...(priority ? {preload:true} : {})}/>
-    <span>Söyle<small>ҚАРЫМ-ҚАТЫНАС ПЕН ЖАТТЫҒУ</small></span>
+    <span>Söyle{variant !== "compact" && <small>ҚАРЫМ-ҚАТЫНАС ПЕН ЖАТТЫҒУ</small>}</span>
   </span>;
   const image = (
     <Image

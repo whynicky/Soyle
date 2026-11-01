@@ -81,6 +81,11 @@ def catalogue() -> dict[tuple[str, str], str]:
         result[("kk", text)] = text
     for text in json.loads((Path(__file__).parent/"locales/kk-KZ-education.json").read_text()).values():
         if 0 < len(text) <= 300: result[("kk", text)] = text
+    from .observation_localization import editorial_phrases as observation_phrases
+    for language, phrases in observation_phrases().items():
+        for text in phrases: result[(language, text)] = text
+    from .exploration_localization import editorial_phrases as exploration_phrases
+    for text in exploration_phrases(): result[("kk", text)] = text
     from .aac_localization import library
     from .aac_kazakh import editorial_phrases
     for text in {card["speech"] for card in library()} | editorial_phrases():

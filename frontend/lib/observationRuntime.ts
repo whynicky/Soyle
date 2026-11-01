@@ -31,7 +31,12 @@ export function observationRounds(scenes: ObservationScene[], random = Math.rand
   return rounds;
 }
 
-export function descriptionQuestion(scene: ObservationScene, step: number): string {
+export function descriptionPhrase(parts: readonly string[], language: "ru" | "kk" = "ru"): string {
+  return (language === "kk" && parts.length === 3 ? [parts[0], parts[2], parts[1]] : parts).join(" ");
+}
+
+export function descriptionQuestion(scene: ObservationScene, step: number, language: "ru" | "kk" = "ru"): string {
+  if (language === "kk") return step === 0 ? "Суретте кім бар?" : step === 1 ? `${scene.parts[0]} не істеп жатыр?` : scene.detail_question;
   const actor = scene.parts[0].toLocaleLowerCase('ru');
   return step === 0 ? 'Кто на картинке?' : step === 1 ? `Что делает ${actor}?` : scene.detail_question.replace(/\?$/, ` ${actor}?`);
 }

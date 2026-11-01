@@ -64,3 +64,15 @@ test("single-answer tasks cannot accumulate contradictory or repeated answers", 
   assert.equal(canAddAACScenarioCard(answer, ["Да"], "Нет"), false);
   assert.equal(canAddAACScenarioCard(answer, ["Да"], "Да"), false);
 });
+
+test('Kazakh captions resolve to the same stable scenario meanings', async () => {
+  const {scenarioCardLabel} = await import('../lib/aacScenarioRuntime.ts');
+  const {setLocale} = await import('../lib/locale.ts');
+  const labels = [{label:'Қалаймын',concept_key:'want'},{label:'Су',concept_key:'water'}].map(scenarioCardLabel);
+  assert.deepEqual(labels,['Хочу','Вода']);
+  assert.equal(evaluateAACScenario(request,labels).complete,true);
+  assert.equal(canAddAACScenarioCard(request,['Хочу'],scenarioCardLabel({label:'Су',concept_key:'water'})),true);
+  setLocale('kk-KZ');
+  try { assert.equal(evaluateAACScenario(undefined,[]).stepLabel,'Қадам 1 / 2'); }
+  finally { setLocale('ru-RU'); }
+});

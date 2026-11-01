@@ -37,14 +37,16 @@ test("critical optimistic UI changes report failures and roll back", async () =>
   const notificationBlock = app.slice(app.indexOf("const markNotificationRead"), app.indexOf("const changeSettings"));
   const settingsBlock = app.slice(app.indexOf("const changeSettings"), app.indexOf("if (user.role === \"parent\" && childrenLoading"));
   assert.doesNotMatch(notificationBlock, /\.catch\(\(\) => null\)/);
-  assert.match(notificationBlock, /Уведомление не отмечено прочитанным/);
+  assert.ok(notificationBlock.includes('t("shell.template9"'));
   assert.match(settingsBlock, /setSettings\(persistedSettingsRef.current\)/);
-  assert.match(settingsBlock, /Настройки не сохранены и возвращены к предыдущим/);
+  assert.ok(settingsBlock.includes('t("shell.template11"'));
 });
 
 test("offline copy does not claim an in-memory attempt is safely stored", async () => {
   const app = await readProjectFile("components/SoyleApp.tsx");
-  assert.match(app, /Результат не сохранится автоматически и пропадёт при обновлении или закрытии страницы/);
+  assert.ok(app.includes('t("screen.AuthenticatedApp.ui66")'));
+  const messages = JSON.parse(await readProjectFile("locales/ru-RU.json"));
+  assert.match(messages["screen.AuthenticatedApp.ui66"], /Результат не сохранится автоматически и пропадёт при обновлении или закрытии страницы/);
 });
 
 test("frontend does not request blocked external fonts or unsupported image quality", async () => {
@@ -86,10 +88,12 @@ test("camera movement check stays local and cannot be completed by a timer", asy
   assert.match(app, /checked=\{consent\.camera_processing\}/);
   assert.match(app, /navigator\.mediaDevices\?\.getUserMedia/);
   assert.doesNotMatch(app, /cameraEnabled=/);
-  assert.match(app, /Кадры анализируются только в этом браузере/);
+  assert.ok(app.includes('t("screen.ParentScreen.ui92")'));
+  const messages = JSON.parse(await readProjectFile("locales/ru-RU.json"));
+  assert.match(messages["screen.ParentScreen.ui92"], /Кадры анализируются только в этом браузере/);
   assert.match(app, /media_sent_to_server:\s*false/);
   assert.match(app, /practice\.phase !== "matched"/);
-  assert.match(app, /Движение пока не найдено/);
+  assert.ok(app.includes('t("screen.MotorGame.ui4")'));
   assert.match(detector, /changeFromBaseline/);
   assert.doesNotMatch(app, /storage\.googleapis|cdn\.jsdelivr|unpkg\.com/);
 });
@@ -146,7 +150,7 @@ test("child-facing copy does not require a streak or fixed daily quota", async (
   assert.doesNotMatch(app, /Серия:/);
   assert.doesNotMatch(app, /ПЛАН НА СЕГОДНЯ/);
   assert.doesNotMatch(app, /дней подряд/);
-  assert.match(app, /Сделать паузу/);
+  assert.ok(app.includes('t("screen.SessionScreen.ui20")'));
 });
 
 test("public child navigation does not expose motor prototypes", async () => {
@@ -154,7 +158,7 @@ test("public child navigation does not expose motor prototypes", async () => {
   const modulesBlock = app.slice(app.indexOf("const modules = ["), app.indexOf("const moduleImages"));
   assert.doesNotMatch(modulesBlock, /id:\s*["']motor["']/);
   assert.match(app, /<ExerciseLibrary items=\{exercises\.filter/);
-  assert.match(app, /className="explore-location-grid"/);
+  assert.match(app, /explore-location-grid/);
   assert.doesNotMatch(app, /<details className="child-more-games"/);
 });
 
@@ -197,11 +201,17 @@ test("P1 family screens keep observations separate and drafts review-gated", asy
   assert.match(app, /FunctionalSkillMap/);
   assert.match(app, /HomePracticeLibrary/);
   assert.match(app, /P1ResultsSummary/);
-  assert.match(family, /Это не тест и не расчёт речевого возраста/);
-  assert.match(family, /методической проверке/);
+  const familyMessages = JSON.parse(await readProjectFile("locales/ru-RU.json"));
+  assert.ok(family.includes('t("familyPractice.ui11")'));
+  assert.ok(family.includes('t("familyPractice.ui39")'));
+  assert.match(familyMessages["familyPractice.ui11"], /Это не тест и не расчёт речевого возраста/);
+  assert.match(familyMessages["familyPractice.ui39"], /методической проверке/);
   assert.doesNotMatch(family, /процент развития речи/i);
-  assert.match(preview, /DRAFT · ТОЛЬКО ПРЕДПРОСМОТР/);
-  assert.match(preview, /Результат не сохраняется/);
+  const messages = JSON.parse(await readProjectFile("locales/ru-RU.json"));
+  assert.ok(preview.includes('t("runner.ui1")'));
+  assert.ok(preview.includes('t("runner.ui3")'));
+  assert.match(messages["runner.ui1"], /DRAFT · ТОЛЬКО ПРЕДПРОСМОТР/);
+  assert.match(messages["runner.ui3"], /Результат не сохраняется/);
   assert.match(preview, /PublishedInstructionRunner/);
   assert.match(app, /mechanic === "tap_instruction"/);
 });
@@ -223,11 +233,15 @@ test("P2.1 goals use a deterministic review-gated planner instead of AI", async 
   ]);
   assert.match(goals, /\/api\/adaptive-plans\/\$\{child\.id\}/);
   assert.doesNotMatch(app, /api<AIPlan>\(`\/api\/ai\/plan/);
-  assert.match(goals, /Локальная адаптация/);
-  assert.match(goals, /Без внешней AI API/);
-  assert.match(goals, /Домашние практические цели/);
-  assert.match(goals, /Черновики не используются/);
-  assert.match(goals, /Почему предложено/);
+  const messages = JSON.parse(await readProjectFile("locales/ru-RU.json"));
+  for (const [key, expected] of [
+    ["practice.ui25", /Локальная адаптация/], ["practice.ui26", /Без внешней AI API/],
+    ["practice.ui28", /Домашние практические цели/], ["practice.ui38", /Черновики не используются/],
+    ["practice.ui86", /Почему предложено/],
+  ]) {
+    assert.ok(goals.includes(`t("${key}")`));
+    assert.match(messages[key], expected);
+  }
   assert.doesNotMatch(goals, /речевой возраст|процент развития речи/i);
   assert.match(api, /goal_version: number/);
   assert.match(api, /difficulty_params: AdaptiveDifficultyParams/);
@@ -260,6 +274,6 @@ test("adaptive analysis has no external model SDK or API key dependency", async 
 test("adaptive runner applies the planned option count instead of a numeric label alone", async () => {
   const app = await readProjectFile("components/SoyleApp.tsx");
   assert.match(app, /exercise\?\.adaptive\?\.difficulty_params\.difficulty_level/);
-  assert.match(app, /Выбрано по домашней практической цели/);
+  assert.ok(app.includes('t("screen.SensoryGame.ui21")'));
   assert.match(app, /exercise\.adaptive\.assignment_reason\.messages\[0\]/);
 });

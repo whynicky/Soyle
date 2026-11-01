@@ -1,3 +1,4 @@
+import { t } from "./locale.ts";
 export type ChoiceStimulus = {
   key: string;
   label: string;
@@ -75,7 +76,7 @@ export function createChoiceRound(
   _previousCorrectIndex?: number,
   preferredTargetKey?: string,
 ): ChoiceRound {
-  if (stimuli.length < optionCount) throw new Error("Недостаточно стимулов для выбранной сложности");
+  if (stimuli.length < optionCount) throw new Error(t("finish.ui26"));
   const excluded = typeof excludedTargetKeys === "string"
     ? new Set([excludedTargetKeys])
     : new Set(excludedTargetKeys || []);
@@ -83,7 +84,7 @@ export function createChoiceRound(
   const target = possibleTargets.find(item => item.key === preferredTargetKey)
     || shuffleWithRandom(possibleTargets.length ? possibleTargets : stimuli, random)[0];
   const pool = stimuli.filter(item => item.key !== target.key && (!target.distractor_keys || target.distractor_keys.includes(item.key)));
-  if (pool.length < optionCount - 1) throw new Error("Недостаточно проверенных отвлекающих вариантов");
+  if (pool.length < optionCount - 1) throw new Error(t("finish.ui27"));
   const distractors = shuffleWithRandom(pool, random).slice(0, optionCount - 1);
   const optionKeys = shuffleWithRandom([target, ...distractors], random).map((item) => item.key);
   return { targetKey: target.key, optionKeys };

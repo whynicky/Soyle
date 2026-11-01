@@ -1,23 +1,32 @@
 "use client";
+
+import { getLocale, languageOf, t, useLocale } from "@/lib/i18n";
 import { stopCurrentSpeech } from "@/lib/speech";
 
 import Image from "next/image";
-import { ArrowRight, Camera, Check, ImageIcon, MessageCircle, Plus, Trash2, Volume2 } from "lucide-react";
-import { useEffect, useId, useState } from "react";
+import { ArrowRight, Camera, Check, MessageCircle, Plus, Trash2, Volume2, Search } from "lucide-react";
+import { useEffect, useId, useRef, useState } from "react";
 import { api, type WorldPhoto } from "@/lib/api";
 import { compressPhoto } from "@/lib/imageUpload";
 
-const categories = [
-  { key: "people", label: "Люди" },
-  { key: "toys", label: "Игрушки" },
-  { key: "food", label: "Еда" },
-  { key: "places", label: "Места" },
+const getCategories = () => [
+  { key: "people", label: t("world.ui1") },
+  { key: "toys", label: t("world.ui2") },
+  { key: "food", label: t("world.ui3") },
+  { key: "places", label: t("world.ui4") },
 ] as const;
 
 export function WorldExperience({ childId, canManage, onWords, onSpeak }: { childId?: number; canManage: boolean; onWords: () => void; onSpeak: (text: string) => Promise<boolean> }) {
+  useLocale();
+  const categories = getCategories();
   const fileId = useId();
+  const fileInput = useRef<HTMLInputElement>(null);
+  const [uploadOpen, setUploadOpen] = useState(false);
+  const [query, setQuery] = useState("");
+  const [revision, setRevision] = useState(0);
+  const [loadError, setLoadError] = useState("");
   const [photos, setPhotos] = useState<WorldPhoto[]>([]);
-  const [category, setCategory] = useState<WorldPhoto["category"]>("people");
+  const [category, setCategory] = useState<WorldPhoto["category"] | "all">("all");
   const [pendingPhotos, setPendingPhotos] = useState<Array<{ id: string; name: string; image_data: string; category: WorldPhoto["category"] }>>([]);
   const [editingPhoto, setEditingPhoto] = useState<number | null>(null);
   const [photoName, setPhotoName] = useState("");
@@ -31,12 +40,13 @@ export function WorldExperience({ childId, canManage, onWords, onSpeak }: { chil
   useEffect(() => {
     if (!childId) return;
     let current = true;
+    queueMicrotask(() => { if(current) { setLoading(true); setLoadError(""); } });
     api<WorldPhoto[]>(`/api/world/${childId}`)
       .then((items) => { if (current) setPhotos(items); })
-      .catch((cause) => { if (current) setError(cause instanceof Error ? cause.message : "Не удалось загрузить фотографии"); })
+      .catch((cause) => { if (current) setLoadError(cause instanceof Error ? cause.message : t("world.ui5")); })
       .finally(() => { if (current) setLoading(false); });
     return () => { current = false; stopCurrentSpeech(); };
-  }, [childId]);
+  }, [childId, revision]);
 
   useEffect(() => {
     if (!childId || !canManage) return;
@@ -58,7 +68,7 @@ export function WorldExperience({ childId, canManage, onWords, onSpeak }: { chil
       try {
         const blob = await fetch(legacy.src).then((response) => response.blob());
         const image_data = await compressPhoto(new File([blob], `${legacy.name || "photo"}.jpg`, { type: blob.type }));
-        const photo = await api<WorldPhoto>(`/api/world/${childId}`, { method: "POST", body: JSON.stringify({ name: legacy.name || "Моя фотография", category, image_data }) });
+        const photo = await api<WorldPhoto>(`/api/world/${childId}`, { method: "POST", body: JSON.stringify({ name: legacy.name || t("world.ui6"), category: category === "all" ? "people" : category, image_data }) });
         setPhotos((items) => [photo, ...items]);
         imported += 1;
       } catch { remaining.push(legacy); }
@@ -66,8 +76,8 @@ export function WorldExperience({ childId, canManage, onWords, onSpeak }: { chil
     window.localStorage.setItem(`soyle-world-photos-${childId}`, JSON.stringify(remaining));
     setLegacyPhotos(remaining);
     setSaving(false);
-    setMessage(imported ? `${imported} прежних фото перенесено в профиль ребёнка.` : "");
-    if (remaining.length) setError(`${remaining.length} фото не удалось перенести. Они остались на этом устройстве — попробуйте ещё раз.`);
+    setMessage(imported ? t("world.imported", { count: imported }) : "");
+    if (remaining.length) setError(t("world.importFailed", { count: remaining.length }));
   };
 
   const preparePhotos = async (files: File[]) => {
@@ -75,12 +85,12 @@ export function WorldExperience({ childId, canManage, onWords, onSpeak }: { chil
     setSaving(true); setMessage(""); setError("");
     const available = Math.max(0, 4 - pendingPhotos.length);
     const failures: string[] = [];
-    if (files.length > available) failures.push("За один раз можно подготовить до 4 фотографий.");
+    if (files.length > available) failures.push(t("world.ui7"));
     for (const file of files.slice(0, available)) {
       try {
         const image_data = await compressPhoto(file);
-        setPendingPhotos((items) => [...items, { id: crypto.randomUUID(), name: "", image_data, category }]);
-      } catch (cause) { failures.push(`${file.name}: ${cause instanceof Error ? cause.message : "Не удалось открыть фото"}`); }
+        setPendingPhotos((items) => [...items, { id: crypto.randomUUID(), name: "", image_data, category: category === "all" ? "people" : category }]);
+      } catch (cause) { failures.push(`${file.name}: ${cause instanceof Error ? cause.message : t("world.ui8")}`); }
     }
     setError(failures.join(" "));
     setSaving(false);
@@ -88,7 +98,7 @@ export function WorldExperience({ childId, canManage, onWords, onSpeak }: { chil
 
   const upload = async () => {
     if (!childId || !pendingPhotos.length || saving) return;
-    if (pendingPhotos.some((photo) => !photo.name.trim())) { setError("Назовите каждую фотографию: это название услышит ребёнок."); return; }
+    if (pendingPhotos.some((photo) => !photo.name.trim())) { setError(t("world.ui9")); return; }
     setSaving(true); setMessage(""); setError("");
     let saved = 0;
     const failures: string[] = [];
@@ -100,9 +110,9 @@ export function WorldExperience({ childId, canManage, onWords, onSpeak }: { chil
         setPhotos((items) => [photo, ...items]);
         setPendingPhotos((items) => items.filter((item) => item.id !== pending.id));
         saved += 1;
-      } catch (cause) { failures.push(`${pending.name}: ${cause instanceof Error ? cause.message : "Фотография не сохранилась"}`); }
+      } catch (cause) { failures.push(`${pending.name}: ${cause instanceof Error ? cause.message : t("world.ui10")}`); }
     }
-    if (saved) setMessage(`Сохранено фото: ${saved}. Они доступны ребёнку после повторного входа.`);
+    if (saved) { setMessage(t("world.saved", { count: saved })); setCategory("all"); setQuery(""); }
     setError(failures.join(" "));
     setSaving(false);
   };
@@ -114,19 +124,19 @@ export function WorldExperience({ childId, canManage, onWords, onSpeak }: { chil
       const updated = await api<WorldPhoto>(`/api/world/${childId}/${photo.id}`, { method: "PATCH", body: JSON.stringify({ name: photoName.trim() }) });
       setPhotos((items) => items.map((item) => item.id === updated.id ? updated : item));
       setEditingPhoto(null);
-      setMessage("Название сохранено. При нажатии на звук прозвучит это название.");
-    } catch (cause) { setError(cause instanceof Error ? cause.message : "Не удалось изменить название"); }
+      setMessage(t("world.ui11"));
+    } catch (cause) { setError(cause instanceof Error ? cause.message : t("world.ui12")); }
     finally { setSaving(false); }
   };
 
   const remove = async (photo: WorldPhoto) => {
-    if (!childId || saving || !window.confirm(`Удалить «${photo.name}» из Моего мира?`)) return;
+    if (!childId || saving || !window.confirm(t("world.deleteConfirm", { name: photo.name }))) return;
     setSaving(true); setError("");
     try {
       await api(`/api/world/${childId}/${photo.id}`, { method: "DELETE" });
       setPhotos((items) => items.filter((item) => item.id !== photo.id));
-      setMessage("Фотография удалена из Моего мира.");
-    } catch (cause) { setError(cause instanceof Error ? cause.message : "Не удалось удалить фотографию"); }
+      setMessage(t("world.ui13"));
+    } catch (cause) { setError(cause instanceof Error ? cause.message : t("world.ui14")); }
     finally { setSaving(false); }
   };
 
@@ -135,44 +145,46 @@ export function WorldExperience({ childId, canManage, onWords, onSpeak }: { chil
     setSaving(true); setError(""); setMessage("");
     const categoryMap = { people: "people", toys: "play", food: "food", places: "places" } as const;
     try {
-      await api("/api/aac/cards", { method: "POST", body: JSON.stringify({ child_id: childId, label: photo.name.slice(0, 40), speech: photo.name, category: categoryMap[photo.category], image: photo.image_data }) });
-      setMessage(`Карточка «${photo.name}» добавлена в «Мои слова».`);
-    } catch (cause) { setError(cause instanceof Error ? cause.message : "Не удалось добавить карточку"); }
+      await api("/api/aac/cards", { method: "POST", body: JSON.stringify({ child_id: childId, label: photo.name.slice(0, 40), speech: photo.name, category: categoryMap[photo.category], image: photo.image_data, language: languageOf(getLocale()) }) });
+      setMessage(t("world.cardAdded", { name: photo.name }));
+    } catch (cause) { setError(cause instanceof Error ? cause.message : t("world.ui15")); }
     finally { setSaving(false); }
   };
 
   const speakName = async (photo: WorldPhoto) => {
     setSpeakingPhoto(photo.id); setError("");
     try {
-      if (!await onSpeak(photo.name)) setError("Не удалось озвучить название. Проверьте звук и попробуйте ещё раз.");
-    } catch { setError("Не удалось озвучить название. Попробуйте ещё раз."); }
+      if (!await onSpeak(photo.name)) setError(t("world.ui16"));
+    } catch { setError(t("world.ui17")); }
     finally { setSpeakingPhoto((current) => current === photo.id ? null : current); }
   };
 
-  const visible = photos.filter((photo) => photo.category === category);
-  if (!childId) return <div className="v2-screen v2-world-empty" role="status">Сначала открой профиль ребёнка.</div>;
-  return <div className="v2-screen v2-world page-enter">
-    <section className="v2-world-hero"><div><span className="v2-title-icon"><ImageIcon/></span><h1>Мой мир</h1><h2>Знакомые люди, места и вещи</h2><p>{canManage ? "Добавьте настоящие фотографии из жизни ребёнка. Они останутся в его профиле и могут стать личными карточками AAC." : "Здесь живут знакомые люди, места и любимые вещи. Нажми на фото, чтобы услышать название."}</p>{canManage && <a href="#world-upload" className="v2-upload-button"><Camera/> Добавить фото</a>}</div><Image src="/app-illustrations/world-memory-board.webp" alt="Мальчик рассматривает доску знакомых фотографий" fill priority sizes="(max-width: 900px) 100vw, 80vw"/></section>
+  const visible = photos.filter(photo => (category === "all" || photo.category === category) && photo.name.toLocaleLowerCase().includes(query.trim().toLocaleLowerCase()));
+  if (!childId) return <div className="v2-screen v2-world-empty" role="status">{t("world.ui18")}</div>;
+  return <div className="v2-screen v2-world focused-world page-enter">
+    <header className="library-heading"><div><h1>{t("world.ui19")}</h1><p>{canManage ? t("world.ui21") : t("world.ui22")}</p>{canManage && <button className="primary-button" aria-expanded={uploadOpen} aria-controls="world-upload" onClick={() => setUploadOpen(value => !value)}><Camera size={20}/>{t(uploadOpen ? "library.closeUpload" : "world.ui23")}</button>}</div><Image src="/app-illustrations/library-world.png" alt="" width={160} height={160} priority/></header>
+    {loadError && <div className="v2-inline-alert" role="alert"><p>{loadError}</p><button className="small-button" onClick={() => setRevision(value => value+1)}>{t("ux.retry")}</button></div>}
     {error && <p className="v2-inline-alert" role="alert">{error}</p>}
     {message && <p className="v2-save-message" role="status"><Check/>{message}</p>}
-    <div className="v2-world-tabs" role="group" aria-label="Категории фотографий">{categories.map((item) => <button key={item.key} aria-pressed={category === item.key} className={category === item.key ? "active" : ""} onClick={() => setCategory(item.key)}>{item.label}</button>)}</div>
-    {canManage && <div className="v2-world-upload-form" id="world-upload">
-      <label className="v2-upload-button" htmlFor={fileId}><Plus/>{saving ? "Подождите…" : "Выбрать фотографии"}</label>
-      <input id={fileId} className="v2-visually-hidden" type="file" accept="image/jpeg,image/png,image/webp" multiple disabled={saving || pendingPhotos.length >= 4} onChange={(event) => { const files = Array.from(event.target.files || []); event.target.value = ""; void preparePhotos(files); }}/>
-      <small>До 4 фотографий за раз. Назовите каждое фото: ребёнок услышит именно это название.</small>
+    <div className="world-library-tools"><label className="library-search">{t("library.findPhoto")}<span><Search size={20}/><input type="search" value={query} onChange={event => setQuery(event.target.value)} placeholder={t("library.searchPhotoPlaceholder")}/></span></label><div className="v2-world-tabs" role="group" aria-label={t("world.ui25")}>{[{key:"all",label:t("library.allPhotos")},...categories].map(item => <button key={item.key} aria-pressed={category === item.key} className={category === item.key ? "active" : ""} onClick={() => setCategory(item.key as typeof category)}>{item.label}<span>{item.key === "all" ? photos.length : photos.filter(photo => photo.category === item.key).length}</span></button>)}</div></div>
+    {canManage && <div className="v2-world-upload-form" id="world-upload" hidden={!uploadOpen}>
+      <div className="world-upload-heading"><h2>{t("library.uploadTitle")}</h2><p>{t("library.uploadSteps")}</p></div>
+      <button className="v2-upload-button" type="button" disabled={saving || pendingPhotos.length >= 4} onClick={() => fileInput.current?.click()}><Plus/>{saving ? t("world.ui26") : t("world.ui27")}</button>
+      <input ref={fileInput} id={fileId} tabIndex={-1} className="v2-visually-hidden" type="file" accept="image/jpeg,image/png,image/webp" multiple disabled={saving || pendingPhotos.length >= 4} onChange={(event) => { const files = Array.from(event.target.files || []); event.target.value = ""; void preparePhotos(files); }}/>
+      <small>{t("world.ui28")}</small>{pendingPhotos.length >= 4 && <p role="status">{t("library.uploadLimit")}</p>}
       {pendingPhotos.length > 0 && <form className="v2-photo-upload-review" onSubmit={(event) => { event.preventDefault(); void upload(); }}>
         <div className="v2-photo-upload-previews">{pendingPhotos.map((photo, index) => <div className="v2-photo-upload-preview" key={photo.id}>
-          <div className="v2-upload-photo-image"><Image src={photo.image_data} alt={`Новое фото ${index + 1}`} fill sizes="(max-width: 480px) 100vw, 40vw" unoptimized/></div>
-          <label>Название фото {index + 1}<input required maxLength={60} disabled={saving} value={photo.name} placeholder="Например, Мама или Мой мишка" onChange={(event) => setPendingPhotos((items) => items.map((item) => item.id === photo.id ? { ...item, name: event.target.value } : item))}/></label>
-          <label>Раздел<select disabled={saving} value={photo.category} onChange={(event) => setPendingPhotos((items) => items.map((item) => item.id === photo.id ? { ...item, category: event.target.value as WorldPhoto["category"] } : item))}>{categories.map((item) => <option key={item.key} value={item.key}>{item.label}</option>)}</select></label>
-          <button type="button" className="small-button" disabled={saving} onClick={() => setPendingPhotos((items) => items.filter((item) => item.id !== photo.id))}>Убрать фото {index + 1}</button>
+          <div className="v2-upload-photo-image"><Image src={photo.image_data} alt={t("world.newPhoto", { number: index + 1 })} fill sizes="(max-width: 480px) 100vw, 40vw" unoptimized/></div>
+          <label>{t("world.ui29")} {index + 1}<input required maxLength={60} disabled={saving} value={photo.name} placeholder={t("world.ui30")} onChange={(event) => setPendingPhotos((items) => items.map((item) => item.id === photo.id ? { ...item, name: event.target.value } : item))}/></label>
+          <label>{t("world.ui31")}<select disabled={saving} value={photo.category} onChange={(event) => setPendingPhotos((items) => items.map((item) => item.id === photo.id ? { ...item, category: event.target.value as WorldPhoto["category"] } : item))}>{categories.map((item) => <option key={item.key} value={item.key}>{item.label}</option>)}</select></label>
+          <button type="button" className="small-button" disabled={saving} onClick={() => setPendingPhotos((items) => items.filter((item) => item.id !== photo.id))}>{t("world.ui32")} {index + 1}</button>
         </div>)}</div>
-        <button type="submit" className="primary-button" disabled={saving}>{saving ? "Сохраняем…" : "Сохранить фотографии"}</button>
+        <button type="submit" className="primary-button" disabled={saving}>{saving ? t("world.ui33") : t("world.ui34")}</button>
       </form>}
-      {legacyPhotos.length > 0 && <button className="v2-legacy-import" onClick={() => void importLegacy()} disabled={saving}>Перенести прежние фото с этого устройства ({legacyPhotos.length})</button>}
+      {legacyPhotos.length > 0 && <button className="v2-legacy-import" onClick={() => void importLegacy()} disabled={saving}>{t("world.import", { count: legacyPhotos.length })}</button>}
     </div>}
 
-    {loading ? <p className="v2-world-empty" role="status">Загружаем фотографии…</p> : visible.length ? <div className="v2-photo-grid">{visible.map((photo) => <article key={photo.id} className="v2-photo-card"><button className="v2-photo-image-button" onClick={() => void speakName(photo)} aria-label={`Послушать: ${photo.name}`}><Image src={photo.image_data} alt={photo.name} fill unoptimized sizes="(max-width: 480px) 100vw, (max-width: 760px) 50vw, 30vw"/></button><footer><strong>{photo.name}</strong><button onClick={() => void speakName(photo)} aria-label={`Произнести: ${photo.name}`}><Volume2/>{speakingPhoto === photo.id && <span className="v2-visually-hidden">Озвучиваем</span>}</button></footer>{canManage && editingPhoto === photo.id && <form className="v2-photo-rename" onSubmit={(event) => { event.preventDefault(); void rename(photo); }}><label>Название фотографии<input required maxLength={60} value={photoName} disabled={saving} onChange={(event) => setPhotoName(event.target.value)}/></label><button disabled={saving} type="submit">Сохранить</button><button type="button" disabled={saving} onClick={() => setEditingPhoto(null)}>Отмена</button></form>}{canManage && <div className="v2-photo-actions"><button disabled={saving} onClick={() => { setEditingPhoto(photo.id); setPhotoName(photo.name); }}>Название</button><button disabled={saving} onClick={() => void addToWords(photo)}><MessageCircle/> В слова</button><button disabled={saving} onClick={() => void remove(photo)} aria-label={`Удалить ${photo.name}`}><Trash2/></button></div>}</article>)}</div> : <div className="v2-world-empty"><ImageIcon/><strong>Пока нет фотографий в разделе «{categories.find((item) => item.key === category)?.label}»</strong><p>{canManage ? "Добавьте знакомый предмет или человека — фото будет доступно ребёнку." : "Попроси взрослого добавить сюда знакомые фотографии."}</p></div>}
-    <button className="v2-world-words-link" onClick={onWords}><MessageCircle/><span><strong>Мои слова</strong><small>{canManage ? "Добавляйте знакомые фотографии в AAC-карточки" : "Собери сообщение из карточек"}</small></span><ArrowRight/></button>
+    {loading ? <p className="v2-world-empty" role="status">{t("world.ui36")}</p> : visible.length ? <div className="v2-photo-grid">{visible.map((photo) => <article key={photo.id} className="v2-photo-card"><button className="v2-photo-image-button" onClick={() => void speakName(photo)} aria-label={t("world.listen", { name: photo.name })}><Image src={photo.image_data} alt={photo.name} fill unoptimized sizes="(max-width: 480px) 100vw, (max-width: 760px) 50vw, 30vw"/></button><footer><strong>{photo.name}</strong><button onClick={() => void speakName(photo)} aria-label={t("world.speak", { name: photo.name })}><Volume2/>{speakingPhoto === photo.id && <span className="v2-visually-hidden">{t("world.ui37")}</span>}</button></footer>{canManage && editingPhoto === photo.id && <form className="v2-photo-rename" onSubmit={(event) => { event.preventDefault(); void rename(photo); }}><label>{t("world.ui38")}<input required maxLength={60} value={photoName} disabled={saving} onChange={(event) => setPhotoName(event.target.value)}/></label><button disabled={saving} type="submit">{t("world.ui39")}</button><button type="button" disabled={saving} onClick={() => setEditingPhoto(null)}>{t("world.ui40")}</button></form>}{canManage && <div className="v2-photo-actions"><button disabled={saving} onClick={() => { setEditingPhoto(photo.id); setPhotoName(photo.name); }}>{t("world.ui41")}</button><button disabled={saving} onClick={() => void addToWords(photo)}><MessageCircle/>  {t("world.ui42")}</button><button disabled={saving} onClick={() => void remove(photo)} aria-label={t("world.delete", { name: photo.name })}><Trash2/></button></div>}</article>)}</div> : !loadError && <div className="library-empty world-empty"><Image src="/app-illustrations/library-world.png" alt="" width={160} height={160}/><div><h2>{t(query || photos.length ? "library.noPhotos" : "library.firstPhoto")}</h2><p>{query || photos.length ? t("library.changeFilters") : canManage ? t("library.firstPhotoHint") : t("world.ui45")}</p>{query || photos.length ? <button className="small-button" onClick={() => {setQuery("");setCategory("all");}}>{t("library.reset")}</button> : canManage && <button className="small-button" onClick={() => {setUploadOpen(true);fileInput.current?.click();}}>{t("world.ui27")}</button>}</div></div>}
+    <button className="v2-world-words-link" onClick={onWords}><MessageCircle/><span><strong>{t("world.ui46")}</strong><small>{canManage ? t("world.ui47") : t("world.ui48")}</small></span><ArrowRight/></button>
   </div>;
 }

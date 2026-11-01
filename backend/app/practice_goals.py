@@ -15,6 +15,7 @@ from fastapi import HTTPException
 
 from .database import now_iso
 from .goal_progress import goal_progress
+from .practice_localization import localize_goal, practice_text
 
 
 PRACTICE_GOAL_TEMPLATES = (
@@ -152,7 +153,7 @@ def list_templates(db) -> list[dict]:
     ).fetchall()]
     for template in templates:
         template["available_exercise_count"] = len(_related_exercises(db, template))
-    return templates
+    return [localize_goal(template) for template in templates]
 
 
 def exercise_matches_goal(exercise: dict, goal: dict) -> bool:
@@ -206,7 +207,7 @@ def list_goals(db, child_id: int, *, full: bool = False) -> list[dict]:
         for history in item["history"]:
             history.pop("snapshot_json", None)
         goals.append(item)
-    return goals
+    return [localize_goal(goal) for goal in goals]
 
 
 def create_goal(db, child_id: int, template_key: str, baseline: str, help_level: str, user_id: int) -> dict:
@@ -215,14 +216,14 @@ def create_goal(db, child_id: int, template_key: str, baseline: str, help_level:
         (template_key,),
     ).fetchone()
     if not template_row:
-        raise HTTPException(422, "Цель отсутствует в подготовленном каталоге")
+        raise HTTPException(422, practice_text("Цель отсутствует в подготовленном каталоге"))
     if help_level not in HELP_LEVELS:
-        raise HTTPException(422, "Неизвестный уровень помощи")
+        raise HTTPException(422, practice_text("Неизвестный уровень помощи"))
     if db.execute(
         "SELECT 1 FROM parent_practice_goals WHERE child_id=? AND template_key=? AND status IN ('active','paused')",
         (child_id, template_key),
     ).fetchone():
-        raise HTTPException(409, "Такая домашняя практическая цель уже добавлена")
+        raise HTTPException(409, practice_text("Такая домашняя практическая цель уже добавлена"))
     template = decode_template(template_row)
     stamp = now_iso()
     cursor = db.execute(
@@ -241,20 +242,20 @@ def create_goal(db, child_id: int, template_key: str, baseline: str, help_level:
     )
     goal = decode_goal(db.execute("SELECT * FROM parent_practice_goals WHERE id=?", (cursor.fetchone()["id"],)).fetchone())
     record_goal_history(db, goal, "created", user_id)
-    return goal
+    return localize_goal(goal)
 
 
 def update_goal(db, goal_id: int, child_id: int, expected_version: int, changes: dict, user_id: int) -> dict:
     row = db.execute("SELECT * FROM parent_practice_goals WHERE id=? AND child_id=?", (goal_id, child_id)).fetchone()
     if not row:
-        raise HTTPException(404, "Домашняя практическая цель не найдена")
+        raise HTTPException(404, practice_text("Домашняя практическая цель не найдена"))
     current = decode_goal(row)
     if current["version"] != expected_version:
-        raise HTTPException(409, "Цель уже была изменена. Обновите страницу и повторите действие")
+        raise HTTPException(409, practice_text("Цель уже была изменена. Обновите страницу и повторите действие"))
     status = changes.get("status", current["status"])
     help_level = changes.get("help_level", current["help_level"])
     if status not in GOAL_STATUSES or help_level not in HELP_LEVELS:
-        raise HTTPException(422, "Неизвестный статус или уровень помощи")
+        raise HTTPException(422, practice_text("Неизвестный статус или уровень помощи"))
     baseline = changes.get("baseline") if changes.get("baseline") is not None else current["baseline"]
     target = changes.get("target_outcome") if changes.get("target_outcome") is not None else current["target_outcome"]
     next_version = current["version"] + 1
@@ -264,18 +265,18 @@ def update_goal(db, goal_id: int, child_id: int, expected_version: int, changes:
         (next_version, baseline, target, help_level, status, now_iso(), goal_id, child_id, expected_version),
     )
     if updated.rowcount != 1:
-        raise HTTPException(409, "Цель уже была изменена. Обновите страницу и повторите действие")
+        raise HTTPException(409, practice_text("Цель уже была изменена. Обновите страницу и повторите действие"))
     goal = decode_goal(db.execute("SELECT * FROM parent_practice_goals WHERE id=?", (goal_id,)).fetchone())
     record_goal_history(db, goal, "updated", user_id)
-    return goal
+    return localize_goal(goal)
 
 
 def save_observation(db, goal_id: int, child_id: int, payload: dict, user_id: int, observation_id: int | None = None) -> dict:
     goal = db.execute("SELECT id,version FROM parent_practice_goals WHERE id=? AND child_id=?", (goal_id, child_id)).fetchone()
     if not goal:
-        raise HTTPException(404, "Домашняя практическая цель не найдена")
+        raise HTTPException(404, practice_text("Домашняя практическая цель не найдена"))
     if payload["result_type"] not in OBSERVATION_RESULTS:
-        raise HTTPException(422, "Неизвестный результат наблюдения")
+        raise HTTPException(422, practice_text("Неизвестный результат наблюдения"))
     stamp = now_iso()
     observed_at = payload.get("observed_at") or stamp
     if observation_id is None:
@@ -293,7 +294,7 @@ def save_observation(db, goal_id: int, child_id: int, payload: dict, user_id: in
             (observation_id, goal_id, child_id),
         ).fetchone()
         if not existing:
-            raise HTTPException(404, "Наблюдение не найдено")
+            raise HTTPException(404, practice_text("Наблюдение не найдено"))
         db.execute(
             """UPDATE practice_goal_observations SET result_type=?,prompt_level=?,note=?,observed_at=?,updated_at=?
                WHERE id=? AND goal_id=? AND child_id=?""",
@@ -317,10 +318,10 @@ def save_preferences(db, child_id: int, payload: dict, user_id: int) -> dict:
     preferred = list(dict.fromkeys(payload.get("preferred_exercise_ids", [])))
     avoided = list(dict.fromkeys(payload.get("avoided_exercise_ids", [])))
     if set(preferred) & set(avoided):
-        raise HTTPException(422, "Одно задание нельзя одновременно предпочитать и избегать")
+        raise HTTPException(422, practice_text("Одно задание нельзя одновременно предпочитать и избегать"))
     published_ids = {item["id"] for item in _published_non_motor(db)}
     if any(item not in published_ids for item in preferred + avoided):
-        raise HTTPException(422, "Предпочтения можно сохранять только для опубликованных немоторных заданий")
+        raise HTTPException(422, practice_text("Предпочтения можно сохранять только для опубликованных немоторных заданий"))
     stamp = now_iso()
     db.execute(
         """INSERT INTO child_practice_preferences(

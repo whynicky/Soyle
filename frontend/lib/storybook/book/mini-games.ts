@@ -8,8 +8,8 @@ export function activeOptions(scene:BookScene,state:BookState):BookOption[]{
   return scene.options;
 }
 export function canTurnPage(scene:BookScene,state:BookState){return !state.paused&&!state.completed&&(state.ready||scene.kind==='ending'||scene.kind==='watch');}
-export function promptFor(scene:BookScene,state:BookState){
+export function promptFor(scene:BookScene,state:BookState,language:"ru"|"kk"="ru"){
   if(state.ready)return state.feedback;
-  if(scene.kind==='sequence'&&state.step===1)return 'Теперь поставь поезд на рельсы';
+  if(scene.kind==='sequence'&&state.step===1)return language === 'kk' ? 'Енді пойызды рельске қой' : 'Теперь поставь поезд на рельсы';
   return scene.instruction;
 }

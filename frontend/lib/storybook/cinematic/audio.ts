@@ -1,3 +1,4 @@
+import { t } from "../../locale.ts";
 import { playSpeechClip, speak, stopCurrentSpeech } from "../../speech";
 
 /** Reviewed recordings and TTS use the same player as exercises and the pet. */
@@ -7,7 +8,7 @@ export async function playNarration(text: string, signal: AbortSignal, clips: Re
   signal.addEventListener("abort", abort, { once: true });
   try {
     const played = language === "ru" && clips[text] ? await playSpeechClip(clips[text]) : await speak(text, .70, true, language);
-    if (!played && !signal.aborted) throw new Error("Не удалось завершить озвучку: озвучка недоступна");
+    if (!played && !signal.aborted) throw new Error(t("final.speech"));
   } finally {
     signal.removeEventListener("abort", abort);
   }

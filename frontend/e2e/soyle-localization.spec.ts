@@ -1,4 +1,6 @@
 import { test, expect } from '@playwright/test';
+import { readFileSync } from 'node:fs';
+const kk = JSON.parse(readFileSync(new URL('../locales/kk-KZ.json', import.meta.url), 'utf8'));
 test.use({storageState:{cookies:[],origins:[]}});
 
 test('first use, Kazakh authentication, switching and reload preserve locale', async ({ page }) => {
@@ -55,8 +57,8 @@ test('child settings switch both ways and keep saved progress', async ({ page })
     const me = await (await fetch('/api/auth/me')).json();
     return (await fetch(`/api/dashboard/${me.child_id}`)).json();
   });
-  const menu = page.getByRole('button',{name:'Открыть меню',exact:true});
-  if (await menu.isVisible()) await menu.click();
+  const menu = page.getByRole('button',{name:/^(Открыть меню|Мәзірді ашу)$/});
+  if ((page.viewportSize()?.width || 1440) <= 760) { await expect(menu).toBeVisible(); await menu.click(); }
   await page.getByRole('button',{name:/^(Настройки|Баптаулар)$/}).click();
   await page.getByRole('button',{name:'Қазақша',exact:true}).click();
   await expect(page.getByRole('heading',{name:'Саған қалай ыңғайлы?'})).toBeVisible();
@@ -137,7 +139,7 @@ test('Kazakh book preview displays translated scenes and requests matching speec
   await page.getByRole('button',{name:'Кіру',exact:true}).click();
   await expect(page.locator('.parent-shell')).toBeVisible();
   await page.goto('/app?cabinet=parent&section=materials');
-  await page.getByRole('button',{name:'Открыть книгу с играми',exact:true}).click();
+  await page.getByRole('button',{name:'Ойындары бар кітапты ашу',exact:true}).click();
   await expect(page.getByRole('heading',{name:'Сүйікті ойыншық',exact:true})).toBeVisible();
   const request=page.waitForRequest(request => request.url().endsWith('/api/tts') && request.method()==='POST');
   await page.getByRole('button',{name:'Кітапты ашу',exact:true}).click();
@@ -162,7 +164,7 @@ test('Kazakh picnic preview keeps translated choices and Kazakh narration', asyn
   const csrf=(await page.context().cookies()).find(cookie=>cookie.name==='soyle_csrf')?.value || '';
   expect((await page.request.post(bookUrl+'/events',{headers:{'X-CSRF-Token':csrf},data:{version:saved.definition.version,expected_revision:saved.revision,scene_id:saved.definition.scenes[saved.state.scene_index].id,event_id:crypto.randomUUID(),action:'restart'}})).ok()).toBeTruthy();
   await page.goto('/app?cabinet=parent&section=materials');
-  await page.getByRole('button',{name:'Открыть комикс',exact:true}).click();
+  await page.getByRole('button',{name:'Комиксті ашу',exact:true}).click();
   await expect(page.getByRole('heading',{name:'Қонжыққа арналған пикник',exact:true})).toBeVisible();
   const request=page.waitForRequest(request => request.url().endsWith('/api/tts') && request.method()==='POST');
   await page.getByRole('button',{name:/^(Кітапты ашу|Оқуды жалғастыру)$/,exact:true}).click();
@@ -186,7 +188,7 @@ test('parent previews the Kazakh AAC library without saving a child result', asy
   await page.getByRole('button',{name:'Кіру',exact:true}).click();
   await expect(page.locator('.parent-shell')).toBeVisible();
   await page.goto('/app?cabinet=parent&section=materials');
-  await page.getByRole('button',{name:'Карточки AAC',exact:true}).click();
+  await page.getByRole('button',{name:'AAC карточкалары',exact:true}).click();
   await expect(page.getByText(/Карточка аудармаларын алдын ала қарау/)).toBeVisible();
   await page.locator('.aac-card-main').filter({has:page.getByText('Қалаймын',{exact:true})}).click();
   await page.getByRole('button',{name:/^Тағы/}).first().click();
@@ -225,4 +227,15 @@ test('specialist reviews an AAC translation through the explicit approval contro
   await approve.click();
   await expect.poll(()=>reviewed).toBeTruthy();
   await expect(approve).toBeDisabled();
+});
+
+
+test('installation metadata follows locale without reloading',async({page})=>{
+  await page.goto('/app');
+  await page.getByRole('dialog').getByRole('button',{name:'Қазақша',exact:true}).click();
+  await expect(page.locator('link[rel="manifest"]')).toHaveAttribute('href','/localized-manifest?lang=kk-KZ');
+  const manifest = await (await page.request.get('/localized-manifest?lang=kk-KZ')).json();
+  expect(manifest.lang).toBe('kk-KZ');
+  expect(manifest.name).toBe(kk['app.title']);
+  await expect(page.locator('meta[name="description"]')).toHaveAttribute('content',kk['app.description']);
 });

@@ -6,6 +6,8 @@ from typing import Any
 from fastapi import HTTPException
 
 from .database import now_iso
+from .practice_localization import practice_text
+from .localization import LOCALE
 from .p1_content import HOME_OBSERVATION_OUTCOMES, OBSERVATION_STATUSES, SKILL_CATEGORIES
 
 
@@ -27,7 +29,7 @@ def skill_map(db, child_id: int) -> list[dict]:
     return [
         {
             "category": category,
-            "label": label,
+            "label": practice_text(label),
             "status": by_category.get(category, {}).get("status", "not_observed"),
             "note": by_category.get(category, {}).get("note", ""),
             "source": by_category.get(category, {}).get("source", "real_life_parent_observation"),
@@ -56,7 +58,7 @@ def upsert_skill_observation(db, child_id: int, category: str, payload: dict, us
     )
     row = db.execute("SELECT * FROM skill_observations WHERE child_id=? AND category=?", (child_id, category)).fetchone()
     result = dict(row)
-    result["label"] = allowed[category]
+    result["label"] = practice_text(allowed[category])
     return result
 
 
@@ -75,12 +77,22 @@ def home_library(db, child_id: int) -> dict:
            WHERE o.child_id=? ORDER BY o.observed_at DESC,o.id DESC LIMIT 40""",
         (child_id,),
     ).fetchall()
-    return {
+    if LOCALE.get() == "kk-KZ":
+        pending = [*published, *pending]
+        published = []
+    result = {
         "activities": [_decode_activity(row, include_content=True) for row in published],
         "pending_review": [_decode_activity(row, include_content=False) for row in pending],
         "observations": [dict(row) for row in observations],
         "notice": "Домашние игры не являются диагностикой. Черновики недоступны до методической проверки.",
     }
+    if LOCALE.get() == "kk-KZ":
+        for activity in result["pending_review"]:
+            activity["title"] = practice_text(activity["title"])
+            activity["translation_status"] = "needs_review"
+        for observation in result["observations"]: observation["activity_title"] = practice_text(observation["activity_title"])
+        result["notice"] = practice_text(result["notice"])
+    return result
 
 
 def save_home_observation(db, child_id: int, payload: dict, user_id: int, observation_id: int | None = None) -> dict:
@@ -154,5 +166,5 @@ def descriptive_results(db, child_id: int) -> dict:
         "technical_errors": sum(1 for row in sessions if row["attempt_status"] == "technical_error"),
         "modelled_responses": sum(1 for row in sessions if row["support_context"] == "caregiver_modelled"),
         "real_life_observations": real_life_skill + real_life_home + real_life_goals + real_life_specialist,
-        "disclaimer": "Показатели описывают отдельные игровые попытки и бытовые наблюдения; они не объединяются в оценку развития речи.",
+        "disclaimer": practice_text("Показатели описывают отдельные игровые попытки и бытовые наблюдения; они не объединяются в оценку развития речи."),
     }
