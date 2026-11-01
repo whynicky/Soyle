@@ -1,31 +1,28 @@
 "use client";
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { homePetDelay, nextHomePetState, type HomePetState } from '@/lib/homePet';
 
-/** No speech, bubbles, or exercise events: only the home Rive pose is scheduled. */
+/** Pauses retain the pose: dragging/visibility never teleport the anatomy. */
 export function useHomePetIdle(active: boolean, reduced: boolean) {
-  const [state, setState] = useState<HomePetState>('sit');
+  const [state, setState] = useState<HomePetState>('stand');
+  const current = useRef<HomePetState>('stand');
+  const previous = useRef<HomePetState | null>(null);
   useEffect(() => {
     if (!active) return;
-    let current: HomePetState = 'sit';
-    let previous: HomePetState | null = null;
     let timer: ReturnType<typeof setTimeout>;
-    const reset = setTimeout(() => setState('sit'), 0);
     function schedule() {
       clearTimeout(timer);
       timer = setTimeout(() => {
-        const next = nextHomePetState(current, previous, reduced);
-        previous = current; current = next;
+        const next = nextHomePetState(current.current, previous.current, reduced);
+        previous.current = current.current; current.current = next;
         setState(next); schedule();
-      }, homePetDelay(current));
+      }, homePetDelay(current.current));
     }
-    // Restart the inactivity interval after interaction; never advance on a click
-    // or while a tab is hidden. The caller pauses us for explicit reactions/drag.
     const events = ['pointerdown', 'pointermove', 'keydown', 'wheel', 'touchstart'] as const;
     events.forEach(event => document.addEventListener(event, schedule, { passive: true }));
     schedule();
     return () => {
-      clearTimeout(timer); clearTimeout(reset);
+      clearTimeout(timer);
       events.forEach(event => document.removeEventListener(event, schedule));
     };
   }, [active, reduced]);

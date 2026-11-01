@@ -17,9 +17,9 @@ test('home life is automatic, interruptible, silent and absent from exercises',a
  const pet=page.locator('.exercise-pet');
  await expect(pet).toHaveAttribute('data-pet-ready','true',{timeout:25000});
  await expect(pet).toHaveAttribute('data-pet-state','idle',{timeout:12000});
- await expect(pet).toHaveAttribute('data-rive-state',/Home • Sit idle/);
- await page.clock.fastForward(26000);await page.clock.runFor(1100);
- await expect(pet).not.toHaveAttribute('data-home-pet-state','sit');
+ await expect(pet).toHaveAttribute('data-rive-state',/Home • Stand idle/);
+ await page.clock.fastForward(26000);await page.clock.runFor(2400);
+ await expect(pet).toHaveAttribute('data-home-pet-state','sit');
  await expect(pet.locator('.pet-bubble')).toHaveCount(0);
  await page.screenshot({path:info.outputPath('home-auto-idle.png')});
  const first=await pet.getAttribute('data-home-pet-state');
@@ -29,11 +29,11 @@ test('home life is automatic, interruptible, silent and absent from exercises',a
  await pet.locator('button').click();await page.clock.runFor(700);
  await expect(pet).toHaveAttribute('data-pet-state','tap');
  await expect(pet).toHaveAttribute('data-rive-state',/Greeting/);
- await page.clock.fastForward(5000);await page.clock.runFor(1100);
+ await page.clock.fastForward(5000);await page.clock.runFor(2400);
  await expect(pet).toHaveAttribute('data-rive-state',/Home • Sit idle/);
  const seen=new Set<string>();
  for(let i=0;i<30;i++){
-  await page.clock.fastForward(26000);await page.clock.runFor(1000);
+  await page.clock.fastForward(26000);await page.clock.runFor(2400);
   seen.add((await pet.getAttribute('data-home-pet-state'))!);
   await expect(pet.locator('.pet-bubble')).toHaveCount(0);
  }
@@ -43,19 +43,36 @@ test('home life is automatic, interruptible, silent and absent from exercises',a
  await page.evaluate(()=>{Object.defineProperty(document,'hidden',{configurable:true,value:true});document.dispatchEvent(new Event('visibilitychange'));});
  await page.clock.fastForward(120000);await expect(pet).toHaveAttribute('data-home-pet-state',pose!);
  await page.evaluate(()=>{Object.defineProperty(document,'hidden',{configurable:true,value:false});document.dispatchEvent(new Event('visibilitychange'));});
- await page.clock.runFor(1100);
- // Follow a deterministic stand → sleep → wake → stand chain through the actual Rive graph.
+ await page.clock.runFor(2400);
+ // Restart at the real entry pose, then follow all native anatomical transitions.
+ await page.reload();
+ await expect(pet).toHaveAttribute('data-pet-ready','true');
+ await page.clock.runFor(6000);
+ await expect(pet).toHaveAttribute('data-rive-state',/Home • Stand idle/);
  await page.evaluate(()=>{Math.random=()=>.8;});
- for(const [state,label] of [['stand','Stand idle'],['sleepy','Sleepy'],['wake','Wake stretch'],['stand','Stand idle']]){
-  await page.clock.fastForward(26000);await page.clock.runFor(1100);
+ for(const [state,label] of [['sit','Sit idle'],['lie','Lie down'],['sleepy','Sleepy'],['wake','Wake stretch'],['sit','Sit idle']]){
+  await page.clock.fastForward(26000);await page.clock.runFor(2400);
   await expect(pet).toHaveAttribute('data-home-pet-state',state);
   await expect(pet).toHaveAttribute('data-rive-state',new RegExp(`Home • ${label}`));
+  await page.screenshot({path:info.outputPath(`pose-${state}.png`)});
  }
+ // Drag freezes both scheduling and Rive without replacing the current pose.
+ const box=await pet.locator('button').boundingBox();expect(box).toBeTruthy();
+ await page.mouse.move(box!.x+box!.width/2,box!.y+box!.height/2);
+ await page.mouse.down();await page.mouse.move(box!.x+box!.width/2,box!.y+box!.height/2-35,{steps:5});
+ await expect(pet).toHaveAttribute('data-dragging','true');
+ const dragStyle=await pet.getAttribute('style');
+ await page.clock.fastForward(60000);
+ await expect(pet).toHaveAttribute('data-home-pet-state','sit');
+ await expect(pet).toHaveAttribute('style',dragStyle!);
+ await page.mouse.up();await page.clock.runFor(200);
+ await expect(pet).toHaveAttribute('data-home-pet-state','sit');
+ await expect(pet).toHaveAttribute('data-pet-state','idle');
  // System reduced motion keeps reading/looking but does not doze.
- await page.emulateMedia({reducedMotion:'reduce'});await page.clock.runFor(1100);
+ await page.emulateMedia({reducedMotion:'reduce'});await page.clock.runFor(2400);
  for(let i=0;i<5;i++){
-  await page.clock.fastForward(26000);await page.clock.runFor(1100);
-  await expect(pet).not.toHaveAttribute('data-home-pet-state',/^sleepy$/);
+  await page.clock.fastForward(26000);await page.clock.runFor(2400);
+  await expect(pet).not.toHaveAttribute('data-home-pet-state',/^(lie|sleepy)$/);
  }
  await page.emulateMedia({reducedMotion:'no-preference'});
  // Leave via the actual home activity link; exercise runtime must use Companion.
@@ -64,7 +81,7 @@ test('home life is automatic, interruptible, silent and absent from exercises',a
  await page.clock.runFor(6000);
  await expect(pet).toHaveAttribute('data-pet-mode','exercise');
  await expect(pet).toHaveAttribute('data-rive-state',/Idle/);
- await page.clock.fastForward(120000);await page.clock.runFor(1000);
+ await page.clock.fastForward(120000);await page.clock.runFor(2400);
  await expect(pet).not.toHaveAttribute('data-home-pet-state',/.+/);
  await expect(pet).toHaveAttribute('data-rive-state',/Idle/);
  await page.screenshot({path:info.outputPath('exercise-unchanged.png')});

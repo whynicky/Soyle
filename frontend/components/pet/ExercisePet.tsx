@@ -81,7 +81,7 @@ function PetCompanion({ reaction, motion, onTap, showBubble }: { showBubble: boo
       if (disposed || !canvas.current) return;
       RuntimeLoader.setWasmUrl("/mascot/rive.wasm");
       RuntimeLoader.setWasmFallbackUrl("/mascot/rive_fallback.wasm");
-      instance = new Rive({ canvas: canvas.current, src: "/mascot/soyle-mascot.riv?v=home-2", artboard: "Söyle • Full-body pet", stateMachine: "Companion", autoBind: true, autoplay: false, shouldDisableRiveListeners: true, enableRiveAssetCDN: false, layout: new Layout({ fit: Fit.Contain, alignment: Alignment.Center }),
+      instance = new Rive({ canvas: canvas.current, src: "/mascot/soyle-mascot.riv?v=home-poses-4", artboard: "Söyle • Full-body pet", stateMachine: "Companion", autoBind: true, autoplay: false, shouldDisableRiveListeners: true, enableRiveAssetCDN: false, layout: new Layout({ fit: Fit.Contain, alignment: Alignment.Center }),
         onLoad: () => {
           if (disposed || !instance) return;
           if (!instance.viewModelInstance?.number("mood") || !instance.viewModelInstance?.number("homeState")) { setFailed(true); return; }
@@ -111,8 +111,8 @@ function PetCompanion({ reaction, motion, onTap, showBubble }: { showBubble: boo
     // Reduced motion keeps gestures and expressions, replacing only the two jumps.
     const reactionMood = reduced && requestedMood === 2 ? 3 : reduced && requestedMood === 5 ? 1 : requestedMood;
     if (mood) mood.value = still ? 0 : home && !reaction ? homePetStates[homeState].value : reactionMood;
-    if (still || !pageVisible) { rive.pause(); } else rive.play(machine);
-  }, [ready, reaction, still, pageVisible, reduced, home, homeState, machine]);
+    if (still || !pageVisible || (home && dragging)) { rive.pause(); } else rive.play(machine);
+  }, [ready, reaction, still, pageVisible, reduced, home, homeState, machine, dragging]);
   // The exported rest frame also works when WebGL is unavailable or motion is disabled.
   const showStill = still || failed || !ready;
   return <div ref={dragRef} className="exercise-pet" data-draggable={true} data-dragging={dragging} style={{transform:`translate(${offset.x}px, ${offset.y}px)`,position:"relative",zIndex:offset.x || offset.y || dragging ? 20 : undefined}} data-pet-mode={home ? "home" : "exercise"} data-home-pet-state={home && !reaction ? homeState : undefined} data-pet-renderer={showStill ? "static" : "rive"} data-pet-state={reaction?.event || "idle"} data-pet-motion={still ? "off" : reduced ? "reduced" : "full"} data-pet-ready={ready} data-rive-state={riveState}>
