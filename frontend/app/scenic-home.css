@@ -119,3 +119,5 @@ html:has(.scenic-child-home), body:has(.scenic-child-home) { height: 100%; overf
 }
 .soyle-unified.room-home-active .topbar { border-radius: 28px; overflow: hidden; isolation: isolate; }
 .soyle-unified.room-home-active .topbar::before, .soyle-unified.room-home-active .topbar::after { display: none; }
+
+.scenic-child-home .pet-home-voice { display: inline-flex; align-items: center; justify-content: center; gap: 5px; padding: 5px 8px; border: 0; border-radius: 12px; background: #fff9ed; color: #174460; font: inherit; font-size: 12px; cursor: pointer; }

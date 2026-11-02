@@ -630,6 +630,10 @@ def text_to_speech(payload: TTSRequest, user: dict = Depends(require_roles("admi
     except TTSUnavailable as exc:
         retry = exc.retry_after
     bundled_path = bundled_tts_path(text, payload.language)
+    if payload.profile == "pet":
+        pet_recording = bundled_path.parent / "pet" / bundled_path.name
+        if pet_recording.is_file():
+            bundled_path = pet_recording
     if bundled_path.exists():
         return FileResponse(bundled_path, media_type="audio/wav", filename="soyle-speech.wav",
                             headers={"Cache-Control": "no-store", "X-Soyle-TTS": "bundled"})

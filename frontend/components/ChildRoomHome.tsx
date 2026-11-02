@@ -12,13 +12,12 @@ type Destination = 'stories' | 'games' | 'aac' | 'achievements' | 'profile' | 's
 type Props = { child?: Child; dashboard: Dashboard | null; exercises: Exercise[]; currentSession: LearningSession | null;
   busy: boolean; error: string; canSave: boolean; soundEnabled: boolean; onStart: () => void; onResume: () => void;
   onNavigate: (screen: Destination) => void; onExercise: (exercise: Exercise) => void };
-export function ChildRoomHome({ child, dashboard, exercises, currentSession, busy, error, canSave, onStart, onResume, onNavigate }: Props) {
+export function ChildRoomHome({ child, currentSession, busy, error, canSave, onStart, onResume, onNavigate }: Props) {
   useLocale();
   useEffect(() => () => stopCurrentSpeech(), []);
-  const canStartPlan = (dashboard?.recommended_exercises || []).some(item => exercises.some(e => e.id === item.id));
   const nextExercise = currentSession?.exercises[currentSession.current_index];
-  const actionLabel = currentSession && canSave ? t("ux.continueSession") : canSave && canStartPlan ? t("ux.startSession") : t("ux.chooseExercise");
-  function start() { if (currentSession && canSave) onResume(); else if (canSave && canStartPlan) onStart(); else onNavigate('games'); }
+  const actionLabel = currentSession && canSave ? t("ux.continueSession") : t("ux.startSession");
+  function start() { if (currentSession && canSave) onResume(); else if (canSave) onStart(); else onNavigate('games'); }
   return <div className="child-room-home focused-child-home scenic-child-home">
     <section className="home-next-step" aria-labelledby="home-next-title">
       <div className="home-next-copy"><span className="home-greeting">{t("scenic.greeting",{name:child?.name || t("scenic.friend")})}</span><h1 id="home-next-title">{t(currentSession ? "scenic.continueTitle" : "scenic.lets")}<br/><span>{t(currentSession ? "scenic.continueAccent" : "scenic.play")}</span></h1>

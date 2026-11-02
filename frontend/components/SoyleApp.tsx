@@ -13,7 +13,7 @@ import { savedReward } from "@/lib/rewards";
 import { ExplorationExercise } from "./ExplorationExercise";
 import { VocabularyProgress } from "./VocabularyProgress";
 import { ObservationExercise } from "./ObservationExercise";
-import { speak, stopCurrentSpeech } from "@/lib/speech";
+import { speak, speakPet, stopCurrentSpeech } from "@/lib/speech";
 import { nextPetPhrase } from "@/lib/pet";
 
 import {
@@ -309,6 +309,7 @@ function AuthenticatedApp({ user, onLogout, externalError, onDismissExternalErro
   const [exercises, setExercises] = useState<Exercise[]>([]);
   const [catalogRevision, setCatalogRevision] = useState(0);
   const [selectedExercise, setSelectedExercise] = useState<Exercise | null>(null);
+  const [choosingSessionExercise, setChoosingSessionExercise] = useState(false);
   const [activeSession, setActiveSession] = useState<LearningSession | null>(null);
   const [sessionExerciseActive, setSessionExerciseActive] = useState(false);
   const [activeSessionLoading, setActiveSessionLoading] = useState(true);
@@ -613,6 +614,11 @@ function AuthenticatedApp({ user, onLogout, externalError, onDismissExternalErro
         return;
       }
       const plan = await api<AdaptivePlan>(`/api/adaptive-plans/${child.id}`, { method: "POST", body: JSON.stringify({ target_minutes: dailyMinutes }) });
+      if (!plan.items.length && user.role === "student") {
+        openScreen("games");
+        setChoosingSessionExercise(true);
+        return;
+      }
       if (!plan.items.length) throw new Error(plan.notices[0]?.message || t("screen.AuthenticatedApp.ui27"));
       const created = await api<LearningSession>("/api/learning-sessions", { method: "POST", body: JSON.stringify({ child_id: child.id, exercise_ids: plan.items.map((item) => item.exercise_id), target_minutes: plan.target_minutes, adaptive_plan_id: plan.id }) });
       setActiveSession({ ...created, results: [] });
@@ -755,6 +761,7 @@ function AuthenticatedApp({ user, onLogout, externalError, onDismissExternalErro
   if (user.role === "parent" && !children.length) return <ChildOnboarding user={user} onCreated={(newChild) => { setChildren([newChild]); setSelectedChildId(newChild.id); }} onLogout={onLogout} />;
 
   const openScreen = (next: Screen, cabinetSection = "overview") => {
+    setChoosingSessionExercise(false);
     if (user.role === "parent") {
       const url = new URL(window.location.href);
       if (next === "parent") { url.searchParams.set("cabinet", "parent"); url.searchParams.set("section", cabinetSection); }
@@ -800,6 +807,23 @@ function AuthenticatedApp({ user, onLogout, externalError, onDismissExternalErro
     setScreen(exercise.module);
     setSidebarOpen(false);
     window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  const startChosenSession = async (exercise: Exercise) => {
+    if (!child || sessionLoading) return;
+    setSessionLoading(true);
+    setSessionError("");
+    try {
+      const session = await api<LearningSession>("/api/learning-sessions", { method: "POST", body: JSON.stringify({
+        child_id: child.id, exercise_ids: [exercise.id], target_minutes: dailyMinutes,
+      }) });
+      setActiveSession(session);
+      setChoosingSessionExercise(false);
+      setScreen("session");
+    } catch (cause) {
+      setSessionError(cause instanceof Error ? cause.message : t("screen.AuthenticatedApp.ui28"));
+      setScreen("home");
+    } finally { setSessionLoading(false); }
   };
 
   const continueAfterExercise = () => {
@@ -943,13 +967,18 @@ function AuthenticatedApp({ user, onLogout, externalError, onDismissExternalErro
         <div className="page">
           {familyRole && <SectionNavigation screen={screen} role={user.role} onOpen={openScreen}/>}
 
-          {screen === "home" && <ExercisePetProvider presentation="home" key={`home-${child?.id}`} preferences={{ ...petPreferences.value, visible: user.role === "student" && petPreferences.ready && petPreferences.value.visible }} soundEnabled={settings.sound_enabled} calmMode={settings.calm_mode}><HomeScreen onStartPlan={startPreparedPlan} onOpenSpecialist={() => openScreen("parent", "specialist")} onOpen={openScreen} onExercise={exercise => { if (user.role === "parent") setParentPracticeMode("adult_preview"); openExercise(exercise); }} onStartSession={startDailySession} onResume={resumeSession} onPauseSession={pauseSession} soundEnabled={settings.sound_enabled} activeSession={activeSession} activeSessionLoading={activeSessionLoading} dailyMinutes={dailyMinutes} onMinutesChange={setDailyMinutes} sessionLoading={sessionLoading} sessionError={sessionError} child={child} dashboard={dashboard} consent={consent} userRole={user.role} exercises={exercises} /></ExercisePetProvider>}
+          {screen === "home" && <ExercisePetProvider onVoiceToggle={() => {
+            if (!settings.sound_enabled) { openScreen("settings"); return; }
+            const voice = !petPreferences.value.voice;
+            petPreferences.change({ ...petPreferences.value, voice });
+            if (voice) void speakPet(nextPetPhrase("greeting", languageOf(interfaceLocale)));
+          }} presentation="home" key={`home-${child?.id}`} preferences={{ ...petPreferences.value, visible: user.role === "student" && petPreferences.ready && petPreferences.value.visible }} soundEnabled={settings.sound_enabled} calmMode={settings.calm_mode}><HomeScreen onStartPlan={startPreparedPlan} onOpenSpecialist={() => openScreen("parent", "specialist")} onOpen={openScreen} onExercise={exercise => { if (user.role === "parent") setParentPracticeMode("adult_preview"); openExercise(exercise); }} onStartSession={startDailySession} onResume={resumeSession} onPauseSession={pauseSession} soundEnabled={settings.sound_enabled} activeSession={activeSession} activeSessionLoading={activeSessionLoading} dailyMinutes={dailyMinutes} onMinutesChange={setDailyMinutes} sessionLoading={sessionLoading} sessionError={sessionError} child={child} dashboard={dashboard} consent={consent} userRole={user.role} exercises={exercises} /></ExercisePetProvider>}
           {screen === "stories" && user.role === "student" && <StoryExperience childId={child?.id} calmMode={settings.calm_mode}/>}
           {(screen === "world" || screen === "my-world") && ["student", "parent"].includes(user.role) && <WorldExperience key={child?.id} childId={child?.id} canManage={user.role === "parent"} onWords={() => openScreen("aac")} onSpeak={(text) => speak(text, .82, true)}/>}
 
           {["success", "achievements", "progress", "skills"].includes(screen) && user.role === "student" && <AchievementsExperience childId={child?.id} dashboard={dashboard} onStories={() => openScreen("stories")} onGames={() => openScreen("games")}/>}
           {screen === "guides" && user.role === "parent" && <GuidesExperience child={child} dashboard={dashboard} exercises={exercises} onNavigate={openScreen} onExercise={openExercise}/>}
-          {(screen === "games" || screen === "learn") && <GamesScreen onOpen={openScreen} onExercise={openExercise} dashboard={dashboard} exercises={exercises} childMode={user.role === "student"} parentPracticeMode={user.role === "parent" ? parentPracticeMode : undefined} onParentPracticeModeChange={setParentPracticeMode} />}
+          {(screen === "games" || screen === "learn") && <GamesScreen onOpen={openScreen} onExercise={choosingSessionExercise ? startChosenSession : openExercise} dashboard={dashboard} exercises={exercises} childMode={user.role === "student"} parentPracticeMode={user.role === "parent" ? parentPracticeMode : undefined} onParentPracticeModeChange={setParentPracticeMode} />}
           {screen === "session" && sessionError && <div className="v2-inline-alert" role="alert">{sessionError}</div>}
           {screen === "session" && activeSession && <SessionScreen session={activeSession} busy={sessionLoading} onContinue={continueSession} onPause={pauseSession} onFinish={() => { setActiveSession(null); refreshDashboard(); setScreen("home"); }} />}
           {screen === "exercise-complete" && exerciseCompletion && <ExercisePetProvider key={`complete-${child?.id}-${selectedExercise?.id}`} preferences={{ ...petPreferences.value, visible: petPreferences.ready && petPreferences.value.visible && !exerciseCompletion.refused && (user.role === "student" || parentPracticeMode === "child_practice") }} soundEnabled={settings.sound_enabled} calmMode={settings.calm_mode} initialEvent="complete"><div className="pet-completion"><ExercisePet/></div><ExerciseCompletionScreen completion={exerciseCompletion} onContinue={continueAfterExercise} onFinish={() => { if (exerciseCompletion.refused) { if (exerciseCompletion.sessionMode) void pauseSession(); else openScreen("home"); } else openScreen(exerciseCompletion.sessionMode ? "session" : "games"); }} /></ExercisePetProvider>}

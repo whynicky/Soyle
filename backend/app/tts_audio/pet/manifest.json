@@ -1,0 +1,226 @@
+{
+  "clips": [
+    {
+      "text": "Давай вместе!",
+      "file": "4f3a83f405714465acc6ceb05207883254cd11b73456263061ed3a6b829f6b8b.wav",
+      "language": "ru",
+      "voice": "Milena"
+    },
+    {
+      "text": "Давай поиграем!",
+      "file": "d4b6390535802cbd27de7eebb72ea97eb1176965d401f1dd339b9642ba0f90c9.wav",
+      "language": "ru",
+      "voice": "Milena"
+    },
+    {
+      "text": "Давай попробуем ещё раз.",
+      "file": "85af0813f663c65939ab2d37846e30193b012ef15e9c963bdf6ddcb961fdfb7f.wav",
+      "language": "ru",
+      "voice": "Milena"
+    },
+    {
+      "text": "Здорово!",
+      "file": "73fec5bcb537d35d623cd8fe03f4de3eb2bee07c814151866c72f24467072d59.wav",
+      "language": "ru",
+      "voice": "Milena"
+    },
+    {
+      "text": "Молодец!",
+      "file": "6ff4f1809a7551fe63055978193876effe70334dbb1a57c0645ddaee929e44af.wav",
+      "language": "ru",
+      "voice": "Milena"
+    },
+    {
+      "text": "Начнём?",
+      "file": "ddbb20af6d7a419c0d13585779128b49d38f4497492487ac1980d962ef4e5f1d.wav",
+      "language": "ru",
+      "voice": "Milena"
+    },
+    {
+      "text": "Отлично!",
+      "file": "ac199c845ce5b95b0d1dad70bf26aff8982c806db4fdbcc82db332a2b10eab2b.wav",
+      "language": "ru",
+      "voice": "Milena"
+    },
+    {
+      "text": "Подумай ещё раз.",
+      "file": "54634cd851329f095a291e5c484316eeb3048ff1f37840edd852aa17cf0f3460.wav",
+      "language": "ru",
+      "voice": "Milena"
+    },
+    {
+      "text": "Поиграем?",
+      "file": "e64eafe7ce0a3f546d7a2d478c541fa874f475bbfc6ef3e4864f05ad8fdadfae.wav",
+      "language": "ru",
+      "voice": "Milena"
+    },
+    {
+      "text": "Получилось!",
+      "file": "5db8821db57140c2992eff4f37470e5b73f092c73689da6e458ade2d6b86cd92.wav",
+      "language": "ru",
+      "voice": "Milena"
+    },
+    {
+      "text": "Попробуем ещё!",
+      "file": "391876ceb6eb2569ac7e468e7ed401f5920f9aa0dc602af7c59e9917826c5df9.wav",
+      "language": "ru",
+      "voice": "Milena"
+    },
+    {
+      "text": "Попробуй ещё раз.",
+      "file": "03f91dd0d1d89449f78e0b37b8046ea019499338136cd11082b2f8a050fb3b5c.wav",
+      "language": "ru",
+      "voice": "Milena"
+    },
+    {
+      "text": "Посмотри сюда!",
+      "file": "95ee367140426e4ac3ff36d3fcfa75f95271ce1ac188018c0e4067e6b67db4b1.wav",
+      "language": "ru",
+      "voice": "Milena"
+    },
+    {
+      "text": "Привет!",
+      "file": "e416fef96e0b69947dd1c139edab017c495bfe4658466e03ed0c050c0e03994e.wav",
+      "language": "ru",
+      "voice": "Milena"
+    },
+    {
+      "text": "Ты старался!",
+      "file": "3f7b746faa350c81480d09f50e30d2c3bdf2d2343f2bca4d1c802a7ebe90ec7d.wav",
+      "language": "ru",
+      "voice": "Milena"
+    },
+    {
+      "text": "Ура!",
+      "file": "38b608b5d260b26c559e1d984a944d837a5c17b5466863f77ea6c76039b39270.wav",
+      "language": "ru",
+      "voice": "Milena"
+    },
+    {
+      "text": "Ура! Мы закончили!",
+      "file": "1756c9a234dc5e4a9faa3d97278bf66b7303a09470d6435d6df2eef99bf9c1d3.wav",
+      "language": "ru",
+      "voice": "Milena"
+    },
+    {
+      "text": "Я здесь!",
+      "file": "04889666a911e315ed2aa072be4b7a3161a679fec730dd85d8f6ab982ef3a30e.wav",
+      "language": "ru",
+      "voice": "Milena"
+    },
+    {
+      "text": "Я помогу!",
+      "file": "84950b1e4fa5f4c43ae09a8addf6f48219188b295494cbb4c732b62d829f949d.wav",
+      "language": "ru",
+      "voice": "Milena"
+    },
+    {
+      "text": "Я рядом!",
+      "file": "1310f85c2ffc2a83abd5ff3722a97af1fec23d985ec0cc7d50b06c83c4d67641.wav",
+      "language": "ru",
+      "voice": "Milena"
+    },
+    {
+      "text": "Алақай!",
+      "file": "d60dc39f57ea88ee100de236d7dbc54058c78065707f07c5b99eeeade3810af3.wav",
+      "language": "kk",
+      "voice": "Aru"
+    },
+    {
+      "text": "Алақай! Біз аяқтадық!",
+      "file": "eccf505ec44ccfc7b99e993da4d560a37abaa1f5ac42bc7195d30d484d15b77b.wav",
+      "language": "kk",
+      "voice": "Aru"
+    },
+    {
+      "text": "Бастаймыз ба?",
+      "file": "e181a7e3f7710c359356524ce3868100a64828fa800c01be819f7688cbaa10e5.wav",
+      "language": "kk",
+      "voice": "Aru"
+    },
+    {
+      "text": "Жарайсың!",
+      "file": "17657d36937aa2d50744d4cb1f88cac268a0f658e597908ee2041582ca69f7ee.wav",
+      "language": "kk",
+      "voice": "Aru"
+    },
+    {
+      "text": "Жақсы тырыстың!",
+      "file": "a70fd844d0b6df632ea917fd057c3a2627f2e82d07fefa1b1296f2bb02602891.wav",
+      "language": "kk",
+      "voice": "Aru"
+    },
+    {
+      "text": "Кел, ойнайық!",
+      "file": "5d2afb6ea9599ce2268c7349c64cd97ff399b50aa421121d675e62f3539ae7d2.wav",
+      "language": "kk",
+      "voice": "Aru"
+    },
+    {
+      "text": "Кел, тағы байқап көрейік.",
+      "file": "0ecac9b6ef7f4612459787e6264fee4cd39d3155a24ebe8c6b06564194f80771.wav",
+      "language": "kk",
+      "voice": "Aru"
+    },
+    {
+      "text": "Керемет!",
+      "file": "9c9c442c0a9c66a37308c33187d309213a1d50abfad5a88a96b44838d57f3f7f.wav",
+      "language": "kk",
+      "voice": "Aru"
+    },
+    {
+      "text": "Мен көмектесемін!",
+      "file": "3a13522e479bd1f4b56c150356af9044bf01256bd2462d852129aba3c96db3fe.wav",
+      "language": "kk",
+      "voice": "Aru"
+    },
+    {
+      "text": "Мен осындамын!",
+      "file": "d24daaadfb316d93ca4bbc660b2abce6153887c1ebbc2849123ba15e6ca1e1fb.wav",
+      "language": "kk",
+      "voice": "Aru"
+    },
+    {
+      "text": "Мұнда қара!",
+      "file": "eaf969120091e0cd03dd806535a650edb6098b83957ff64eb654a85739e1ee78.wav",
+      "language": "kk",
+      "voice": "Aru"
+    },
+    {
+      "text": "Ойнаймыз ба?",
+      "file": "6d1a968753024776c785a9300825567e899649af1613bac65568094180169d03.wav",
+      "language": "kk",
+      "voice": "Aru"
+    },
+    {
+      "text": "Сәлем!",
+      "file": "7bddf4dacc8ec085bbc82fed5322e5dc2c7ba59677fdef0bf31f3cc643bbee02.wav",
+      "language": "kk",
+      "voice": "Aru"
+    },
+    {
+      "text": "Тамаша!",
+      "file": "91186fd051c53c522965308422d8c46341ebcc23273fe3997d964dcc830f8b8f.wav",
+      "language": "kk",
+      "voice": "Aru"
+    },
+    {
+      "text": "Тағы бір рет көр.",
+      "file": "fe2c0e12da0eb6a5f961494e5d5c820d8106326cd6ef4ddc5d21fa40445f266b.wav",
+      "language": "kk",
+      "voice": "Aru"
+    },
+    {
+      "text": "Тағы ойланып көр.",
+      "file": "697eae3cd50fa952d74c6a63ff5039af97ddf7cdf394f41e17122f759b4f6061.wav",
+      "language": "kk",
+      "voice": "Aru"
+    },
+    {
+      "text": "Қолыңнан келді!",
+      "file": "d66a081340fa5e6bffdb814d162bc7969230ddebad6eb76783d0d04304e4145e.wav",
+      "language": "kk",
+      "voice": "Aru"
+    }
+  ]
+}
