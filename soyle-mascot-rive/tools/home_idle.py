@@ -1,4 +1,5 @@
 """Home-only painted replacement poses and native, articulated transition clips."""
+import base64
 def add_home(g):
  el,ref,track=g['el'],g['ref'],g['track']
  r,ab,root,vm,instance=[g[k] for k in ('r','ab','root','vm','instance')]
@@ -17,20 +18,22 @@ def add_home(g):
  # First declared objects draw in front: face, book/hands, soles, torsos, wings.
  for n in (seat,recline):root.remove(n);root.insert(2,n)
  for n in (soleL,soleR):root.remove(n);root.insert(1,n)
- book=el(root,'Node',name='Open book • held in seated lap',x=0,y=-21,opacity=0)
+ book=el(root,'Node',name='Open book • held in seated lap',x=0,y=-15,opacity=0)
  root.remove(book);root.insert(1,book)
  hands=[]
- for side,x,angle,box,pivot in [('Left',-39,-.8,(1190,268,1500,615),(1415,305)),('Right',39,.8,(115,655,455,990),(200,690))]:
-  hand=el(book,'Node',name=side+' holding wing',x=x,y=-12,rotation=angle);hands.append(hand)
+ for side,x,angle,box,pivot in [('Left',-40,-.76,(1190,268,1500,615),(1415,305)),('Right',37,1.0,(115,655,455,990),(200,690))]:
+  hand=el(book,'Node',name=side+' holding wing',x=x,y=-22,rotation=angle);hands.append(hand)
   n=g['crop'](hand,side+' original flipper texture',box,pivot,.105)
   n.set('scaleX','.105');n.set('scaleY','.105')
  page=el(book,'Node',name='Turning textured page',opacity=0)
  im=el(page,'Image',assetId=ref(bookAsset),name='Actual cream paper texture')
- mesh=el(im,'Mesh',triangleIndexBytes='AAECAAID',name='Page bending surface')
+ # Two hinged strips sample the painted page itself. The middle bows while the spine stays fixed.
+ mesh=el(im,'Mesh',triangleIndexBytes=base64.b64encode(bytes([0,1,4,0,4,5,1,2,3,1,3,4])).decode(),name='Flexible page around the binding')
  pageverts=[]
- for (px,py),(x,y) in zip([(800,260),(1325,140),(1390,680),(800,815)],[(0,-13),(35,-20),(36,13),(0,22)]):
+ for (px,py),(x,y) in zip([(795,242),(1050,136),(1325,98),(1418,670),(1100,714),(795,810)],
+                          [(0,-10),(16,-14),(33,-17),(39,9),(20,11),(0,16)]):
   pageverts.append(el(mesh,'ContourMeshVertex',x=x,y=y,u=px/1586,v=py/992))
- g['imagequad'](book,bookAsset,(0,60,1586,960),(-44,-25,44,25),dimensions=(1586,992),name='Full rounded open book')
+ g['imagequad'](book,bookAsset,(0,60,1586,960),(-50,-18,50,18),dimensions=(1586,992),name='Full rounded open book')
  # Contact shadow fixes the ground at y=212; it never moves with breathing.
  shadow=el(root,'Shape',name='Home floor contact',y=7,scaleY='.12',opacity=0)
  el(shadow,'Ellipse',width=125,height=125);f=el(shadow,'Fill');grad=el(f,'RadialGradient',startX=0,startY=0,endX=62.5,endY=0)
@@ -40,7 +43,7 @@ def add_home(g):
  for pos,color in [(0,'FFFDF6E7'),(.65,'FFE6DBC0'),(1,'FFC2B69A')]:el(grad,'GradientStop',position=pos,colorValue=color)
  extra=[(body,'y',-42),(body,'rotation',0),(body,'opacity',1),(head,'opacity',1),(neck,'opacity',1),
   (left,'x',-25),(left,'y',-65),(right,'x',25),(right,'y',-65),(left,'opacity',1),(right,'opacity',1),
-  (lf,'x',-22),(rf,'x',22),(lf,'opacity',1),(rf,'opacity',1),(book,'opacity',0),(book,'y',-21),(book,'rotation',0),
+  (lf,'x',-22),(rf,'x',22),(lf,'opacity',1),(rf,'opacity',1),(book,'opacity',0),(book,'y',-15),(book,'rotation',0),
   (seat,'opacity',0),(seat,'y',0),(seat,'scaleY',1),(recline,'opacity',0),(recline,'scaleY',1),
   (soleL,'opacity',0),(soleR,'opacity',0),(soleL,'x',-32),(soleR,'x',32),(soleL,'y',0),(soleR,'y',0),(soleL,'rotation',-.15),(soleR,'rotation',.15),
   (shadow,'opacity',0),(shadow,'scaleX',1),(floor,'opacity',0),(floor,'scaleX',1),(page,'opacity',0)]
@@ -58,7 +61,7 @@ def add_home(g):
   vals=defaults.copy()
   def setv(o,**ps):
    for p,v in ps.items():vals[(ref(o),p)]=v
-  setv(shadow,opacity=1);setv(floor,opacity=1)
+  setv(shadow,opacity=1)
   if kind=='stand':return vals
   setv(body,opacity=0);setv(lf,opacity=0);setv(rf,opacity=0);setv(neck,opacity=0)
   setv(seat,opacity=1);setv(soleL,opacity=1);setv(soleR,opacity=1)
@@ -113,16 +116,21 @@ def add_home(g):
   hy=poses[kind][(ref(head),'y')];breathe(head,'y',hy,-.55)
   blink=[(0,1),(164,1),(170,.06),(174,.06),(186,1),(d,1)]
   if k==1:
-   constant(book,'opacity',1);constant(left,'opacity',0);constant(right,'opacity',0);constant(gaze,'y',10)
-   put(gaze,'x',[(0,-4),(180,4),(270,4),(360,-4),(d,-4)])
-   breathe(head,'y',-39,.7)
-   # Lift a real textured leaf, fold it across the spine, then settle onto the page block.
-   put(page,'opacity',[(0,0),(249,0),(252,1),(345,1),(350,0),(d,0)])
-   for v in (pageverts[1],pageverts[2]):
-    x=float(v.get('x'));y=float(v.get('y'))
-    put(v,'x',[(0,x),(250,x),(295,3),(340,-x),(d,-x)])
-    put(v,'y',[(0,y),(250,y),(295,y-15),(340,y),(d,y)])
-   put(hands[1],'rotation',[(0,.8),(240,.8),(280,.45),(330,.8),(d,.8)])
+   constant(book,'opacity',1);constant(left,'opacity',0);constant(right,'opacity',0)
+   constant(gaze,'y',18)
+   put(gaze,'x',[(0,-5),(170,5),(245,6),(305,0),(365,-5),(540,4),(d,-5)])
+   put(head,'rotation',[(0,-.022),(200,.025),(310,.035),(375,-.022),(d,-.022)])
+   breathe(head,'y',-38,.9)
+   # One wing supports the cover. The other sweeps inward to carry the leaf to the spine,
+   # releases it there, then returns to the cover as the paper settles on the left.
+   put(hands[0],'rotation',[(0,-.76),(241,-.76),(284,-.83),(345,-.83),(390,-.76),(d,-.76)])
+   put(hands[1],'rotation',[(0,1),(230,1),(248,.79),(278,1.37),(301,1.82),(315,1.82),(370,1),(d,1)])
+   put(page,'opacity',[(0,0),(247,0),(254,1),(345,1),(356,0),(d,0)])
+   for i in (1,2,3,4):
+    v=pageverts[i];x=float(v.get('x'));y=float(v.get('y'))
+    mid=i in (1,4)
+    put(v,'x',[(0,x),(248,x),(276,.78*x),(301,6 if mid else 1),(327,-.64*x),(348,-x),(d,-x)])
+    put(v,'y',[(0,y),(248,y),(276,y-(2 if mid else 6)),(301,y-(5 if mid else 12)),(327,y-(5 if mid else 3)),(348,y),(d,y)])
   if k==3:
    blink=[(0,.035),(d,.035)]
    put(head,'rotation',[(0,-.65),(240,-.665),(420,-.65),(d,-.65)])

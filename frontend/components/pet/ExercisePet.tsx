@@ -81,7 +81,7 @@ function PetCompanion({ reaction, motion, onTap, showBubble }: { showBubble: boo
       if (disposed || !canvas.current) return;
       RuntimeLoader.setWasmUrl("/mascot/rive.wasm");
       RuntimeLoader.setWasmFallbackUrl("/mascot/rive_fallback.wasm");
-      instance = new Rive({ canvas: canvas.current, src: "/mascot/soyle-mascot.riv?v=home-poses-4", artboard: "Söyle • Full-body pet", stateMachine: "Companion", autoBind: true, autoplay: false, shouldDisableRiveListeners: true, enableRiveAssetCDN: false, layout: new Layout({ fit: Fit.Contain, alignment: Alignment.Center }),
+      instance = new Rive({ canvas: canvas.current, src: "/mascot/soyle-mascot.riv?v=home-poses-6", artboard: "Söyle • Full-body pet", stateMachine: "Companion", autoBind: true, autoplay: false, shouldDisableRiveListeners: true, enableRiveAssetCDN: false, layout: new Layout({ fit: Fit.Contain, alignment: Alignment.Center }),
         onLoad: () => {
           if (disposed || !instance) return;
           if (!instance.viewModelInstance?.number("mood") || !instance.viewModelInstance?.number("homeState")) { setFailed(true); return; }
