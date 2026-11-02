@@ -1,5 +1,5 @@
 export type PetPreferences = { visible: boolean; voice: boolean; motion: "full" | "reduced" | "off" };
-export const defaultPetPreferences: PetPreferences = { visible: true, voice: false, motion: "full" };
+export const defaultPetPreferences: PetPreferences = { visible: true, voice: true, motion: "full" };
 export type PetEvent = "greeting" | "correct" | "incorrect" | "hint" | "complete" | "tap";
 // Verified against SoylePet.mood and the Companion state machine in the supplied .riv.
 export const petReactions: Record<PetEvent, { mood: number; duration: number; phrases: readonly string[] }> = {

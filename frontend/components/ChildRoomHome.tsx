@@ -17,7 +17,7 @@ export function ChildRoomHome({ child, currentSession, busy, error, canSave, onS
   useEffect(() => () => stopCurrentSpeech(), []);
   const nextExercise = currentSession?.exercises[currentSession.current_index];
   const actionLabel = currentSession && canSave ? t("ux.continueSession") : t("ux.startSession");
-  function start() { if (currentSession && canSave) onResume(); else if (canSave) onStart(); else onNavigate('games'); }
+  function start() { if (currentSession && canSave) onResume(); else onStart(); }
   return <div className="child-room-home focused-child-home scenic-child-home">
     <section className="home-next-step" aria-labelledby="home-next-title">
       <div className="home-next-copy"><span className="home-greeting">{t("scenic.greeting",{name:child?.name || t("scenic.friend")})}</span><h1 id="home-next-title">{t(currentSession ? "scenic.continueTitle" : "scenic.lets")}<br/><span>{t(currentSession ? "scenic.continueAccent" : "scenic.play")}</span></h1>

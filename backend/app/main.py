@@ -1684,6 +1684,20 @@ def prepare_adaptive_plan(child_id: int, payload: AdaptivePlanRequest, user: dic
     creator_id = user["id"] if user["role"] == "parent" else child["parent_id"]
     with connect() as db:
         result = create_adaptive_plan(db, child_id, payload.target_minutes, creator_id)
+        if user["role"] == "student" and not result["items"] and not db.execute(
+            "SELECT 1 FROM parent_practice_goals WHERE child_id=? AND status='active' LIMIT 1", (child_id,)
+        ).fetchone():
+            preferred = set(get_preferences(db, child_id)["preferred_exercise_ids"])
+            choices = [item for item in child_exercise_rows(db, child_id) if item["module"] != "motor"]
+            last_practiced = {row["exercise_id"]: row["last_time"] for row in db.execute(
+                "SELECT exercise_id, MAX(created_at) AS last_time FROM sessions "
+                "WHERE child_id=? AND response_owner='child' GROUP BY exercise_id", (child_id,)
+            ).fetchall()}
+            choices.sort(key=lambda item: (last_practiced.get(item["id"], ""), item["id"] not in preferred,
+                                           item["difficulty"], item["id"]))
+            count = {3: 2, 5: 3, 10: 5}[payload.target_minutes]
+            result["starter_exercise_ids"] = [item["id"] for item in choices[:count]]
+
     audit(user, "adaptive_plan.prepare", "child", child_id, {
         "plan_id": result["id"], "rules_version": result["rules_version"], "item_count": len(result["items"]),
     })

@@ -3,13 +3,12 @@
 import { t, useLocale, languageOf, getLocale } from "@/lib/i18n";
 import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from "react";
 import Image from "next/image";
-import { Volume2, VolumeX } from "lucide-react";
 import { useHomePetIdle } from "./useHomePetIdle";
 import { homePetStates } from "@/lib/homePet";
 import { usePetDrag } from "./usePetDrag";
 import type { Rive } from "@rive-app/webgl2";
 import { nextPetPhrase, petReactions, type PetEvent, type PetPreferences } from "@/lib/pet";
-import { speakPet, stopPetSpeech } from "@/lib/speech";
+import { speakPet, stopPetSpeech, unlockSpeechAudio } from "@/lib/speech";
 
 type PetReaction = { event: PetEvent; phrase: string; id: number; mood: number; duration: number };
 const tapReactions = ["greeting", "correct", "hint", "incorrect", "complete"] as const;
@@ -21,7 +20,7 @@ const PetDisplayContext = createContext<ReactNode>(null);
 export const useExercisePet = () => useContext(PetContext);
 export const ExercisePet = () => useContext(PetDisplayContext);
 
-export function ExercisePetProvider({ preferences, soundEnabled, calmMode, initialEvent = "greeting", presentation = "exercise", onVoiceToggle, children }: { onVoiceToggle?: () => void; presentation?: "exercise" | "home"; preferences: PetPreferences; soundEnabled: boolean; calmMode: boolean; initialEvent?: PetEvent; children: ReactNode }) {
+export function ExercisePetProvider({ preferences, soundEnabled, calmMode, initialEvent = "greeting", presentation = "exercise", children }: { presentation?: "exercise" | "home"; preferences: PetPreferences; soundEnabled: boolean; calmMode: boolean; initialEvent?: PetEvent; children: ReactNode }) {
   const locale = useLocale();
   const [reaction, setReaction] = useState<PetReaction | null>(null);
   const lastTap = useRef(0);
@@ -49,14 +48,20 @@ export function ExercisePetProvider({ preferences, soundEnabled, calmMode, initi
   }, []);
   useEffect(() => {
     const reset = setTimeout(() => setReaction(null), 0);
-    const start = setTimeout(() => react(initialEvent), 600);
-    return () => { clearTimeout(reset); clearTimeout(start); clearTimeout(timer.current); clearTimeout(speechTimer.current); stopPetSpeech(); };
-  }, [initialEvent, react, preferences.visible, locale]);
-  const display = preferences.visible ? <><PetCompanion showBubble={presentation !== "home"} reaction={reaction} motion={calmMode && preferences.motion !== "off" ? "reduced" : preferences.motion} onTap={() => react("tap")}/>
-    {presentation === "home" && onVoiceToggle && <button type="button" className="pet-home-voice" onClick={onVoiceToggle} aria-pressed={preferences.voice && soundEnabled}>
-      {preferences.voice && soundEnabled ? <Volume2 size={16}/> : <VolumeX size={16}/>}
-      {t(preferences.voice && soundEnabled ? "pet.muteVoice" : "pet.enableVoice")}
-    </button>}</> : null;
+    const waitForGesture = presentation === "home" && preferences.visible && preferences.voice &&
+      soundEnabled && navigator.userActivation && !navigator.userActivation.hasBeenActive;
+    const start = setTimeout(() => react(initialEvent, { silent: Boolean(waitForGesture) }), 600);
+    // A restored tab may have no playback permission until its first click.
+    const greetOnClick = (event: MouseEvent) => {
+      clearTimeout(start);
+      if (event.target instanceof Element && event.target.closest(".pet-button")) return;
+      unlockSpeechAudio();
+      react(initialEvent);
+    };
+    if (waitForGesture) document.addEventListener("click", greetOnClick, { capture: true, once: true });
+    return () => { document.removeEventListener("click", greetOnClick, true); clearTimeout(reset); clearTimeout(start); clearTimeout(timer.current); clearTimeout(speechTimer.current); stopPetSpeech(); };
+  }, [initialEvent, react, preferences.visible, preferences.voice, soundEnabled, presentation, locale]);
+  const display = preferences.visible ? <PetCompanion showBubble={presentation !== "home"} reaction={reaction} motion={calmMode && preferences.motion !== "off" ? "reduced" : preferences.motion} onTap={() => react("tap")}/> : null;
   return <PetContext.Provider value={react}><PetDisplayContext.Provider value={display}><PetMessageContext.Provider value={reaction?.phrase || t("pet.question")}>{children}</PetMessageContext.Provider></PetDisplayContext.Provider></PetContext.Provider>;
 }
 

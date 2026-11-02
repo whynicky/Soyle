@@ -481,7 +481,7 @@ class SpecialistObservationCreate(BaseModel):
 
 class ChildPetSettingsUpdate(BaseModel):
     visible: bool = True
-    voice: bool = False
+    voice: bool = True
     motion: Literal["full", "reduced", "off"] = "full"
 
 

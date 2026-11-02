@@ -25,6 +25,11 @@ function prepareAudio() {
   return reusableAudio;
 }
 
+// Unlock the same audio element during a user gesture, before an asynchronous greeting loads.
+export function unlockSpeechAudio() {
+  prepareAudio();
+}
+
 let currentSpeechAudio: HTMLAudioElement | null = null;
 let currentSpeechUrl = "";
 let speechOwner: "exercise" | "pet" = "exercise";

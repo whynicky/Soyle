@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test';
 
-test('child hears the pet and resumes a chosen exercise without a recommended plan', async ({ page, request }) => {
+test('child hears an automatic greeting and resumes an automatically prepared starter session', async ({ page, request }) => {
   const api = 'http://localhost:8011';
   const suffix = Date.now().toString();
   const family = await request.post(api + '/api/auth/register', {
@@ -34,17 +34,17 @@ test('child hears the pet and resumes a chosen exercise without a recommended pl
   await page.getByRole('button', { name: 'Ребёнок', exact: true }).click();
   await page.getByLabel('Логин ребёнка', { exact: true }).fill('kid-' + suffix);
   await page.getByLabel('PIN-код', { exact: true }).fill('1234');
-  await page.getByRole('button', { name: 'Начать заниматься', exact: true }).click();
-
   const spoken = page.waitForResponse(r => r.url().endsWith('/api/tts') && r.request().postDataJSON().profile === 'pet');
-  await page.getByRole('button', { name: 'Включить голос' }).click();
+  await page.getByRole('button', { name: 'Начать заниматься', exact: true }).click();
   expect((await spoken).headers()['content-type']).toMatch(/^audio\//);
   await expect(page.locator('body')).toHaveAttribute('data-pet-audio-played', 'true');
+  await expect(page.getByRole('button', { name: /Включить голос|Выключить голос/ })).toHaveCount(0);
   await page.getByRole('button', { name: 'Начать занятие', exact: true }).click();
-  await page.getByRole('button', { name: /Я хочу.*Начать/ }).first().click();
   await expect(page.locator('.session-mode')).toBeVisible();
+  const steps = page.locator('.session-steps > div');
+  await expect.poll(() => steps.count()).toBeGreaterThan(1);
+  const titles = await steps.locator('strong').allTextContents();
   await page.reload();
-  await expect(page.getByRole('button', { name: 'Выключить голос' })).toBeVisible();
   await page.getByRole('button', { name: 'Продолжить занятие', exact: true }).click();
-  await expect(page.locator('.session-mode')).toContainText('Я хочу');
+  await expect(steps.locator('strong')).toHaveText(titles);
 });

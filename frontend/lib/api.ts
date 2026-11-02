@@ -292,6 +292,7 @@ export type AdaptivePlan = {
   thresholds: Record<string, number>;
   created_at: string;
   started_at?: string | null;
+  starter_exercise_ids?: number[];
   items: AdaptivePlanItem[];
 };
 
