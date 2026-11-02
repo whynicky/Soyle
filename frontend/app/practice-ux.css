@@ -121,3 +121,59 @@
   .aac-free button { scroll-margin-block-start: calc(40svh + 88px); }
 }
 .home-next-copy .home-start-action, .parent-next-actions .primary-button, .aac-free .aac-composer-actions .speak-button { background: #087f7d; color: #fff; }
+
+/* Children's exercise catalogue */
+.soyle-unified .child-games.exercise-catalog-page { gap: 16px; }
+.child-library-title h1 { margin: 4px 0 0; font: 850 clamp(30px,4vw,46px)/1.12 var(--font-display); color: var(--ink); }
+.child-library-tools { display: grid; gap: 16px; }
+.child-library-directions { display: flex; flex-wrap: wrap; gap: 8px; }
+.child-library-directions button, .child-library-options summary {
+  display: inline-flex; align-items: center; justify-content: center; min-height: 44px; padding: 8px 16px;
+  border: 1px solid #91adae; border-radius: 24px; color: var(--ink); background: var(--paper); font: inherit; font-weight: 700; cursor: pointer;
+}
+.child-library-directions button[aria-pressed=true] { background: var(--forest); border-color: var(--forest); color: white; }
+.child-library-search { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 12px; }
+.child-library-search .catalog-search { display: grid; gap: 6px; width: min(100%,410px); min-width: 0; font-weight: 700; }
+.child-library-search .catalog-search input, .child-library-options select {
+  width: 100%; height: 46px; border: 1px solid #91adae; border-radius: 12px; color: var(--ink); background: var(--paper); font: inherit;
+}
+.child-library-options { margin-block-start: auto; }
+.child-library-options summary { border-radius: 12px; min-height: 46px; }
+.child-library-options summary::after { content: '⌄'; margin-inline-start: 8px; }
+.child-library-options[open] { flex-basis: 100%; }
+.child-library-options[open] summary::after { transform: rotate(180deg); }
+.child-library-options > div { max-width: 410px; margin-block-start: 12px; }
+.child-library-options label { display: grid; gap: 6px; font-weight: 700; }
+.child-library-options select { padding-inline: 12px; }
+.child-library-options p { margin: 8px 0; color: var(--muted); font-size: 14px; }
+.child-games .focused-catalog .section-heading { margin: 0; align-items: center; }
+.child-games .focused-catalog .section-heading h2 { font-size: 16px; color: var(--muted); }
+.child-games .focused-catalog .exercise-card { text-align: start; border-radius: 18px; box-shadow: none; }
+.child-games .exercise-card .exercise-card-visual { aspect-ratio: 2.35; }
+.child-games .exercise-card .exercise-card-copy { flex: 1; width: 100%; min-height: 0; padding: 16px; }
+.child-games .exercise-card-copy small { text-transform: none; letter-spacing: 0; }
+.child-games .exercise-card-copy p { flex: 1; margin-block-end: 8px; }
+.child-games .exercise-card-meta { margin: 4px 0 12px; }
+.child-games .exercise-card-open { width: 100%; justify-content: space-between; border-top: 1px solid var(--line); padding-block-start: 10px; }
+.child-games summary:focus-visible { outline: 3px solid var(--forest); outline-offset: 3px; }
+@media (max-width: 650px) {
+  .child-games .child-library-directions { gap: 6px; }
+  .child-games .child-library-directions button { padding-inline: 12px; }
+  .child-library-search .catalog-search { flex: 1 1 140px; }
+  .soyle-unified .child-games .exercise-grid { grid-template-columns: minmax(0,1fr); gap: 12px; }
+  .soyle-unified .child-games .exercise-card { display: grid; grid-template-columns: clamp(80px,26vw,140px) minmax(0,1fr); }
+  .child-games .exercise-card .exercise-card-visual { aspect-ratio: auto; height: 100%; }
+  .child-games .exercise-card .exercise-card-copy { padding: 12px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .child-games .exercise-card, .child-games .exercise-card img { transition: none; transform: none; }
+}
+
+.child-games .exercise-card-copy small, .child-games .exercise-card-open { color: #086766; }
+.child-library-options .child-library-mobile-direction { display: none; }
+@media (max-width: 650px) {
+  .child-library-directions { display: none; }
+  .child-library-options .child-library-mobile-direction { display: grid; margin-block-end: 12px; }
+  .child-library-options summary { padding-inline: 10px; }
+  .child-library-search .catalog-search { font-size: 14px; }
+}
