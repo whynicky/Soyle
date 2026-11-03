@@ -12,7 +12,7 @@ import { CinematicStage } from './CinematicStage';
 import './cinematic.css';
 const phases: Phase[] = ['INTRO','NOTICE','REACH','AWAIT_REQUEST','REQUEST','MOTHER_ENTER','PICK_UP','TRANSFER','HUG','COMPLETE'];
 type Snapshot = { preview: boolean; revision: number; definition: { language?:"ru"|"kk"; narration_translations?:Record<string,string>; title: string; review_note: string; communication_options: {action:string;label:string;speech:string}[]; audio:{clips:Record<string,string>} }; state:{phase:Phase;paused:boolean;completed:boolean} };
-const captions: Record<Phase,string> = {INTRO:'Миша играет в своей комнате',NOTICE:'На полке — любимый мишка',REACH:'Мишка слишком высоко',AWAIT_REQUEST:'Мише нужна помощь. Поможем попросить?',REQUEST:'Мама, помоги!',MOTHER_ENTER:'Мама услышала просьбу',MOTHER_WALK:'Мама подходит к полке',PICK_UP:'Мама берёт мишку',CARRY:'Мама несёт игрушку Мише',TRANSFER:'Мишка — для Миши',HUG:'Мишка у тебя! Обними его',COMPLETE:'Как хорошо играть вместе!'};
+const captions: Record<Phase,string> = {INTRO:'Миша играет в своей комнате',NOTICE:'На полке - любимый мишка',REACH:'Мишка слишком высоко',AWAIT_REQUEST:'Мише нужна помощь. Поможем попросить?',REQUEST:'Мама, помоги!',MOTHER_ENTER:'Мама услышала просьбу',MOTHER_WALK:'Мама подходит к полке',PICK_UP:'Мама берёт мишку',CARRY:'Мама несёт игрушку Мише',TRANSFER:'Мишка - для Миши',HUG:'Мишка у тебя! Обними его',COMPLETE:'Как хорошо играть вместе!'};
 function narrationText(snapshot:Snapshot|null, text:string) {
   if (snapshot?.definition.language !== 'kk') return text;
   const phrases = snapshot.definition.narration_translations || {};

@@ -11,7 +11,7 @@ export function GoalPracticeProgress({ progress }: { progress?: GoalProgress }) 
     {progress.rounds ? <>
       <p>{t("practice.progress.sessions", { sessions: progress.completed_sessions, rounds: progress.rounds })}</p>
       <p>{t("practice.progress.answers", { independent: progress.independent, prompted: progress.prompted, unanswered: progress.without_child_answer })}</p>
-      <p>{t("practice.progress.rate", { rate: progress.independent_rate ?? "—" })}</p>
+      <p>{t("practice.progress.rate", { rate: progress.independent_rate ?? "-" })}</p>
     </> : <p>{t("practice.progress.empty")}</p>}
     {(progress.breaks > 0 || progress.refusals > 0 || progress.technical_errors > 0) && <p>{t("practice.progress.excluded", { breaks: progress.breaks, refusals: progress.refusals, errors: progress.technical_errors })}</p>}
     {progress.participations > 0 && <p>{t("practice.progress.participations", { count: progress.participations })}</p>}

@@ -18,8 +18,6 @@ import {
   MessageCircle,
   Puzzle,
   ShieldCheck,
-  Sparkles,
-  Star,
   Target,
   Volume2,
   X,
@@ -353,8 +351,6 @@ export function LandingPage() {
           </div>
           <div className="sl-container sl-hero-inner">
             <div className="sl-hero-copy">
-              <span className="sl-eyebrow">
-                <Star size={13} fill="currentColor" /> {t("landing.copy048")}</span>
               <h1>
                 <span>{t("landing.copy049")}</span>
                 <span>{t("landing.copy050")}</span>
@@ -386,7 +382,7 @@ export function LandingPage() {
             </div>
             <div className="sl-speech-bubble" aria-hidden="true">
               {t("landing.copy059")}<br />
-              {t("landing.copy060")}<Sparkles size={20} />
+              {t("landing.copy060")}
             </div>
           </div>
           <OrganicWave />
@@ -568,11 +564,11 @@ export function LandingPage() {
                 {t("landing.copy091")}</strong>
               <div className="sl-preview-stats">
                 <div>
-                  <b>—</b>
+                  <b>-</b>
                   <span>{t("landing.copy092")}</span>
                 </div>
                 <div>
-                  <b>—</b>
+                  <b>-</b>
                   <span>{t("landing.copy093")}</span>
                 </div>
               </div>
@@ -614,18 +610,18 @@ export function LandingPage() {
               {t("landing.copy101")}<br />{t("landing.copy102")}</h2>
             <ol>
               {[
-                t("landing.copy103"),
-                t("landing.copy104"),
-                t("landing.copy004"),
-                t("landing.copy105"),
+                { title: t("landing.copy103"), image: "sounds" },
+                { title: t("landing.copy104"), image: "words" },
+                { title: t("landing.copy004"), image: "phrases" },
+                { title: t("landing.copy105"), image: "situations" },
               ].map((step, i) => (
                 <li
                   data-reveal
-                  key={step}
+                  key={step.image}
                   style={{ "--delay": `${i * 100}ms` } as React.CSSProperties}
                 >
-                  <span>0{i + 1}</span>
-                  {step}
+                  <div className="sl-journey-card-art"><Image src={`/images/landing/journey-${step.image}-v2.webp`} alt="" fill sizes="(max-width: 640px) 40vw, (max-width: 1000px) 45vw, 24vw"/><span className="sl-step-number">0{i + 1}</span></div>
+                  <h3>{step.title}</h3>
                 </li>
               ))}
             </ol>
