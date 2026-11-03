@@ -2700,5 +2700,11 @@
   "scenic.all": "Барлық жаттығулар",
   "scenic.continueTitle": "Жаттығуды",
   "scenic.continueAccent": "жалғастырайық!",
-  "scenic.nextLabel": "Келесі тапсырма"
+  "scenic.nextLabel": "Келесі тапсырма",
+  "playroom.title": "Қандай ойын ойнаймыз?",
+  "playroom.subtitle": "Сабақты таңдап, сөйлеуді дамыт",
+  "playroom.games": "Ойындар",
+  "playroom.continue": "Сабақты жалғастырайық",
+  "playroom.choose": "Ойын таңда",
+  "playroom.all": "Барлық жаттығулар"
 }

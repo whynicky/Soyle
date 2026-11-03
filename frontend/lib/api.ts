@@ -460,20 +460,41 @@ export async function api<T>(path: string, options: RequestInit = {}): Promise<T
     const csrfToken = getCsrfToken();
     if (csrfToken) headers.set("X-CSRF-Token", csrfToken);
   }
-  let response: Response;
-  const controller = new AbortController();
+  // Retry only reads: a lost write response may already have changed server state.
+  const retryable = ["GET", "HEAD"].includes((options.method || "GET").toUpperCase());
   const timeoutMs = path.startsWith("/api/admin/audio/") && path.endsWith("/prepare") ? 20_000 : (path === "/api/tts" ? 45_000 : 8_000);
-  const timeout = window.setTimeout(() => controller.abort(), timeoutMs);
-  if (options.signal) options.signal.addEventListener("abort", () => controller.abort(), { once: true });
-  try {
-    response = await fetch(`${API_URL}${path}`, { ...options, headers, credentials: "include", signal: controller.signal });
-  } catch (cause) {
-    if (cause instanceof DOMException && cause.name === "AbortError") {
-      throw new Error(path === "/api/tts" ? t("errors.ttsTimeout") : t("errors.timeout"));
+  let response!: Response;
+  for (let attempt = 0; ; attempt++) {
+    const controller = new AbortController();
+    const abort = () => controller.abort();
+    if (options.signal?.aborted) throw options.signal.reason || new DOMException("Aborted", "AbortError");
+    options.signal?.addEventListener("abort", abort, { once: true });
+    const timeout = window.setTimeout(abort, timeoutMs);
+    let failure: unknown;
+    try {
+      response = await fetch(`${API_URL}${path}`, { ...options, headers, credentials: "include", signal: controller.signal });
+    } catch (cause) {
+      failure = cause;
+    } finally {
+      window.clearTimeout(timeout);
+      options.signal?.removeEventListener("abort", abort);
     }
-    throw new Error(t("errors.offline"));
-  } finally {
-    window.clearTimeout(timeout);
+    if (options.signal?.aborted) throw options.signal.reason || new DOMException("Aborted", "AbortError");
+    const transient = failure || [408, 429, 500, 502, 503, 504].includes(response.status);
+    if (retryable && transient && attempt < 2) {
+      await new Promise<void>((resolve, reject) => {
+        const onAbort = () => { window.clearTimeout(timer); reject(options.signal?.reason || new DOMException("Aborted", "AbortError")); };
+        const timer = window.setTimeout(() => { options.signal?.removeEventListener("abort", onAbort); resolve(); }, 400 * 2 ** attempt + Math.random() * 200);
+        options.signal?.addEventListener("abort", onAbort, { once: true });
+        if (options.signal?.aborted) onAbort();
+      });
+      continue;
+    }
+    if (failure) {
+      if (failure instanceof DOMException && failure.name === "AbortError") throw new Error(path === "/api/tts" ? t("errors.ttsTimeout") : t("errors.timeout"));
+      throw new Error(t("errors.offline"));
+    }
+    break;
   }
   if (response.status === 204) {
     if (path === "/api/auth/logout") csrfTokenMemory = "";

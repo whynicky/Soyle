@@ -34,17 +34,8 @@ for(const locale of ['ru','kk'] as const) {
      return;
    }
    await expect(catalog.locator('.v2-story-card').first()).toBeVisible();
-   const count=await catalog.locator('.v2-story-card').count();
-   const title=await catalog.locator('.v2-story-body > strong').first().innerText();
-   await catalog.getByRole('searchbox').fill(title);
-   await expect(catalog.locator('.v2-story-card').first()).toContainText(title);
-   await catalog.getByRole('searchbox').fill('zzzz-no-match');
-   await expect(catalog.locator('.library-empty')).toBeVisible();
-   await catalog.locator('.library-empty button').click();
-   await expect(catalog.locator('.v2-story-card')).toHaveCount(count);
-   await catalog.locator('select').first().selectOption('completed');
-   await expect(catalog.locator('.v2-story-card .story-state-new')).toHaveCount(0);
-   await catalog.locator('select').first().selectOption('all');
+   await expect(catalog.getByRole('searchbox')).toHaveCount(0);
+   await expect(catalog.locator('select')).toHaveCount(0);
    expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBeTruthy();
    if(info.project.name==='desktop') expect((await new AxeBuilder({page}).include('.focused-stories').analyze()).violations).toEqual([]);
    await page.screenshot({path:`../output/library-stories-${locale}-${info.project.name}.png`,fullPage:true});
@@ -84,7 +75,7 @@ for(const locale of ['ru','kk'] as const) {
  });
 }
 
-test('story retry, resume and status filters',async({page},info)=>{
+test('story retry, resume and reading states',async({page},info)=>{
   await login(page,'student','ru');
   let failed=true;
   await page.route('**/api/stories/*',async route=>{
@@ -100,11 +91,8 @@ test('story retry, resume and status filters',async({page},info)=>{
   await expect(catalog.locator('.v2-story-card')).toHaveCount(3);
   await expect(catalog.locator('.story-resume')).toContainText('Начатая история');
   for(const state of ['new','started','completed']){
-    await catalog.locator('select').first().selectOption(state);
-    await expect(catalog.locator('.v2-story-card')).toHaveCount(1);
     await expect(catalog.locator(`.v2-story-card .story-state-${state}`)).toBeVisible();
   }
-  await catalog.locator('select').first().selectOption('all');
   if(info.project.name==='desktop') expect((await new AxeBuilder({page}).include('.focused-stories').analyze()).violations).toEqual([]);
   await page.screenshot({path:`../output/library-resume-${info.project.name}.png`,fullPage:true});
 });

@@ -2700,5 +2700,11 @@
   "scenic.all": "Все занятия",
   "scenic.continueTitle": "Продолжим",
   "scenic.continueAccent": "занятие?",
-  "scenic.nextLabel": "Следующее задание"
+  "scenic.nextLabel": "Следующее задание",
+  "playroom.title": "Во что поиграем?",
+  "playroom.subtitle": "Выбирай занятие и развивай речь",
+  "playroom.games": "Игры",
+  "playroom.continue": "Продолжим занятие",
+  "playroom.choose": "Выбери игру",
+  "playroom.all": "Все упражнения"
 }

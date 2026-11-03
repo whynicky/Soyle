@@ -1,0 +1,79 @@
+/* Local activities redesign: warm surfaces and large, predictable actions. */
+.soyle-unified .playroom-catalog { --playroom-ink: #123456; gap: 28px; color: var(--playroom-ink); background: transparent; border-radius: 0; padding: 8px 28px 36px; }
+.playroom-hero { position: relative; display: flex; align-items: center; min-height: 300px; isolation: isolate; }
+.playroom-hero-copy { z-index: 1; width: 66%; padding: 20px 0; }
+.soyle-unified .playroom-hero h1 { font-size: clamp(32px,3.4vw,54px); line-height: 1.12; letter-spacing: -.035em; margin: 0 0 12px; color: #103154; }
+.playroom-hero-copy > p { margin: 0 0 28px; color: #4b647d; font-size: 20px; }
+.playroom-tabs { display: flex; gap: 16px; flex-wrap: wrap; }
+.playroom-tabs button { display: flex; align-items: center; gap: 18px; min-height: 76px; padding: 16px 26px; border: 2px solid white; border-radius: 28px; color: #123456; background: #fff8ee; box-shadow: 0 8px 24px #b98e6210; font-size: 26px; font-weight: 800; }
+.playroom-tabs button[aria-current] { color: white; background: linear-gradient(150deg,#49aaa5,#087b79); border-color: #84c9c2; }
+.playroom-tabs button > svg:first-child { width: 36px; height: 36px; }
+.playroom-tabs button > svg:last-child { margin-inline-start: 20px; }
+.playroom-tabs button:not([aria-current]) > svg { color: #ba740c; }
+.playroom-resume { display: flex; align-items: center; gap: 28px; padding: 20px; border: 2px solid #ffffff; border-radius: 32px; background: linear-gradient(115deg,#e2f1e9,#c3dedb); }
+.playroom-resume > img { width: 190px; height: 145px; border-radius: 24px; object-fit: cover; }
+.playroom-resume > div { flex: 1; min-width: 0; }
+.playroom-resume p { color: #4b647d; margin: 0 0 8px; }
+.soyle-unified .playroom-resume h2 { margin: 0 0 20px; font-size: 27px; }
+.playroom-progress-row { display: flex; gap: 16px; align-items: center; flex-wrap: wrap; color: #48647a; }
+.playroom-progress-row progress { width: min(280px,100%); height: 14px; border: 0; border-radius: 20px; overflow: hidden; accent-color: #139994; }
+.playroom-progress-row progress::-webkit-progress-bar { background: #bcd2ce; border-radius: 20px; }
+.playroom-progress-row progress::-webkit-progress-value { background: #139994; border-radius: 20px; }
+.playroom-resume > button { display: flex; align-items: center; gap: 12px; border: 1px solid #6ebfb8; border-radius: 24px; padding: 18px 24px; background: linear-gradient(145deg,#24a09c,#00736f); color: white; font-size: 20px; font-weight: 800; }
+.soyle-unified .playroom-catalog .focused-catalog { border-top: 1px solid #e5ddd0; padding-top: 24px; }
+.soyle-unified .playroom-catalog .exercise-grid { grid-template-columns: repeat(3,minmax(0,1fr)); }
+.soyle-unified .playroom-catalog .exercise-card { border-radius: 28px; background: #fffcf7; }
+.soyle-unified .playroom-catalog .exercise-card-visual { border-radius: 26px 26px 0 0; }
+.soyle-unified .playroom-catalog :is(button,a,input,select):focus-visible { outline: 3px solid #087b79; outline-offset: 4px; }
+@media(max-width:1200px) { .playroom-tabs button { font-size: 22px; padding: 16px 20px; gap: 12px; } .playroom-tabs button > svg:last-child { margin-inline-start: 0; } .playroom-resume { gap: 16px; flex-wrap: wrap; } .playroom-resume > button { margin-inline-start: auto; } }
+@media(max-width:760px) { .soyle-unified .playroom-catalog { padding: 20px 16px; border-radius: 24px; gap: 24px; } .playroom-hero { min-height: 260px; align-items: start; } .playroom-hero-copy { padding: 0; } .playroom-hero-copy > p { font-size: 17px; max-width: 75%; } .playroom-tabs { flex-direction: column; align-items: start; gap: 12px; } .playroom-tabs button { min-height: 60px; padding: 12px 18px; font-size: 20px; border-radius: 22px; } .playroom-tabs button > svg:first-child { width: 26px; height: 26px; } .soyle-unified .playroom-resume { padding: 16px; border-radius: 24px; } .playroom-resume > img { width: 84px; height: 84px; border-radius: 18px; } .soyle-unified .playroom-resume h2 { font-size: 21px; margin-bottom: 12px; } .playroom-resume > button { width: 100%; justify-content: center; font-size: 18px; } .playroom-progress-row { font-size: 14px; gap: 8px; } .soyle-unified .playroom-catalog .exercise-grid { grid-template-columns: 1fr; } }
+.playroom-tabs.section-navigation { margin: 0; padding: 0; border: 0; background: transparent; }
+.playroom-tabs.section-navigation button { flex: 0 1 auto; }
+
+/* The illustration is a single room scene behind the page, including its character. */
+.soyle-unified .main:has(.playroom-catalog) {
+  background-color: #fcf8f2;
+  background-image: linear-gradient(to bottom, transparent 300px, #fcf8f2 540px), url('/app-illustrations/playroom-room-v1.webp');
+  background-size: 100% 620px, 100% auto;
+  background-position: top center;
+  background-repeat: no-repeat;
+}
+.soyle-unified .main:has(.playroom-catalog) > .topbar { background: transparent; border: 0; box-shadow: none; backdrop-filter: none; }
+.playroom-resume { background: linear-gradient(115deg,#e2f1e9ed,#c3dedbe8); backdrop-filter: blur(12px); }
+@media(max-width:760px) {
+  .soyle-unified .main:has(.playroom-catalog) {
+    background-image: linear-gradient(to bottom,#fcf8f2 140px,transparent 210px,transparent 280px,#fcf8f2 460px), linear-gradient(to right,#fcf8f2e6,transparent 90%), url('/app-illustrations/playroom-room-v1.webp');
+    background-size: 100% 460px,100% 460px,auto 250px;
+    background-position: top center,top center,70% 170px;
+  }
+  .soyle-unified .playroom-catalog { background: transparent; padding-top: 8px; border-radius: 0; }
+  .playroom-hero-copy { width: 100%; }
+  .playroom-hero { min-height: 300px; }
+}
+
+/* The story library shares the room, navigation and reading surfaces with games. */
+.soyle-unified .story-room-catalog { gap: 28px; }
+.story-room-catalog .library-heading > div { flex: initial; min-width: 0; }
+.story-room-catalog .playroom-hero-copy > p { max-width: 40ch; margin-bottom: 28px; font-size: 20px; }
+.soyle-unified .story-room-catalog .library-controls { background: #fffbf4ed; border: 1px solid #fff; border-radius: 24px; padding: 20px; box-shadow: 0 8px 24px #805e3508; }
+.soyle-unified .story-room-catalog .v2-story-card { border: 2px solid #fff; border-radius: 30px; background: #fffaf3; box-shadow: 0 12px 24px #805e3510; }
+.story-room-catalog .v2-story-cover { height: 210px; }
+.story-room-catalog .v2-story-body { padding: 24px; }
+.story-room-catalog .story-card-action { margin-top: auto; padding-top: 16px; border-top: 1px solid #e9dfd2; color: #087b79; }
+.soyle-unified .story-room-catalog .library-empty { background: #fffbf4ed; border-radius: 28px; border: 1px solid white; }
+.story-room-catalog .story-resume > div { min-width: 0; }
+@media(max-width:760px) {
+  .story-room-catalog .playroom-hero-copy > p { font-size: 17px; max-width: 75%; }
+  .story-room-catalog .story-resume > div { flex: 1; flex-basis: auto; }
+  .soyle-unified .story-room-catalog .library-controls { padding: 16px; }
+}
+/* Full bleed landscape cover art at every width. */
+.soyle-unified .playroom-catalog .exercise-card { display: flex; flex-direction: column; }
+.soyle-unified .playroom-catalog .exercise-card .exercise-card-visual { width: 100%; height: auto; aspect-ratio: 5 / 3; flex-shrink: 0; border-radius: 26px 26px 0 0; }
+.soyle-unified .playroom-catalog .exercise-card-visual img { display: block; width: 100%; height: 100%; object-fit: cover; }
+.soyle-unified .main:has(.story-room-catalog) { background-image: linear-gradient(to bottom,transparent 300px,#fcf8f2 540px),url('/app-illustrations/stories-reading-room-v1.webp'); }
+@media(max-width:760px) {
+ .soyle-unified .main:has(.story-room-catalog) {
+  background-image: linear-gradient(to bottom,#fcf8f2 140px,transparent 210px,transparent 280px,#fcf8f2 460px),linear-gradient(to right,#fcf8f2e6,transparent 90%),url('/app-illustrations/stories-reading-room-v1.webp');
+ }
+}

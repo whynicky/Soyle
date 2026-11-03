@@ -164,6 +164,8 @@ import {
   GuidesExperience,
 } from "@/components/ProductExperience";
 
+import { exerciseCover } from "@/lib/exerciseCovers";
+import { LessonLibraryHero } from "./LessonLibraryHero";
 import { AccountMenu, SectionNavigation, familyNavigation, familySection } from "./AppNavigation";
 
 import { ParentProgress } from "./ParentProgress";
@@ -338,6 +340,7 @@ function AuthenticatedApp({ user, onLogout, externalError, onDismissExternalErro
   const [consent, setConsent] = useState<ChildConsent | null>(null);
   const [isOnline, setIsOnline] = useState(true);
   const [requestError, setRequestError] = useState("");
+  const [consentError, setConsentError] = useState("");
   const [parentPracticeMode, setParentPracticeMode] = useState<ParentPracticeMode>("adult_preview");
   const [focusStopping, setFocusStopping] = useState(false);
   const interfaceLocale = useLocale();
@@ -459,14 +462,14 @@ function AuthenticatedApp({ user, onLogout, externalError, onDismissExternalErro
 
   useEffect(() => {
     if (!child?.id || !["parent", "student"].includes(user.role)) {
-      queueMicrotask(() => setConsent(null));
+      queueMicrotask(() => { setConsent(null); setConsentError(""); });
       return;
     }
     let active = true;
-    api<ChildConsent>(`/api/children/${child.id}/consent`).then(value => { if (active) setConsent(value); }).catch((cause) => {
+    api<ChildConsent>(`/api/children/${child.id}/consent`).then(value => { if (active) { setConsent(value); setConsentError(""); } }).catch((cause) => {
       if (!active) return;
       setConsent(null);
-      setRequestError(cause instanceof Error ? t("shell.template5", { v0: cause.message }) : t("screen.AuthenticatedApp.ui7"));
+      setConsentError(cause instanceof Error ? t("shell.template5", { v0: cause.message }) : t("screen.AuthenticatedApp.ui7"));
     });
     return () => { active = false; };
   }, [child?.id, user.role, catalogRevision]);
@@ -886,6 +889,7 @@ function AuthenticatedApp({ user, onLogout, externalError, onDismissExternalErro
     >
       {!isOnline && <div className="offline-banner" role="status"><CircleAlert size={18}/><span><strong>{t("screen.AuthenticatedApp.ui46")}</strong>  {t("screen.AuthenticatedApp.ui47")}</span></div>}
       {externalError && <div className="game-error global-request-error" role="alert"><ShieldAlert size={18}/><span>{externalError}</span><button type="button" className="small-button" onClick={onDismissExternalError}>{t("common.close")}</button></div>}
+      {consentError && <div className="game-error global-request-error" role="alert"><ShieldAlert size={18}/><span>{consentError}</span><button type="button" className="small-button" onClick={() => setCatalogRevision(value => value + 1)}>{t("common.retry")}</button></div>}
       {requestError && <div className="game-error global-request-error" role="alert"><ShieldAlert size={18}/><span>{requestError}</span><button type="button" className="small-button" onClick={() => setRequestError("")}>{t("common.close")}</button></div>}
       {sessionError && <div className="game-error" role="alert"><ShieldAlert size={18}/><span>{sessionError}</span></div>}
       {activeExerciseContent}
@@ -942,18 +946,19 @@ function AuthenticatedApp({ user, onLogout, externalError, onDismissExternalErro
 
         {!isOnline && <div className="offline-banner" role="status"><CircleAlert size={18}/><span><strong>{t("screen.AuthenticatedApp.ui46")}</strong>  {t("screen.AuthenticatedApp.ui66")}</span></div>}
         {externalError && <div className="game-error global-request-error" role="alert"><ShieldAlert size={18}/><span>{externalError}</span><button type="button" className="small-button" onClick={onDismissExternalError}>{t("common.close")}</button></div>}
-        {requestError && <div className="game-error global-request-error" role="alert"><ShieldAlert size={18}/><span>{requestError}</span><button type="button" className="small-button" onClick={() => setRequestError("")}>{t("common.close")}</button></div>}
+        {consentError && <div className="game-error global-request-error" role="alert"><ShieldAlert size={18}/><span>{consentError}</span><button type="button" className="small-button" onClick={() => setCatalogRevision(value => value + 1)}>{t("common.retry")}</button></div>}
+      {requestError && <div className="game-error global-request-error" role="alert"><ShieldAlert size={18}/><span>{requestError}</span><button type="button" className="small-button" onClick={() => setRequestError("")}>{t("common.close")}</button></div>}
 
         <div className="page">
-          {familyRole && <SectionNavigation screen={screen} role={user.role} onOpen={openScreen}/>}
+          {familyRole && !["games", "learn", "stories"].includes(screen) && <SectionNavigation screen={screen} role={user.role} onOpen={openScreen}/>}
 
           {screen === "home" && <ExercisePetProvider presentation="home" key={`home-${child?.id}`} preferences={{ ...petPreferences.value, visible: user.role === "student" && petPreferences.ready && petPreferences.value.visible }} soundEnabled={settings.sound_enabled} calmMode={settings.calm_mode}><HomeScreen onStartPlan={startPreparedPlan} onOpenSpecialist={() => openScreen("parent", "specialist")} onOpen={openScreen} onExercise={exercise => { if (user.role === "parent") setParentPracticeMode("adult_preview"); openExercise(exercise); }} onStartSession={startDailySession} onResume={resumeSession} onPauseSession={pauseSession} soundEnabled={settings.sound_enabled} activeSession={activeSession} activeSessionLoading={activeSessionLoading} dailyMinutes={dailyMinutes} onMinutesChange={setDailyMinutes} sessionLoading={sessionLoading} sessionError={sessionError} child={child} dashboard={dashboard} consent={consent} userRole={user.role} exercises={exercises} /></ExercisePetProvider>}
-          {screen === "stories" && user.role === "student" && <StoryExperience childId={child?.id} calmMode={settings.calm_mode}/>}
+          {screen === "stories" && user.role === "student" && <StoryExperience childId={child?.id} calmMode={settings.calm_mode} onGames={() => openScreen("games")}/>}
           {(screen === "world" || screen === "my-world") && ["student", "parent"].includes(user.role) && <WorldExperience key={child?.id} childId={child?.id} canManage={user.role === "parent"} onWords={() => openScreen("aac")} onSpeak={(text) => speak(text, .82, true)}/>}
 
           {["success", "achievements", "progress", "skills"].includes(screen) && user.role === "student" && <AchievementsExperience childId={child?.id} dashboard={dashboard} onStories={() => openScreen("stories")} onGames={() => openScreen("games")}/>}
           {screen === "guides" && user.role === "parent" && <GuidesExperience child={child} dashboard={dashboard} exercises={exercises} onNavigate={openScreen} onExercise={openExercise}/>}
-          {(screen === "games" || screen === "learn") && <GamesScreen onOpen={openScreen} onExercise={openExercise} dashboard={dashboard} exercises={exercises} childMode={user.role === "student"} parentPracticeMode={user.role === "parent" ? parentPracticeMode : undefined} onParentPracticeModeChange={setParentPracticeMode} />}
+          {(screen === "games" || screen === "learn") && <GamesScreen onOpen={openScreen} onExercise={openExercise} dashboard={dashboard} exercises={exercises} childMode={user.role === "student"} parentPracticeMode={user.role === "parent" ? parentPracticeMode : undefined} onParentPracticeModeChange={setParentPracticeMode} currentSession={activeSession?.status !== "completed" ? activeSession : null} onResume={() => openScreen("session")} />}
           {screen === "session" && sessionError && <div className="v2-inline-alert" role="alert">{sessionError}</div>}
           {screen === "session" && activeSession && <SessionScreen session={activeSession} busy={sessionLoading} onContinue={continueSession} onPause={pauseSession} onFinish={() => { setActiveSession(null); refreshDashboard(); setScreen("home"); }} />}
           {screen === "exercise-complete" && exerciseCompletion && <ExercisePetProvider key={`complete-${child?.id}-${selectedExercise?.id}`} preferences={{ ...petPreferences.value, visible: petPreferences.ready && petPreferences.value.visible && !exerciseCompletion.refused && (user.role === "student" || parentPracticeMode === "child_practice") }} soundEnabled={settings.sound_enabled} calmMode={settings.calm_mode} initialEvent="complete"><div className="pet-completion"><ExercisePet/></div><ExerciseCompletionScreen completion={exerciseCompletion} onContinue={continueAfterExercise} onFinish={() => { if (exerciseCompletion.refused) { if (exerciseCompletion.sessionMode) void pauseSession(); else openScreen("home"); } else openScreen(exerciseCompletion.sessionMode ? "session" : "games"); }} /></ExercisePetProvider>}
@@ -1104,74 +1109,37 @@ function ModuleCard({ module, onClick, index, completed, total }: { module: type
   );
 }
 
-function GamesScreen({ onOpen, onExercise, dashboard, exercises, childMode, parentPracticeMode, onParentPracticeModeChange }: { onOpen: (screen: Screen) => void; onExercise: (exercise: Exercise) => void; dashboard: Dashboard | null; exercises: Exercise[]; childMode: boolean; parentPracticeMode?: ParentPracticeMode; onParentPracticeModeChange?: (mode: ParentPracticeMode) => void }) {
+function GamesScreen({ onOpen, onExercise, dashboard, exercises, childMode, parentPracticeMode, onParentPracticeModeChange, currentSession, onResume }: { onOpen: (screen: Screen) => void; onExercise: (exercise: Exercise) => void; dashboard: Dashboard | null; exercises: Exercise[]; childMode: boolean; parentPracticeMode?: ParentPracticeMode; onParentPracticeModeChange?: (mode: ParentPracticeMode) => void; currentSession: LearningSession | null; onResume: () => void }) {
   useLocale();
+  const sessionExercise = currentSession?.exercises[currentSession.current_index];
   return (
-    <div className={`page-enter stack-xl exercise-catalog-page ${childMode ? "child-games" : ""}`}>
-      {childMode ? <header className="child-library-title">
-        <h1>{t("screen.GamesScreen.ui2")}</h1>
-      </header> : <section className="exercise-catalog-hero">
-        <div className="exercise-catalog-hero-copy"><span className="kicker">{t("screen.GamesScreen.ui1")} {exercises.length}</span><h1>{childMode ? t("screen.GamesScreen.ui2") : t("screen.GamesScreen.ui3")}</h1><p>{childMode ? t("screen.GamesScreen.ui4") : t("screen.GamesScreen.ui5")}</p></div>
-        <Image src="/app-illustrations/exercise-library-hero.webp" width={768} height={512} alt={t("screen.GamesScreen.ui6")} priority />
-      </section>}
+    <div className={`page-enter stack-xl exercise-catalog-page playroom-catalog ${childMode ? "child-games" : ""}`}>
+      <LessonLibraryHero section="games" onOpen={onOpen}/>
+      {currentSession && <section className="playroom-resume" aria-labelledby="playroom-resume-title"><Image src="/app-illustrations/practice-continue.webp" alt="" width={208} height={156}/><div><p>{t("playroom.continue")}</p><h2 id="playroom-resume-title">{sessionExercise?.title || t("product.ui8")}</h2><div className="playroom-progress-row"><progress value={currentSession.current_index} max={Math.max(1,currentSession.exercises.length)} aria-label={t("product.ui6")}/><span>{t("product.steps", {completed:currentSession.current_index,total:currentSession.exercises.length})}</span></div></div><button type="button" onClick={onResume}><Play/>{t("product.ui8")}</button></section>}
       {!childMode && exercises.some((item) => item.engine?.review_gate.demo_only) && <div className="unreviewed-demo-banner" role="status"><ShieldAlert size={20}/><div><strong>{childMode ? t("screen.GamesScreen.ui7") : t("screen.GamesScreen.ui8")}</strong><span>{childMode ? t("screen.GamesScreen.ui9") : t("screen.GamesScreen.ui10")}</span></div></div>}
       <button className="child-aac-entry" onClick={() => onOpen("aac")}><Image src="/app-illustrations/aac-help.webp" width={78} height={78} alt={t("screen.GamesScreen.ui11")}/><div><strong>{t("screen.GamesScreen.ui12")}</strong><small>{t("screen.GamesScreen.ui13")}</small></div><ChevronRight size={24}/></button>
       {parentPracticeMode && <section className="practice-mode-card" aria-labelledby="practice-mode-title"><div><Eye size={22}/><span><strong id="practice-mode-title">{t("screen.GamesScreen.ui14")}</strong><small>{t("screen.GamesScreen.ui15")}</small></span></div><div className="practice-mode-options"><button type="button" className={parentPracticeMode === "adult_preview" ? "active" : ""} aria-pressed={parentPracticeMode === "adult_preview"} onClick={() => onParentPracticeModeChange?.("adult_preview")}><Eye size={17}/>  {t("screen.GamesScreen.ui16")}</button><button type="button" className={parentPracticeMode === "child_practice" ? "active" : ""} aria-pressed={parentPracticeMode === "child_practice"} onClick={() => onParentPracticeModeChange?.("child_practice")}><Baby size={17}/>  {t("screen.GamesScreen.ui17")}</button></div></section>}
-      <ExerciseLibrary childMode={childMode} items={exercises.filter(item => item.module !== "motor")} completedIds={dashboard?.completed_exercise_ids || []} onExercise={onExercise} />
+      <ExerciseLibrary items={exercises.filter(item => item.module !== "motor")} childMode={childMode} completedIds={dashboard?.completed_exercise_ids || []} onExercise={onExercise} />
       {!childMode && <div className="tip-banner"><div className="tip-icon"><Sparkles/></div><div><strong>{t("screen.GamesScreen.ui21")}</strong><p>{t("screen.GamesScreen.ui22")}</p></div></div>}
     </div>
   );
 }
 
-const exerciseImages: Record<string, string> = {
-  animals: "aac-cat.webp", food: "aac-apple.webp", toys: "aac-teddy.webp", body: "aac-me.webp", clothes: "aac-school.webp", household: "aac-home.webp", actions: "aac-walk.webp", qualities: "aac-hot.webp", location: "aac-on-table.webp", places: "aac-playground.webp", opposites: "aac-cold.webp", commands: "aac-play.webp",
-  request: "aac-juice.webp", observation: "aac-see.webp", preference: "aac-love.webp", family: "aac-mother.webp", feelings: "aac-happy.webp", routine: "aac-yesterday.webp", help: "aac-help.webp", desire: "aac-want.webp", need: "aac-drink.webp", refusal: "aac-no.webp", choice: "aac-water.webp", greeting: "aac-hello.webp", answer: "aac-yes.webp", agent_action: "aac-played.webp", spatial_phrase: "aac-in-box.webp", question: "aac-what-is-this.webp", past_event: "aac-walked.webp",
-};
-
 function ExerciseLibrary({ childMode, items, completedIds, onExercise }: { childMode: boolean; items: Exercise[]; completedIds: number[]; onExercise: (exercise: Exercise) => void }) {
-  const locale = useLocale();
-  const [query, setQuery] = useState("");
-  const [direction, setDirection] = useState("all");
-  const [duration, setDuration] = useState("all");
+  useLocale();
   const completed = new Set(completedIds);
   const labels = { motor: t("screen.ExerciseLibrary.ui1"), sensory: t("screen.ExerciseLibrary.ui2"), mixed: t("screen.ExerciseLibrary.ui3") };
   // A planning estimate, not a timer or a measured completion time: about 30 seconds per round.
   const minutes = (exercise: Exercise) => Math.max(1, Math.ceil((exercise.adaptive?.difficulty_params.round_count || exercise.engine?.content.default_rounds || 6) / 2));
-  const filtered = items.filter(exercise => (direction === "all" || exercise.module === direction) && (duration === "all" || (duration === "short" ? minutes(exercise) <= 3 : minutes(exercise) > 3)) && `${exercise.title} ${exercise.instruction}`.toLocaleLowerCase(locale).includes(query.trim().toLocaleLowerCase(locale)));
-  const reset = () => { setQuery(""); setDirection("all"); setDuration("all"); };
-  const searchField = <label className="catalog-search">{t("ux.searchExercises")}<span><Search size={20}/><input type="search" value={query} onChange={event => setQuery(event.target.value)} placeholder={t("ux.searchExample")}/></span></label>;
-  const directionKeys = ["mixed", "sensory"] as const;
-  const activeFilterCount = Number(direction !== "all") + Number(duration !== "all");
-  const durationField = <label>{t("ux.duration")}<select value={duration} onChange={event => setDuration(event.target.value)}><option value="all">{t("ux.anyDuration")}</option><option value="short">{t("ux.shortDuration")}</option><option value="long">{t("ux.longDuration")}</option></select></label>;
   return <section className="exercise-library focused-catalog" aria-labelledby="all-exercises-title">
-    {childMode ? <div className="child-library-tools">
-      <div className="child-library-directions" role="group" aria-label={t("ux.direction")}>
-        {(["all", ...directionKeys] as const).map(key => <button type="button" key={key} aria-pressed={direction === key} onClick={() => setDirection(key)}>
-          {key === "all" ? t("ux.allDirections") : labels[key]}
-        </button>)}
-      </div>
-      <div className="child-library-search">{searchField}
-        <details className="child-library-options"><summary>{t("catalog.filters")}{activeFilterCount > 0 && <span> · {activeFilterCount}</span>}</summary>
-          <div><label className="child-library-mobile-direction">{t("ux.direction")}
-            <select value={direction} onChange={event => setDirection(event.target.value)}>
-              <option value="all">{t("ux.allDirections")}</option>
-              {directionKeys.map(key => <option key={key} value={key}>{labels[key]}</option>)}
-            </select>
-          </label>{durationField}<p>{t("ux.estimateHint")}</p></div>
-        </details>
-      </div>
-    </div> : <>
-      <div className="catalog-filters">{searchField}<label>{t("ux.direction")}<select value={direction} onChange={event => setDirection(event.target.value)}><option value="all">{t("ux.allDirections")}</option>{Object.entries(labels).map(([id,label]) => <option key={id} value={id}>{label}</option>)}</select></label>{durationField}</div>
-      <p className="catalog-estimate-note">{t("ux.estimateHint")}</p>
-    </>}
-    <div className="section-heading"><h2 id="all-exercises-title" aria-live="polite">{t("ux.foundExercises", {count:filtered.length})}</h2>{(query || direction !== "all" || duration !== "all") && <button type="button" className="small-button" onClick={reset}>{t("ux.resetFilters")}</button>}</div>
-    <div className="exercise-grid">{filtered.map(exercise => <button type="button" key={exercise.id} className={`exercise-card ${exercise.module}`} onClick={() => onExercise(exercise)}>
-      <span className="exercise-card-visual"><Image src={exercise.engine?.content.exploration?.image.media_ref || (exerciseImages[exercise.target] ? `/app-illustrations/${exerciseImages[exercise.target]}` : exercise.icon)} width={320} height={230} alt=""/></span>
+    <div className="section-heading"><h2 id="all-exercises-title">{t("ux.foundExercises", {count:items.length})}</h2></div>
+    <div className="exercise-grid">{items.map(exercise => <button type="button" key={exercise.id} className={`exercise-card ${exercise.module}`} onClick={() => onExercise(exercise)}>
+      <span className="exercise-card-visual"><Image src={exerciseCover(exercise)} width={600} height={360} sizes="(max-width: 760px) 100vw, (max-width: 1050px) 50vw, 33vw" alt=""/></span>
       <div className="exercise-card-copy"><small>{labels[exercise.module]}{completed.has(exercise.id) ? t("screen.ExerciseLibrary.ui6") : ""}</small><strong>{exercise.title}</strong><p>{childMode ? exercise.instruction.split(/(?<=[.!?])\s+/)[0] : exercise.instruction}</p>
       <span className="exercise-card-meta"><span><Clock3 size={16}/>{t("ux.aboutMinutes", {count:minutes(exercise)})}</span>{exercise.module === "motor" && <span><UserRound size={16}/>{t("ux.withAdult")}</span>}</span>
       <span className="exercise-card-open">{t("screen.ExerciseLibrary.ui7")} <ArrowRight size={18}/></span></div>
     </button>)}</div>
-    {!filtered.length && <div className="empty-state large" role="status"><Search size={28}/><strong>{items.length ? t("ux.noExercises") : t("content.empty")}</strong><span>{items.length ? t("ux.tryFilters") : t("screen.ExerciseLibrary.ui9")}</span>{items.length > 0 && <button type="button" className="small-button" onClick={reset}>{t("ux.resetFilters")}</button>}</div>}
+    {!items.length && <div className="empty-state large" role="status"><strong>{t("content.empty")}</strong><span>{t("screen.ExerciseLibrary.ui9")}</span></div>}
   </section>;
 }
 

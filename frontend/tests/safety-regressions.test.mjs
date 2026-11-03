@@ -158,7 +158,7 @@ test("public child navigation does not expose motor prototypes", async () => {
   const modulesBlock = app.slice(app.indexOf("const modules = ["), app.indexOf("const moduleImages"));
   assert.doesNotMatch(modulesBlock, /id:\s*["']motor["']/);
   assert.match(app, /<ExerciseLibrary items=\{exercises\.filter/);
-  assert.match(app, /exercise\.engine\?\.content\.exploration\?\.image\.media_ref/);
+  assert.match(await readProjectFile("lib/exerciseCovers.ts"), /exercise\.engine\?\.content\.exploration\?\.image\.media_ref/);
   assert.doesNotMatch(app, /<details className="child-more-games"/);
 });
 
