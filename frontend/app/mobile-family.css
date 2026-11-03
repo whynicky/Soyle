@@ -1,0 +1,70 @@
+/* Shared heading geometry keeps section switches at the same position. */
+.soyle-unified .family-library-header { position: relative; display: flex; align-items: stretch; min-height: 300px; padding: 0; }
+.soyle-unified .family-library-header > div { box-sizing: border-box; display: flex; flex-direction: column; align-items: flex-start; flex: 0 1 66%; width: 66%; min-width: 0; min-height: 300px; padding: 20px 0; }
+.soyle-unified .family-library-header h1 { margin: 0 0 12px; font-size: clamp(32px,3.4vw,54px); line-height: 1.12; letter-spacing: -.035em; }
+.soyle-unified .family-library-header p { margin: 0 0 24px; max-width: 40ch; font-size: 20px; line-height: 1.5; color: #4b647d; }
+.soyle-unified .family-library-header .playroom-tabs { margin-top: auto; flex-shrink: 0; }
+.soyle-unified .focused-world,.soyle-unified .aac-free { padding-inline: 28px; }
+.soyle-unified .focused-world > .world-add-photo { justify-self: start; margin: 0; }
+.family-bottom-nav { display: none; }
+@media(min-width:761px) and (max-width:1050px) {
+ .soyle-unified .playroom-catalog .exercise-grid,.soyle-unified .focused-stories .v2-story-grid { grid-template-columns: repeat(2,minmax(0,1fr)); }
+}
+@media(max-width:760px) {
+ html:has(.family-bottom-nav) { scroll-padding-bottom: calc(104px + env(safe-area-inset-bottom,0px)); }
+ .soyle-unified:has(.family-bottom-nav) .main > .page { padding-bottom: calc(112px + env(safe-area-inset-bottom,0px)); }
+ .family-bottom-nav {
+  display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); align-items: stretch;
+  position: fixed; z-index: 45; inset-inline: 12px; bottom: max(10px,env(safe-area-inset-bottom,0px));
+  min-height: 72px; padding: 6px; gap: 2px; border: 1px solid #e3dbcb; border-radius: 27px;
+  background: #fffcf5f5; backdrop-filter: blur(18px); box-shadow: 0 6px 28px #1736561a;
+ }
+ .family-bottom-nav button { position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 5px; min-width: 0; min-height: 58px; padding: 6px 2px 10px; border: 0; border-radius: 21px; background: transparent; color: #52677d; font-family: inherit; font-size: 11px; font-weight: 700; line-height: 1.2; cursor: pointer; -webkit-tap-highlight-color: transparent; touch-action: manipulation; transition: background-color 160ms ease,color 160ms ease; }
+ .family-bottom-nav button svg { width: 23px; height: 23px; stroke-width: 1.8; flex-shrink: 0; }
+ .family-bottom-nav button span { white-space: nowrap; }
+ .family-bottom-nav button[aria-current='page'] { background: #e4f1eb; color: #086b68; }
+ .family-bottom-nav button[aria-current='page']::after { content: ''; position: absolute; bottom: 4px; width: 4px; height: 4px; border-radius: 50%; background: currentColor; }
+ .family-bottom-nav button:active { background: #d7e9df; }
+ .family-bottom-nav button:focus-visible { outline: 3px solid #087f7c; outline-offset: 1px; }
+ .soyle-unified.room-home-active:has(.family-bottom-nav) .main { height: calc(100dvh - 94px - env(safe-area-inset-bottom,0px)); }
+ .soyle-unified .family-library-header { min-height: 310px; }
+ .soyle-unified .family-library-header > div { width: 100%; flex-basis: 100%; min-height: 310px; padding: 8px 0 22px; }
+ .soyle-unified .family-library-header h1 { font-size: clamp(30px,8vw,38px); max-width: 100%; overflow-wrap: break-word; }
+ .soyle-unified .family-library-header p { max-width: 70%; font-size: 16px; line-height: 1.5; margin-bottom: 20px; }
+ .soyle-unified .focused-world,.soyle-unified .aac-free { padding-inline: 16px; }
+ .soyle-unified .family-library-header .playroom-tabs { width: min(100%,360px); }
+ .soyle-unified .family-library-header .world-add-photo { position: static; margin-top: 16px; }
+ .soyle-unified .main:has(.playroom-catalog)::before { top: 120px; height: 260px; background-size: 100% 100%,auto 260px; background-position: center,75% top; }
+ .soyle-unified .main:has(.story-room-catalog)::before { background-position: center,80% top; }
+ .soyle-unified .playroom-catalog { padding-inline: 16px; gap: 20px; }
+ .soyle-unified .playroom-catalog .exercise-card .exercise-card-visual { aspect-ratio: 8 / 5; }
+ .soyle-unified .playroom-catalog .exercise-card-visual img { object-fit: cover; object-position: center; }
+ .soyle-unified .focused-stories .v2-story-cover { height: auto; aspect-ratio: 8 / 5; }
+ .soyle-unified .focused-stories .v2-story-cover img { object-position: center; }
+ .soyle-unified .exercise-card-copy,.soyle-unified .focused-stories .v2-story-body { padding: 18px; }
+ .soyle-unified .exercise-card-copy > strong,.soyle-unified .focused-stories .v2-story-body > strong { font-size: 22px; line-height: 1.3; overflow-wrap: break-word; }
+ .soyle-unified .exercise-card-copy p { font-size: 16px; line-height: 1.5; }
+ .soyle-unified .focused-world .v2-photo-image-button { aspect-ratio: 4 / 3; height: auto; }
+ .soyle-unified .focused-world .v2-photo-image-button img { object-fit: contain; background: #f4eee4; }
+ .soyle-unified .world-empty { align-items: start; padding: 20px; }
+ .soyle-unified .world-empty > img { width: 100%; height: auto; max-height: 180px; object-fit: contain; }
+ .soyle-unified .world-library-tools { min-width: 0; }
+ .soyle-unified .world-library-tools .v2-world-tabs { flex-wrap: wrap; }
+ .soyle-unified .aac-free .aac-composer-top { top: 8px; }
+ .soyle-unified:has(.interactive-book,.book-experience,.cinema-player,.v2-story-player,.book-reader,.book-player) > .family-bottom-nav { display: none; }
+}
+@media(max-width:359px) {
+ .family-bottom-nav { inset-inline: 8px; padding: 5px 3px; border-radius: 23px; }
+ .family-bottom-nav button { font-size: 10px; }
+ .soyle-unified .family-library-header p { max-width: 80%; }
+}
+@media(prefers-reduced-motion:reduce) { .family-bottom-nav button { transition: none; } }
+@media(prefers-reduced-transparency:reduce) { .family-bottom-nav { background: #fffcf5; backdrop-filter: none; } }
+.soyle-unified .focused-world,.soyle-unified .aac-free { padding-top: 8px; animation: none; }
+@media(max-width:760px) {
+ .soyle-unified .family-library-header .playroom-tabs button { height: 64px; min-height: 64px; }
+ .room-home-active .scenic-child-home .home-activities { grid-template-rows: auto minmax(0,1fr); }
+ .room-home-active .scenic-child-home .home-activities-heading p { display: none; }
+ .room-home-active .scenic-child-home .home-activities-heading h2 { margin: 0; line-height: 1.3; }
+}
+@media(max-width:760px) { .scenic-child-home .home-reassurance { display: none; } }

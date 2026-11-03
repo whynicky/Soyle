@@ -136,6 +136,7 @@ import Image from "next/image";
 import { BrandLogo } from "@/components/BrandLogo";
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { flushSync } from "react-dom";
 import type { FaceLandmarker } from "@mediapipe/tasks-vision";
 import { api, ApiError, AACCard, AIAnswer, type AdaptivePlan, AppSettings, Child, ChildConsent, clearLegacyAuth, Dashboard, Exercise, LearningSession, NotificationsData, Role, SkillProgress, User } from "@/lib/api";
 import { compressPhoto } from "@/lib/imageUpload";
@@ -155,7 +156,8 @@ import { ContentReviewWorkspace, HomeActivityReviewPreview, type ContentReviewWo
 import { FunctionalSkillMap, HomePracticeLibrary } from "@/components/FamilyPractice";
 import { GoalsAndPractice } from "@/components/GoalsAndPractice";
 import { AdminShell, ChildShell, ExerciseFocusShell, ParentShell } from "@/components/AppShells";
-import { AchievementsExperience } from "@/components/AchievementsExperience";
+import { ChildProgressExperience } from "@/components/ChildProgressExperience";
+import { LibraryScene } from "./LibraryScene";
 import { ParentOverview } from "@/components/ParentOverview";
 import { InteractiveBook } from "./storybook/book/InteractiveBook";
 import { StoryExperience } from "@/components/StoryExperience";
@@ -166,7 +168,7 @@ import {
 
 import { exerciseCover } from "@/lib/exerciseCovers";
 import { LessonLibraryHero } from "./LessonLibraryHero";
-import { AccountMenu, SectionNavigation, familyNavigation, familySection } from "./AppNavigation";
+import { AccountMenu, SectionNavigation, FamilyMobileNavigation, familyNavigation, familySection } from "./AppNavigation";
 
 import { ParentProgress } from "./ParentProgress";
 import { ParentCabinetOverview } from "./ParentCabinetOverview";
@@ -776,9 +778,20 @@ function AuthenticatedApp({ user, onLogout, externalError, onDismissExternalErro
       gameStartedAtRef.current = Date.now();
       setSelectedExercise(exercises.find((item) => item.module === next) || null);
     }
-    setScreen(next);
-    setSidebarOpen(false);
-    window.scrollTo({ top: 0, behavior: "smooth" });
+    const changeScreen = () => {
+      setScreen(next);
+      setSidebarOpen(false);
+    };
+    const libraryTransition = ["games", "learn", "stories"].includes(screen) && ["games", "stories"].includes(next);
+    if (libraryTransition && document.startViewTransition && !window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      document.startViewTransition(() => {
+        flushSync(changeScreen);
+        window.scrollTo({ top: 0, behavior: "instant" });
+      });
+    } else {
+      changeScreen();
+      window.scrollTo({ top: 0, behavior: "instant" });
+    }
   };
 
   const submitGlobalSearch = (event: React.FormEvent) => {
@@ -900,6 +913,7 @@ function AuthenticatedApp({ user, onLogout, externalError, onDismissExternalErro
 
   return (
     <AppRoleShell home={user.role === "student" && screen === "home"} navigationCollapsed={childNavigationCollapsed}>
+      {familyRole && <div className="mobile-account-access"><AccountMenu name={user.full_name} onOpen={next => openScreen(next)} onLogout={onLogout}/></div>}
       {user.role === "student" && compactNavigation && navigationHidden && <button ref={menuButtonRef} type="button" className="child-menu-toggle" onClick={() => { setSidebarOpen(true); }} aria-label={t("landing.copy046")} aria-expanded={false} aria-controls="primary-navigation"><Menu size={23}/><span>{t("screen.AuthenticatedApp.ui48")}</span></button>}
       <div className="ambient ambient-one" />
       <div className="ambient ambient-two" />
@@ -950,13 +964,13 @@ function AuthenticatedApp({ user, onLogout, externalError, onDismissExternalErro
       {requestError && <div className="game-error global-request-error" role="alert"><ShieldAlert size={18}/><span>{requestError}</span><button type="button" className="small-button" onClick={() => setRequestError("")}>{t("common.close")}</button></div>}
 
         <div className="page">
-          {familyRole && !["games", "learn", "stories"].includes(screen) && <SectionNavigation screen={screen} role={user.role} onOpen={openScreen}/>}
+          {familyRole && !["games", "learn", "stories", "aac", "world", "my-world"].includes(screen) && <SectionNavigation screen={screen} role={user.role} onOpen={openScreen}/>}
 
           {screen === "home" && <ExercisePetProvider presentation="home" key={`home-${child?.id}`} preferences={{ ...petPreferences.value, visible: user.role === "student" && petPreferences.ready && petPreferences.value.visible }} soundEnabled={settings.sound_enabled} calmMode={settings.calm_mode}><HomeScreen onStartPlan={startPreparedPlan} onOpenSpecialist={() => openScreen("parent", "specialist")} onOpen={openScreen} onExercise={exercise => { if (user.role === "parent") setParentPracticeMode("adult_preview"); openExercise(exercise); }} onStartSession={startDailySession} onResume={resumeSession} onPauseSession={pauseSession} soundEnabled={settings.sound_enabled} activeSession={activeSession} activeSessionLoading={activeSessionLoading} dailyMinutes={dailyMinutes} onMinutesChange={setDailyMinutes} sessionLoading={sessionLoading} sessionError={sessionError} child={child} dashboard={dashboard} consent={consent} userRole={user.role} exercises={exercises} /></ExercisePetProvider>}
           {screen === "stories" && user.role === "student" && <StoryExperience childId={child?.id} calmMode={settings.calm_mode} onGames={() => openScreen("games")}/>}
-          {(screen === "world" || screen === "my-world") && ["student", "parent"].includes(user.role) && <WorldExperience key={child?.id} childId={child?.id} canManage={user.role === "parent"} onWords={() => openScreen("aac")} onSpeak={(text) => speak(text, .82, true)}/>}
+          {(screen === "world" || screen === "my-world") && ["student", "parent"].includes(user.role) && <WorldExperience key={child?.id} childId={child?.id} canManage={user.role === "parent"} navigation={<SectionNavigation screen="world" role={user.role} onOpen={openScreen} className="playroom-tabs"/>} onWords={() => openScreen("aac")} onSpeak={(text) => speak(text, .82, true)}/>}
 
-          {["success", "achievements", "progress", "skills"].includes(screen) && user.role === "student" && <AchievementsExperience childId={child?.id} dashboard={dashboard} onStories={() => openScreen("stories")} onGames={() => openScreen("games")}/>}
+          {["success", "achievements", "progress", "skills"].includes(screen) && user.role === "student" && <ChildProgressExperience childId={child?.id} dashboard={dashboard} onStories={() => openScreen("stories")} onGames={() => openScreen("games")}/>}
           {screen === "guides" && user.role === "parent" && <GuidesExperience child={child} dashboard={dashboard} exercises={exercises} onNavigate={openScreen} onExercise={openExercise}/>}
           {(screen === "games" || screen === "learn") && <GamesScreen onOpen={openScreen} onExercise={openExercise} dashboard={dashboard} exercises={exercises} childMode={user.role === "student"} parentPracticeMode={user.role === "parent" ? parentPracticeMode : undefined} onParentPracticeModeChange={setParentPracticeMode} currentSession={activeSession?.status !== "completed" ? activeSession : null} onResume={() => openScreen("session")} />}
           {screen === "session" && sessionError && <div className="v2-inline-alert" role="alert">{sessionError}</div>}
@@ -965,7 +979,7 @@ function AuthenticatedApp({ user, onLogout, externalError, onDismissExternalErro
           {user.role === "parent" && parentPracticeMode === "adult_preview" && ["motor", "sensory", "mixed"].includes(screen) && <div className="adult-preview-banner" role="status"><Eye size={19}/><div><strong>{t("cinema.copy054")}</strong><span>{t("screen.AuthenticatedApp.ui67")}</span></div><button type="button" onClick={() => setParentPracticeMode("child_practice")}>{t("screen.AuthenticatedApp.ui68")}</button></div>}
           {sessionError && ["motor", "sensory", "mixed"].includes(screen) && <div className="game-error" role="alert"><ShieldAlert size={18}/><span>{sessionError}</span></div>}
           {activeExerciseContent}
-          {screen === "aac" && <PhraseGame key="free-aac" childId={child?.id} canManage={user.role === "parent"} freeMode soundEnabled={settings.sound_enabled} onBack={() => openScreen("home")} />}
+          {screen === "aac" && <PhraseGame navigation={<SectionNavigation screen="aac" role={user.role} onOpen={openScreen} className="playroom-tabs"/>} key="free-aac" childId={child?.id} canManage={user.role === "parent"} freeMode soundEnabled={settings.sound_enabled} onBack={() => openScreen("home")} />}
           {screen === "ai" && user.role === "parent" && <AIParentScreen child={child} />}
           {screen === "progress" && user.role !== "student" && <ParentProgress key={child?.id} childId={child?.id} onStartPractice={() => openScreen("games")} onObservations={() => openScreen("parent", "practice")} />}
           {screen === "goals" && user.role === "parent" && <GoalsAndPractice key={child?.id} child={child} targetMinutes={dailyMinutes} onStartPlan={startPreparedPlan} onPracticeChanged={() => { setExercises([]); setCatalogRevision(value => value + 1); refreshDashboard(); }}/>}
@@ -978,6 +992,7 @@ function AuthenticatedApp({ user, onLogout, externalError, onDismissExternalErro
           {screen === "settings" && <SettingsScreen petPreferences={petPreferences} role={user.role} settings={settings} saving={settingsSaving} onChange={changeSettings} onLogout={onLogout} onOpenParent={() => openScreen("parent")} />}
         </div>
       </main>
+      {familyRole && !["session", "exercise-complete", "motor", "sensory", "mixed"].includes(screen) && <FamilyMobileNavigation screen={screen} role={user.role} onOpen={openScreen} inert={sidebarIsDialog && sidebarOpen}/>}
       {reward && reward.childId === child?.id && <StarReward key={reward.nonce} stars={reward.stars} total={Math.max(reward.total, dashboard?.stars || 0)} calmMode={settings.calm_mode} onDone={dismissReward}/>}
     </AppRoleShell>
   );
@@ -1835,7 +1850,7 @@ function AACVisual({ card, compact = false }: { card: AACCard; compact?: boolean
 
 const aacSafetyConcepts: Record<string,string> = {"Помоги":"help","Больно":"pain","Перерыв":"break","Стоп":"stop","Не хочу":"refuse","Да":"yes","Нет":"no"};
 
-function PhraseGame({ childId, canManage, exercise, freeMode = false, soundEnabled, onBack, onComplete }: { childId?: number; canManage: boolean; exercise?: Exercise; freeMode?: boolean; soundEnabled: boolean; onBack: () => void; onComplete?: (score: number, phrase: string, exerciseId: number, measurement: GameMeasurement) => Promise<unknown> | void }) {
+function PhraseGame({ childId, canManage, exercise, freeMode = false, soundEnabled, onBack, onComplete, navigation }: { navigation?: React.ReactNode; childId?: number; canManage: boolean; exercise?: Exercise; freeMode?: boolean; soundEnabled: boolean; onBack: () => void; onComplete?: (score: number, phrase: string, exerciseId: number, measurement: GameMeasurement) => Promise<unknown> | void }) {
   const pet = useExercisePet();
   const aacLocale = useLocale();
   const [cards, setCards] = useState<AACCard[]>([]);
@@ -2009,7 +2024,7 @@ function PhraseGame({ childId, canManage, exercise, freeMode = false, soundEnabl
   const quickCards = ["Помоги", "Больно", "Стоп", "Перерыв", "Не хочу", "Да"].flatMap((label) => cards.find((card) => card.label === label || card.concept_key === aacSafetyConcepts[label]) || []);
   return <div className={`page-enter game-page aac-page redesigned ${freeMode ? "aac-free" : ""}`}>
     {cards.some(card => card.translation_preview) && <p role="status">{t("aac.previewNote")}</p>}
-    {freeMode ? <header className="communication-title"><h1>{t("nav.words")}</h1><p>{t("aac.copy019")}</p></header> : <GameHeader title={exercise?.title || t("aac.copy018")} subtitle={t("aac.copy020")} step={scenarioEvaluation.stepLabel} onBack={onBack}/>}
+    {freeMode ? <header className="communication-title family-library-header"><div><h1>{t("nav.words")}</h1><p>{t("aac.copy019")}</p>{navigation}</div><LibraryScene scene="words"/></header> : <GameHeader title={exercise?.title || t("aac.copy018")} subtitle={t("aac.copy020")} step={scenarioEvaluation.stepLabel} onBack={onBack}/>}
 
     {!freeMode && <div className="aac-goal"><div><span className="kicker">{t("aac.copy025")}</span><strong>{scenario?.title || exercise?.instruction || t("aac.copy026")}</strong><p>{scenario?.instruction || exercise?.instruction}</p>{scenario?.steps?.length ? <ol className="aac-task-steps">{scenario.steps.map((step) => <li key={step}>{step}</li>)}</ol> : null}</div><Target size={22}/><p>{scenario?.criterion || t("aac.copy027")}</p>{canManage && <div className="aac-prompt-level" aria-label={t("aac.copy028")}><span>{t("aac.copy029")}</span>{([['independent',t("specialist.copy002")],['minimal',t("aac.copy030")],['full',t("aac.copy031")]] as const).map(([value,label]) => <button key={value} className={promptLevel === value ? "active" : ""} aria-pressed={promptLevel === value} onClick={() => setPromptLevel(value)}>{label}</button>)}</div>}</div>}
     <section className={`aac-composer aac-composer-top ${freeMode && !selected.length ? "message-empty" : ""}`}><div className="aac-composer-head"><div><span className="kicker">{freeMode ? t("aac.copy032") : t("aac.copy033")}</span><strong aria-live="polite">{sentence || t("aac.copy034")}</strong><small>{composerHint}</small></div><div className="aac-composer-actions">{freeMode && <button type="button" className="clear-button" disabled={!selected.length || speechPending} onClick={() => { setSelected(items => items.slice(0, -1)); setAacNotice(""); savedRef.current = false; }}><Undo2 size={18}/>{t("ux.undoWord")}</button>}<button className="clear-button" disabled={!selected.length || speechPending} onClick={() => { setSelected([]); setAacNotice(""); savedRef.current = false; }}>{t("aac.copy035")}</button><button className="speak-button" disabled={speechPending || !selected.length || !composition.valid || (!freeMode && !scenarioEvaluation.complete)} onClick={sayPhrase}><Volume2 size={21}/>{speechPending ? t("aac.copy036") : freeMode ? t("aac.copy037") : scenarioEvaluation.actionLabel}</button></div></div><div className={`aac-sentence ${selected.length ? "filled" : ""}`}>{selected.length ? selected.map((card, index) => <button key={`${card.id}-${index}`} disabled={speechPending} aria-label={t("aac.removeCard", {label:card.label})} onClick={() => { savedRef.current = false; setSelected((items) => items.filter((_, itemIndex) => itemIndex !== index)); }}><span className="aac-card-order">{index + 1}</span><AACVisual card={card} compact/><span>{card.label}</span><X size={13}/></button>) : <div className="aac-empty-message"><MessageCircle size={24}/><div><strong>{freeMode ? t("aac.copy039") : scenarioEvaluation.hint}</strong><span>{freeMode ? t("aac.copy040") : t("aac.copy041")}</span></div></div>}</div>{selected.length > 0 && <p className="aac-remove-hint">{t("aac.copy042")}</p>}</section>

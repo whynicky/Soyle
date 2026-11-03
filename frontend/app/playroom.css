@@ -20,7 +20,7 @@
 .playroom-progress-row progress::-webkit-progress-bar { background: #bcd2ce; border-radius: 20px; }
 .playroom-progress-row progress::-webkit-progress-value { background: #139994; border-radius: 20px; }
 .playroom-resume > button { display: flex; align-items: center; gap: 12px; border: 1px solid #6ebfb8; border-radius: 24px; padding: 18px 24px; background: linear-gradient(145deg,#24a09c,#00736f); color: white; font-size: 20px; font-weight: 800; }
-.soyle-unified .playroom-catalog .focused-catalog { border-top: 1px solid #e5ddd0; padding-top: 24px; }
+.soyle-unified .playroom-catalog .focused-catalog { border-top: 0; padding-top: 8px; }
 .soyle-unified .playroom-catalog .exercise-grid { grid-template-columns: repeat(3,minmax(0,1fr)); }
 .soyle-unified .playroom-catalog .exercise-card { border-radius: 28px; background: #fffcf7; }
 .soyle-unified .playroom-catalog .exercise-card-visual { border-radius: 26px 26px 0 0; }
@@ -29,27 +29,6 @@
 @media(max-width:760px) { .soyle-unified .playroom-catalog { padding: 20px 16px; border-radius: 24px; gap: 24px; } .playroom-hero { min-height: 260px; align-items: start; } .playroom-hero-copy { padding: 0; } .playroom-hero-copy > p { font-size: 17px; max-width: 75%; } .playroom-tabs { flex-direction: column; align-items: start; gap: 12px; } .playroom-tabs button { min-height: 60px; padding: 12px 18px; font-size: 20px; border-radius: 22px; } .playroom-tabs button > svg:first-child { width: 26px; height: 26px; } .soyle-unified .playroom-resume { padding: 16px; border-radius: 24px; } .playroom-resume > img { width: 84px; height: 84px; border-radius: 18px; } .soyle-unified .playroom-resume h2 { font-size: 21px; margin-bottom: 12px; } .playroom-resume > button { width: 100%; justify-content: center; font-size: 18px; } .playroom-progress-row { font-size: 14px; gap: 8px; } .soyle-unified .playroom-catalog .exercise-grid { grid-template-columns: 1fr; } }
 .playroom-tabs.section-navigation { margin: 0; padding: 0; border: 0; background: transparent; }
 .playroom-tabs.section-navigation button { flex: 0 1 auto; }
-
-/* The illustration is a single room scene behind the page, including its character. */
-.soyle-unified .main:has(.playroom-catalog) {
-  background-color: #fcf8f2;
-  background-image: linear-gradient(to bottom, transparent 300px, #fcf8f2 540px), url('/app-illustrations/playroom-room-v1.webp');
-  background-size: 100% 620px, 100% auto;
-  background-position: top center;
-  background-repeat: no-repeat;
-}
-.soyle-unified .main:has(.playroom-catalog) > .topbar { background: transparent; border: 0; box-shadow: none; backdrop-filter: none; }
-.playroom-resume { background: linear-gradient(115deg,#e2f1e9ed,#c3dedbe8); backdrop-filter: blur(12px); }
-@media(max-width:760px) {
-  .soyle-unified .main:has(.playroom-catalog) {
-    background-image: linear-gradient(to bottom,#fcf8f2 140px,transparent 210px,transparent 280px,#fcf8f2 460px), linear-gradient(to right,#fcf8f2e6,transparent 90%), url('/app-illustrations/playroom-room-v1.webp');
-    background-size: 100% 460px,100% 460px,auto 250px;
-    background-position: top center,top center,70% 170px;
-  }
-  .soyle-unified .playroom-catalog { background: transparent; padding-top: 8px; border-radius: 0; }
-  .playroom-hero-copy { width: 100%; }
-  .playroom-hero { min-height: 300px; }
-}
 
 /* The story library shares the room, navigation and reading surfaces with games. */
 .soyle-unified .story-room-catalog { gap: 28px; }
@@ -71,9 +50,55 @@
 .soyle-unified .playroom-catalog .exercise-card { display: flex; flex-direction: column; }
 .soyle-unified .playroom-catalog .exercise-card .exercise-card-visual { width: 100%; height: auto; aspect-ratio: 5 / 3; flex-shrink: 0; border-radius: 26px 26px 0 0; }
 .soyle-unified .playroom-catalog .exercise-card-visual img { display: block; width: 100%; height: 100%; object-fit: cover; }
-.soyle-unified .main:has(.story-room-catalog) { background-image: linear-gradient(to bottom,transparent 300px,#fcf8f2 540px),url('/app-illustrations/stories-reading-room-v1.webp'); }
+/* Fade the actual scene layer; its edge never outgrows its mask. */
+.soyle-unified .main:has(.playroom-catalog) { position: relative; isolation: isolate; background: #fcf8f2; --library-scene: url('/app-illustrations/playroom-room-v1.webp'); }
+.soyle-unified .main:has(.story-room-catalog) { --library-scene: url('/app-illustrations/stories-reading-room-v1.webp'); }
+.soyle-unified .main:has(.playroom-catalog)::before { content: ''; position: absolute; z-index: -1; inset: 0 0 auto; height: clamp(480px,40vw,760px); background: var(--library-scene) center top / cover no-repeat; mask-image: linear-gradient(to bottom,#000 48%,#000c 66%,#0004 84%,transparent); pointer-events: none; }
+.soyle-unified .main:has(.playroom-catalog) > .topbar { background: transparent; border: 0; box-shadow: none; backdrop-filter: none; }
+.soyle-unified .playroom-catalog.page-enter { animation: none; }
+.soyle-unified .playroom-tabs.section-navigation { display: grid; grid-template-columns: 1fr 1fr; align-items: stretch; width: min(100%,470px); gap: 6px; padding: 6px; margin: 0; border: 1px solid #ffffffd9; border-radius: 22px; background: #fffaf0e8; box-shadow: 0 4px 16px #684a2810; }
+.soyle-unified .playroom-tabs.section-navigation button { display: flex; justify-content: center; align-items: center; gap: 12px; min-width: 0; min-height: 56px; padding: 12px 20px; color: #36536b; background: transparent; border: 0; border-radius: 16px; font-size: 20px; font-weight: 750; line-height: 1.2; box-shadow: none; transition: background-color 180ms ease,color 180ms ease,transform 100ms ease; }
+.soyle-unified .playroom-tabs.section-navigation button > svg { width: 25px; height: 25px; color: currentColor; margin: 0; flex-shrink: 0; }
+.soyle-unified .playroom-tabs.section-navigation button[aria-current='page'] { color: #fff; background: #087f7c; box-shadow: 0 3px 8px #087f7c26; }
+@media(hover:hover) { .soyle-unified .playroom-tabs.section-navigation button:not([aria-current]):hover { background: #e4f0e9; color: #086c69; } }
+.soyle-unified .playroom-tabs.section-navigation button:active { transform: scale(.98); }
+.soyle-unified .playroom-catalog .playroom-resume { gap: 24px; padding: 18px; border: 1px solid #c9ddd5; border-radius: 26px; background: #e6f1ebf5; backdrop-filter: none; box-shadow: 0 8px 24px #21483b08; }
+.soyle-unified .playroom-catalog .playroom-resume > img { width: 152px; height: 124px; object-fit: cover; border-radius: 18px; }
+.soyle-unified .playroom-catalog .playroom-resume h2 { margin: 8px 0 18px; font-size: clamp(22px,2.2vw,30px); line-height: 1.2; }
+.soyle-unified .playroom-catalog .playroom-resume > div > span,.soyle-unified .playroom-catalog .playroom-resume > div > p { color: #4a665d; font-size: 15px; }
+.soyle-unified .playroom-catalog .playroom-resume > button { min-height: 52px; padding: 14px 22px; border: 0; border-radius: 16px; background: #087f7c; box-shadow: none; font-size: 18px; color: #fff; }
+.playroom-progress-row progress { appearance: none; -webkit-appearance: none; display: block; background: #cdded5; color: #168b7b; height: 8px; border-radius: 999px; }
+.playroom-progress-row progress::-webkit-progress-bar { background: #cdded5; border-radius: 999px; }
+.playroom-progress-row progress::-webkit-progress-value { background: #168b7b; border-radius: 999px; }
+.playroom-progress-row progress::-moz-progress-bar { background: #168b7b; border-radius: 999px; }
+.story-catalog-loading { min-height: 360px; color: #4b647d; }
+.story-catalog-loading > div { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 24px; margin-top: 20px; }
+.story-catalog-loading i { display: block; height: 260px; border-radius: 28px; background: #efe9df; }
+::view-transition-old(root),::view-transition-new(root) { animation-duration: 220ms; animation-timing-function: ease-in-out; }
 @media(max-width:760px) {
- .soyle-unified .main:has(.story-room-catalog) {
-  background-image: linear-gradient(to bottom,#fcf8f2 140px,transparent 210px,transparent 280px,#fcf8f2 460px),linear-gradient(to right,#fcf8f2e6,transparent 90%),url('/app-illustrations/stories-reading-room-v1.webp');
+ .soyle-unified .main:has(.playroom-catalog)::before { top: 120px; height: 320px; background-size: auto 320px; background-position: 70% top; mask-image: linear-gradient(to bottom,transparent,#000 22%,#000 65%,transparent); }
+ .soyle-unified .playroom-catalog { background: transparent; padding-top: 8px; border-radius: 0; }
+ .playroom-hero-copy { width: 100%; }
+ .playroom-hero { min-height: 300px; }
+ .soyle-unified .playroom-tabs.section-navigation { max-width: 360px; padding: 5px; gap: 4px; border-radius: 18px; }
+ .soyle-unified .playroom-tabs.section-navigation button { min-height: 52px; padding: 12px 10px; gap: 8px; font-size: 17px; border-radius: 13px; }
+ .soyle-unified .playroom-tabs.section-navigation button > svg { width: 22px; height: 22px; }
+ .soyle-unified .playroom-catalog .playroom-resume { padding: 16px; gap: 16px; border-radius: 22px; }
+ .soyle-unified .playroom-catalog .playroom-resume > img { width: 84px; height: 84px; border-radius: 14px; }
+ .soyle-unified .playroom-catalog .playroom-resume h2 { font-size: 21px; margin-bottom: 12px; }
+ .soyle-unified .playroom-catalog .playroom-resume > button { width: 100%; justify-content: center; }
+ .story-catalog-loading > div { grid-template-columns: 1fr; }
+ .story-catalog-loading i:not(:first-child) { display: none; }
+}
+@media(prefers-reduced-motion:reduce) { .soyle-unified .playroom-tabs.section-navigation button { transition: none; } ::view-transition-old(root),::view-transition-new(root) { animation: none; } }
+@media(max-width:760px) {
+ .soyle-unified .main:has(.playroom-catalog)::before {
+  background-image: linear-gradient(to right,#fcf8f2f5,#fcf8f2b3 52%,transparent 90%),var(--library-scene);
+  background-size: 100% 100%,auto 320px;
+  background-position: center,70% top;
  }
+ .soyle-unified .playroom-catalog .playroom-resume { display: grid; grid-template-columns: 84px minmax(0,1fr); align-items: start; }
+ .soyle-unified .playroom-catalog .playroom-resume > div { min-width: 0; }
+ .soyle-unified .playroom-catalog .playroom-resume > button { grid-column: 1 / -1; }
+ .soyle-unified .playroom-catalog .playroom-resume .playroom-progress-row progress { width: 100%; }
 }

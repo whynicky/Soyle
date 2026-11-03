@@ -16,6 +16,8 @@ async function login(page: Page, role: 'student'|'parent', locale: 'ru'|'kk') {
   await expect(page.locator('html')).toHaveAttribute('lang',locale === 'ru'?'ru-RU':'kk-KZ');
 }
 async function section(page:Page, index:number) {
+  const dock=page.locator(".family-bottom-nav");
+  if(await dock.isVisible()) { await dock.locator("button").nth(index).click(); return; }
   const menu = page.getByRole('button',{name:/^(Открыть меню|Мәзірді ашу)$/});
   if(await menu.isVisible()) await menu.click();
   await page.locator('#primary-navigation nav button').nth(index).click();
@@ -49,7 +51,7 @@ for(const locale of ['ru','kk'] as const) {
    const world=page.locator('.focused-world');
    await expect(world.locator('.library-heading')).toBeVisible();
    await expect(world.locator('#world-upload')).toBeHidden();
-   await world.locator('.library-heading button').click();
+   await world.locator('.world-add-photo').click();
    await expect(world.locator('#world-upload')).toBeVisible();
    const data=await page.evaluate(()=>{const c=document.createElement('canvas');c.width=120;c.height=120;const ctx=c.getContext('2d')!;ctx.fillStyle=`hsl(${Math.random()*360},60%,70%)`;ctx.fillRect(0,0,120,120);return c.toDataURL().split(',')[1];});
    await world.locator('input[type=file]').setInputFiles({name:'test-photo.png',mimeType:'image/png',buffer:Buffer.from(data,'base64')});
@@ -61,7 +63,7 @@ for(const locale of ['ru','kk'] as const) {
    await world.locator('.v2-photo-upload-review button[type=submit]').click();
    const photo=world.locator('.v2-photo-card').filter({hasText:name});
    await expect(photo).toBeVisible();
-   await world.locator('.library-heading button').click();
+   await world.locator('.world-add-photo').click();
    await world.getByRole('searchbox').fill('zzzz-no-match');
    await expect(world.locator('.world-empty')).toBeVisible();
    await world.locator('.world-empty button').click();

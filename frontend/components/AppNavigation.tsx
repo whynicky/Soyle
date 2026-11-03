@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
-import { BarChart3, Gamepad2, Home, ChevronUp, LogOut, MessageCircle, Settings, UserRound } from "lucide-react";
+import { useEffect, useId, useRef, useState } from "react";
+import { BarChart3, Gamepad2, Home, ImageIcon, ChevronUp, LogOut, MessageCircle, Settings, UserRound } from "lucide-react";
 import { t, useLocale } from "@/lib/i18n";
 
 type Destination = "home" | "games" | "stories" | "guides" | "aac" | "world" | "progress" | "achievements" | "skills" | "goals" | "parent" | "ai";
@@ -34,12 +34,20 @@ export function familySection(screen: string, role: string) {
   if (["session", "exercise-complete", "motor", "sensory", "mixed"].includes(screen)) return "games";
   return familyNavigation(role).find(section => section.pages.some(page => page.id === navigationPage(screen)))?.id;
 }
-export function SectionNavigation({ screen, role, onOpen }: { screen: string; role: string; onOpen: (screen: Destination) => void }) {
+export function SectionNavigation({ screen, role, onOpen, className = "" }: { screen: string; role: string; onOpen: (screen: Destination) => void; className?: string }) {
   useLocale();
   const section = familyNavigation(role).find(item => item.id === familySection(screen, role));
   if (!section || section.pages.length < 2 || ["session", "exercise-complete", "motor", "sensory", "mixed"].includes(screen)) return null;
-  return <nav className="section-navigation" aria-label={`${section.label}: ${t("navigation.pages")}`}>
-    {section.pages.map(page => <button type="button" key={page.id} aria-current={navigationPage(screen) === page.id ? "page" : undefined} onClick={() => onOpen(page.id)}>{page.label}</button>)}
+  return <nav className={`section-navigation ${className}`} aria-label={`${section.label}: ${t("navigation.pages")}`}>
+    {section.pages.map(page => <button type="button" key={page.id} aria-current={navigationPage(screen) === page.id ? "page" : undefined} onClick={() => onOpen(page.id)}>{className && (page.id === "world" ? <ImageIcon aria-hidden="true"/> : <MessageCircle aria-hidden="true"/>)}{page.label}</button>)}
+  </nav>;
+}
+
+export function FamilyMobileNavigation({ screen, role, onOpen, inert }: { screen: string; role: string; onOpen: (screen: Destination) => void; inert?: boolean }) {
+  useLocale();
+  const current = familySection(screen, role);
+  return <nav className="family-bottom-nav" aria-label={t("nav.sections")} inert={inert}>
+    {familyNavigation(role).map(({id,label,icon: Icon}) => <button key={id} type="button" onClick={() => { if (screen !== id) onOpen(id); }} aria-current={current === id ? "page" : undefined}><Icon aria-hidden="true"/><span>{label}</span></button>)}
   </nav>;
 }
 
@@ -48,6 +56,7 @@ export function AccountMenu({ name, onOpen, onLogout, onExpand }: { onExpand?: (
   const [open, setOpen] = useState(false);
   const root = useRef<HTMLDivElement>(null);
   const trigger = useRef<HTMLButtonElement>(null);
+  const panelId = useId();
   useEffect(() => {
     if (!open) return;
     const dismiss = (event: PointerEvent) => { if (!root.current?.contains(event.target as Node)) setOpen(false); };
@@ -58,8 +67,8 @@ export function AccountMenu({ name, onOpen, onLogout, onExpand }: { onExpand?: (
   }, [open]);
   function navigate(screen: "profile" | "settings") { setOpen(false); onOpen(screen); trigger.current?.focus(); }
   return <div className="account-menu" ref={root} onBlur={event => { if (!event.currentTarget.contains(event.relatedTarget as Node)) setOpen(false); }}>
-    <button ref={trigger} type="button" className="account-menu-trigger" aria-label={t("navigation.accountMenu")} aria-expanded={open} aria-controls="account-menu-panel" onClick={() => { if (!open) onExpand?.(); setOpen(value => !value); }}><span className="avatar small" aria-hidden="true">{name[0]}</span><span className="account-menu-name">{name}</span><ChevronUp className="account-menu-chevron" size={18} aria-hidden="true"/></button>
-    {open && <div id="account-menu-panel" className="account-menu-panel"><strong>{name}</strong>
+    <button ref={trigger} type="button" className="account-menu-trigger" aria-label={t("navigation.accountMenu")} aria-expanded={open} aria-controls={panelId} onClick={() => { if (!open) onExpand?.(); setOpen(value => !value); }}><Settings className="account-menu-trigger-icon" size={24} strokeWidth={1.8} aria-hidden="true"/><span className="account-menu-name">{name}</span><ChevronUp className="account-menu-chevron" size={18} aria-hidden="true"/></button>
+    {open && <div id={panelId} className="account-menu-panel"><strong>{name}</strong>
       <button type="button" onClick={() => navigate("profile")}><UserRound size={19}/>{t("nav.myProfile")}</button>
       <button type="button" onClick={() => navigate("settings")}><Settings size={19}/>{t("nav.settings")}</button>
       <button type="button" onClick={() => { setOpen(false); onLogout(); }}><LogOut size={19}/>{t("common.logout")}</button>

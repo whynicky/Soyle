@@ -4,8 +4,9 @@ import { getLocale, languageOf, t, useLocale } from "@/lib/i18n";
 import { stopCurrentSpeech } from "@/lib/speech";
 
 import Image from "next/image";
+import { LibraryScene } from "./LibraryScene";
 import { ArrowRight, Camera, Check, MessageCircle, Plus, Trash2, Volume2, Search } from "lucide-react";
-import { useEffect, useId, useRef, useState } from "react";
+import { useEffect, useId, useRef, useState, type ReactNode } from "react";
 import { api, type WorldPhoto } from "@/lib/api";
 import { compressPhoto } from "@/lib/imageUpload";
 
@@ -16,7 +17,7 @@ const getCategories = () => [
   { key: "places", label: t("world.ui4") },
 ] as const;
 
-export function WorldExperience({ childId, canManage, onWords, onSpeak }: { childId?: number; canManage: boolean; onWords: () => void; onSpeak: (text: string) => Promise<boolean> }) {
+export function WorldExperience({ childId, canManage, onWords, onSpeak, navigation }: { navigation?: ReactNode; childId?: number; canManage: boolean; onWords: () => void; onSpeak: (text: string) => Promise<boolean> }) {
   useLocale();
   const categories = getCategories();
   const fileId = useId();
@@ -162,7 +163,8 @@ export function WorldExperience({ childId, canManage, onWords, onSpeak }: { chil
   const visible = photos.filter(photo => (category === "all" || photo.category === category) && photo.name.toLocaleLowerCase().includes(query.trim().toLocaleLowerCase()));
   if (!childId) return <div className="v2-screen v2-world-empty" role="status">{t("world.ui18")}</div>;
   return <div className="v2-screen v2-world focused-world page-enter">
-    <header className="library-heading"><div><h1>{t("world.ui19")}</h1><p>{canManage ? t("world.ui21") : t("world.ui22")}</p>{canManage && <button className="primary-button" aria-expanded={uploadOpen} aria-controls="world-upload" onClick={() => setUploadOpen(value => !value)}><Camera size={20}/>{t(uploadOpen ? "library.closeUpload" : "world.ui23")}</button>}</div><Image src="/app-illustrations/library-world.png" alt="" width={160} height={160} priority/></header>
+    <header className="library-heading family-library-header"><div><h1>{t("world.ui19")}</h1><p>{canManage ? t("world.ui21") : t("world.ui22")}</p>{navigation}</div><LibraryScene scene="world"/></header>
+    {canManage && <button className="primary-button world-add-photo" aria-expanded={uploadOpen} aria-controls="world-upload" onClick={() => setUploadOpen(value => !value)}><Camera size={20}/>{t(uploadOpen ? "library.closeUpload" : "world.ui23")}</button>}
     {loadError && <div className="v2-inline-alert" role="alert"><p>{loadError}</p><button className="small-button" onClick={() => setRevision(value => value+1)}>{t("ux.retry")}</button></div>}
     {error && <p className="v2-inline-alert" role="alert">{error}</p>}
     {message && <p className="v2-save-message" role="status"><Check/>{message}</p>}

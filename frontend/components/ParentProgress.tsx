@@ -27,8 +27,8 @@ export function ParentProgress({ childId, onStartPractice, onObservations }: { c
   const delta = period?.previous ? period.current.sessions - period.previous.sessions : null;
   const moduleNames = { motor:t("screen.ParentScreen.ui8"),sensory:t("screen.ParentScreen.ui9"),mixed:t("screen.ParentScreen.ui10") };
   const statuses = { completed:t("journey.completed"),participated:t("journey.participated"),break:t("journey.break"),refused:t("journey.refused"),technical_error:t("journey.technical") };
-  return <div className="parent-progress-view page-enter">
-    <header className="journey-heading"><div><span className="kicker">{t("navigation.progress")}</span><h1>{t("journey.results")}{report?.child.name ? ` · ${report.child.name}` : ''}</h1><p>{t("journey.resultsHint")}</p></div><label>{t("journey.period")}<select value={days} onChange={event => setDays(Number(event.target.value) as 0|7|30)}><option value={7}>{t("journey.week")}</option><option value={30}>{t("journey.month")}</option><option value={0}>{t("journey.allTime")}</option></select></label></header>
+  return <div className="parent-progress-view progress-report-redesign page-enter">
+    <header className="journey-heading"><Image className="report-heading-art" src="/app-illustrations/journey-progress.png" alt="" width={220} height={220} priority/><div><span className="kicker">{t("navigation.progress")}</span><h1>{t("journey.results")}{report?.child.name ? ` · ${report.child.name}` : ''}</h1><p>{t("journey.resultsHint")}</p></div><label>{t("journey.period")}<select value={days} onChange={event => setDays(Number(event.target.value) as 0|7|30)}><option value={7}>{t("journey.week")}</option><option value={30}>{t("journey.month")}</option><option value={0}>{t("journey.allTime")}</option></select></label></header>
     {loading && <p role="status">{t("common.wait")}</p>}
     {error && <div className="journey-error" role="alert"><p>{error}</p><button className="small-button" onClick={() => setRevision(value => value + 1)}><RefreshCw size={18}/>{t("ux.retry")}</button></div>}
     {period && <>

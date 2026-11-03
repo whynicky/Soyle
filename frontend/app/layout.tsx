@@ -1,5 +1,5 @@
 import { LocaleBootstrap } from "@/components/LanguagePicker";
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import "./product.css";
 import "./branding.css";
@@ -13,6 +13,10 @@ import "./library.css";
 import "./scenic-home.css";
 import "./communication.css";
 import "./playroom.css";
+import "./mobile-family.css";
+import "./family-refresh.css";
+
+export const viewport: Viewport = { width: "device-width", initialScale: 1, viewportFit: "cover" };
 
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || (process.env.VERCEL_PROJECT_PRODUCTION_URL ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}` : "http://localhost:3006")),
