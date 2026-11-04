@@ -79,7 +79,7 @@
  .progress-discoveries > div { grid-template-columns: 1fr; }.progress-discoveries article { padding: 18px; }
  .progress-collection > div { grid-template-columns: repeat(2,minmax(0,1fr)); gap: 12px; }.progress-collection article { padding: 16px 12px; }.progress-collection h3 { font-size: 17px; }.progress-collection p { font-size: 13px; }
  .progress-next-step { flex-wrap: wrap; padding: 22px; gap: 14px; }.progress-next-step > div { flex-basis: calc(100% - 48px); }.progress-next-step button { width: 100%; justify-content: center; }
- .progress-report-redesign { padding-inline: 16px; }.progress-report-redesign .journey-heading { padding: 22px; }.report-heading-art { width: 110px; height: 110px; }.progress-report-redesign .journey-heading > div { flex-basis: 100%; }.progress-report-redesign .journey-heading > label { flex-wrap: wrap; }
+ .progress-report-redesign { padding-inline: 16px; }.progress-report-redesign .journey-heading { display: grid; grid-template-columns: minmax(0, 1fr); padding: 22px; }.report-heading-art { width: 110px; height: 110px; }.progress-report-redesign .journey-heading > div { flex-basis: 100%; }.progress-report-redesign .journey-heading > label { flex-wrap: wrap; }
 }
 @media(max-width:359px) { .scenic-child-home .home-activity-links > button { grid-template-columns: 36% minmax(0,1fr) 30px; }.scenic-child-home .home-activity-links strong { font-size: 18px; }.scenic-child-home .home-activity-links small { font-size: 13px; }.family-bottom-nav { inset-inline: 8px; gap: 2px; padding: 6px; }.family-bottom-nav button { font-size: 10px; } }
 

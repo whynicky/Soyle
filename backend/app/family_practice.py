@@ -95,6 +95,23 @@ def home_library(db, child_id: int) -> dict:
     return result
 
 
+def recent_family_notes(db, child_id: int, goals: list[dict]) -> list[dict]:
+    notes = [
+        {"title": goal["title"], "result": row["result_type"], "note": row["note"], "observed_at": row["observed_at"]}
+        for goal in goals for row in goal["observations"]
+    ]
+    notes.extend(
+        {"title": row["label"], "result": row["status"], "note": row["note"], "observed_at": row["observed_at"]}
+        for row in skill_map(db, child_id) if row["observed_at"]
+    )
+    for row in db.execute("""SELECT t.title,o.outcome,o.note,o.observed_at FROM home_activity_observations o
+            JOIN home_activity_templates t ON t.id=o.activity_id WHERE o.child_id=?
+            ORDER BY o.observed_at DESC,o.id DESC LIMIT 3""", (child_id,)).fetchall():
+        notes.append({"title": practice_text(row["title"]), "result": row["outcome"],
+                      "note": row["note"], "observed_at": row["observed_at"]})
+    return sorted(notes, key=lambda row: row["observed_at"], reverse=True)[:3]
+
+
 def save_home_observation(db, child_id: int, payload: dict, user_id: int, observation_id: int | None = None) -> dict:
     if payload["outcome"] not in HOME_OBSERVATION_OUTCOMES:
         raise HTTPException(422, "Неизвестный результат наблюдения")

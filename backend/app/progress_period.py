@@ -32,6 +32,7 @@ def summarize_period(rows: list[dict], days: int, now: datetime | None = None) -
                 "breaks": sum(r.get("attempt_status") == "break" for r in items),
                 "refusals": sum(r.get("attempt_status") == "refused" for r in items)}
 
+    ordered = sorted(current, key=lambda r: (r["created_at"], r["id"]), reverse=True)
     return {"days": days, "start": start.isoformat() if start else None, "end": today.isoformat(),
             "current": metrics(current), "previous": metrics(previous) if start else None,
-            "record_count": len(current), "recent": sorted(current, key=lambda r: (r["created_at"], r["id"]), reverse=True)[:20]}
+            "record_count": len(current), "oldest_id": ordered[-1]["id"] if ordered else None, "recent": ordered[:20]}

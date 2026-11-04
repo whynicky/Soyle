@@ -98,18 +98,22 @@ const benefits = () => [
 ];
 const questions = () => [
   [
+    "landing.copy026",
     t("landing.copy026"),
     t("landing.copy027"),
   ],
   [
+    "landing.copy028",
     t("landing.copy028"),
     t("landing.copy029"),
   ],
   [
+    "landing.copy030",
     t("landing.copy030"),
     t("landing.copy031"),
   ],
   [
+    "landing.copy032",
     t("landing.copy032"),
     t("landing.copy033"),
   ],
@@ -408,7 +412,7 @@ export function LandingPage() {
               <Link
                 className={`sl-game ${game.tone}`}
                 href="/app"
-                key={game.title}
+                key={game.image}
                 data-reveal
                 style={{ "--delay": `${i * 85}ms` } as React.CSSProperties}
               >
@@ -469,7 +473,7 @@ export function LandingPage() {
               {forms().map((form, i) => (
                 <article
                   className={`sl-form ${form.tone}`}
-                  key={form.title}
+                  key={form.image}
                   data-reveal
                   style={{ "--delay": `${i * 80}ms` } as React.CSSProperties}
                 >
@@ -741,8 +745,8 @@ export function LandingPage() {
             <p>{t("landing.copy130")}</p>
           </div>
           <div className="sl-faq-list">
-            {questions().map(([q, a]) => (
-              <details key={q} data-reveal>
+            {questions().map(([id, q, a]) => (
+              <details key={id} data-reveal>
                 <summary>
                   {q}
                   <ChevronDown size={18} />

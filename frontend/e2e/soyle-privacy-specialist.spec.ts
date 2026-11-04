@@ -87,7 +87,28 @@ test("family invitation requires confirmation, workspaces stay navigable and rev
     if (await menu.isVisible()) await menu.click();
     await specPage.locator(".desk-rail").getByRole("link", {name, exact: true}).click();
   };
+  const goal = await request.post(API + "/api/practice-goals", {headers: parent.auth, data: {
+    child_id: child, template_key: "recognise-five-objects", baseline: "Узнаёт чашку", help_level: "minimal",
+  }});
+  expect(goal.ok()).toBeTruthy();
+  const goalId = (await goal.json()).id;
+  for (let i = 1; i <= 4; i++) {
+    const recorded = await request.post(`${API}/api/practice-goals/${goalId}/observations`, {headers: parent.auth, data: {
+      child_id: child, result_type: "independent", note: "Домашнее наблюдение " + i,
+    }});
+    expect(recorded.ok()).toBeTruthy();
+  }
+  for (let i = 0; i < 21; i++) {
+    const session = await request.post(API + "/api/sessions", {headers: parent.auth, data: {
+      event_id: crypto.randomUUID(), child_id: child, exercise_id: 7, module: "sensory", score: 0,
+      duration_seconds: 5, actor_role: "parent", response_owner: "child", support_context: "independent",
+      attempt_status: "break", attempts_count: 0, correct_answers: 0,
+    }});
+    expect(session.ok()).toBeTruthy();
+  }
   await specPage.locator(".desk-roster a").filter({hasText: "Тестовый профиль"}).click();
+  await expect(specPage.getByText("Домашнее наблюдение 4", {exact: true})).toBeVisible();
+  await expect(specPage.getByText(/Со слов родителя/).first()).toBeVisible();
   await specPage.getByRole("button", {name: "Записать наблюдение"}).click();
   await expect(specPage.getByRole("heading", { name: "Наблюдение вне игры" })).toBeVisible();
   await specPage.getByLabel("Что наблюдалось").selectOption("with_help");
@@ -114,6 +135,28 @@ test("family invitation requires confirmation, workspaces stay navigable and rev
   await page.reload();
   await expect(page).toHaveURL(/\/app\/parent\/specialist/);
   await expect(page.getByText("Игра с другой игрушкой дома: Выбрал игрушку после указательного жеста")).toBeVisible();
+  const savedNote = page.locator(".cabinet-entry").filter({hasText: "Выбрал игрушку после указательного жеста"});
+  await expect(savedNote).toContainText("Небольшая подсказка");
+  await expect(savedNote.locator("time")).toHaveAttribute("datetime", /T/);
+  await page.goto(`/app/parent/goals?child=${child}`);
+  await page.locator(".practice-goal-toggle").click();
+  const history = page.locator(".goal-observation-history");
+  await expect(history).not.toContainText("Домашнее наблюдение 1");
+  await history.getByRole("button", {name: "Показать ещё"}).click();
+  await expect(history).toContainText("Домашнее наблюдение 1");
+  await expect(history.getByRole("button")).toHaveCount(0);
+  await page.goto(`/app/parent/progress?child=${child}`);
+  const sessions = page.locator(".journey-history");
+  await expect(sessions.locator("li")).toHaveCount(20);
+  await expect(sessions.locator("li strong").first()).toHaveText("Домашние животные");
+  expect(await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)).toBeLessThanOrEqual(1);
+  await sessions.getByRole("button", {name: "Показать ещё"}).click();
+  await expect(sessions.locator("li")).toHaveCount(21);
+  await openSpecialistPage("Цели и история");
+  const attempts = specPage.locator("section.cabinet-panel").filter({has: specPage.getByRole("heading", {name:"История игровых попыток"})});
+  await expect(attempts.locator("article")).toHaveCount(5);
+  await attempts.getByRole("button", {name: "Показать ещё"}).click();
+  await expect(attempts.locator("article")).toHaveCount(15);
   for (const name of ["Обзор", "Наблюдения", "Доступ и данные ребёнка", "Специалист"]) {
     await openFamilyPage(name);
     const audit = await new AxeBuilder({page}).analyze();

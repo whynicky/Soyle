@@ -4,6 +4,7 @@ import { t, useLocale, formatDate, getLocale } from "@/lib/i18n";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Check, ChevronDown, CircleAlert, ClipboardPlus, History, Pause, Play, Save, ShieldCheck, Sparkles, Target } from "lucide-react";
+import { RecordHistory } from "./RecordHistory";
 import { GoalPracticeProgress } from "./GoalPracticeProgress";
 import { useRefreshOnReturn } from "@/lib/hooks/useRefreshOnReturn";
 import { api, type AdaptivePlan, type Child, type Exercise, type PracticeGoal, type PracticeGoalTemplate } from "@/lib/api";
@@ -217,7 +218,12 @@ export function GoalsAndPractice({ child, targetMinutes, onStartPlan, onPractice
             <div className="linked-exercises"><strong>{t("practice.ui37")}</strong>{goal.linked_exercises.length ? goal.linked_exercises.map((exercise) => <span key={exercise.id}><Check size={14}/>{exercise.title}<small>v{exercise.exercise_version}</small></span>) : <p><CircleAlert size={16}/>  {t("practice.ui38")}</p>}</div>
             <div className="goal-status-actions"><button type="button" className="small-button" disabled={loading || goal.status === "active"} onClick={() => void changeGoalStatus(goal, "active")}>{t("practice.ui39")}</button><button type="button" className="small-button" disabled={loading || goal.status === "paused"} onClick={() => void changeGoalStatus(goal, "paused")}><Pause size={14}/>  {t("practice.ui40")}</button><button type="button" className="small-button" disabled={loading || goal.status === "completed"} onClick={() => void changeGoalStatus(goal, "completed")}><Check size={14}/>  {t("practice.ui41")}</button></div>
             <form className="goal-observation-form" onSubmit={(event) => void addObservation(event, goal)}><h3>{t("practice.ui42")}</h3><label>{t("practice.ui43")}<select value={observation.result_type} onChange={(event) => setObservation({...observation, result_type: event.target.value})}>{Object.entries(resultLabels).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label><label>{t("practice.ui44")}<select value={observation.prompt_level} onChange={(event) => setObservation({...observation, prompt_level: event.target.value})}><option value="independent">{t("practice.ui1")}</option><option value="minimal">{t("practice.ui2")}</option><option value="full">{t("practice.ui45")}</option></select></label><label className="wide">{t("practice.ui46")}<textarea value={observation.note} maxLength={600} onChange={(event) => setObservation({...observation, note: event.target.value})} placeholder={t("practice.ui47")}/></label><button className="primary-button" disabled={loading}><Save size={16}/>  {t("practice.ui48")}</button></form>
-            {goal.observations.length ? <div className="goal-observation-history"><strong>{t("practice.ui49")}</strong>{goal.observations.slice(0, 3).map((item) => <span key={item.id}><b>{resultLabels[item.result_type]}</b><small>{formatDate(item.observed_at)}  {t("practice.ui50")} {item.goal_version}{item.note ? ` · ${item.note}` : ""}</small></span>)}</div> : null}
+            {goal.observations.length ? <div className="goal-observation-history"><strong>{t("practice.ui49")}</strong><RecordHistory
+              key={locale + ":" + goal.observations.slice(0, 3).map(item => item.id).join("-")}
+              initial={goal.observations.slice(0, 3)} hasMore={goal.observations.length > 3}
+              endpoint={`/api/children/${childId}/goals/${goal.id}/observations`}>
+              {item => <span><b>{resultLabels[item.result_type]}</b><small>{formatDate(item.observed_at)} · {t("practice.ui50")} {item.goal_version}{item.note ? ` · ${item.note}` : ""}</small></span>}
+            </RecordHistory></div> : null}
           </div>}
         </article>)}</div> : <div className="empty-state large"><Target size={30}/><strong>{t("practice.ui51")}</strong><span>{t("practice.ui52")}</span></div>}
       </section>

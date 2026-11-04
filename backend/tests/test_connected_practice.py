@@ -302,3 +302,49 @@ def test_new_mechanic_goal_recommendation_child_pause_result_shared_by_both_adul
     with connect() as db:
         row = db.execute('SELECT actor_role,recommendation_id,adaptive_plan_item_id FROM sessions WHERE id=?', (saved.json()['id'],)).fetchone()
         assert (row['actor_role'], row['recommendation_id'], row['adaptive_plan_item_id']) == ('student', rec['id'], item['id'])
+
+
+def test_older_child_records_and_session_titles(workflow_client, admin_headers):
+    client = workflow_client
+    parent, child, _, specialist, goal = setup_family(client, admin_headers)
+    goal_path = f"/api/children/{child}/goals/{goal['id']}/observations"
+    stamp = "2026-01-10T07:00:00+00:00"
+    for n in range(25):
+        client.post(f"/api/practice-goals/{goal['id']}/observations", headers=parent, json={
+            "child_id": child, "observed_at": stamp, "result_type": "independent", "note": f"Домашняя запись {n}",
+        }).raise_for_status()
+    with connect() as db:
+        version = db.execute("SELECT id,title FROM exercise_versions WHERE exercise_id=7 ORDER BY version DESC LIMIT 1").fetchone()
+        for _ in range(26):
+            db.execute("""INSERT INTO sessions(child_id,exercise_id,exercise_version_id,module,score,duration_seconds,
+                response_owner,support_context,attempt_status,created_at) VALUES(?,7,?,'sensory',0,5,'child','independent','break',?)""",
+                (child, version["id"], stamp))
+    def remaining(path, initial, headers):
+        rows = list(initial)
+        while True:
+            page = client.get(path, params={"before": rows[-1]["id"]}, headers=headers)
+            page.raise_for_status()
+            result = page.json()
+            assert len(result["items"]) <= 10
+            rows.extend(result["items"])
+            if not result["has_more"]:
+                return rows
+            assert result["items"]
+
+    workspace = client.get(f"/api/specialist/children/{child}", headers=specialist).json()
+    assert [r["note"] for r in workspace["family_notes"]] == [f"Домашняя запись {n}" for n in [24,23,22]]
+    notes = remaining(goal_path, workspace["practice_goals"][0]["observations"][:3], parent)
+    assert [r["note"] for r in notes] == [f"Домашняя запись {n}" for n in reversed(range(25))]
+    sessions = f"/api/children/{child}/session-history"
+    assert workspace["dashboard"]["total_sessions"] == 26
+    rows = remaining(sessions, workspace["dashboard"]["recent"], specialist)
+    assert len(rows) == len({r["id"] for r in rows}) == 26
+    assert all(row["exercise_title"] == version["title"] for row in rows)
+    period = client.get(f"/api/progress/{child}?days=0", headers=parent).json()["period"]
+    assert period["recent"][0]["exercise_title"] == version["title"]
+    assert period["oldest_id"] == rows[-1]["id"]
+    bounded = client.get(sessions, params={"before": rows[19]["id"], "oldest": rows[22]["id"]}, headers=parent).json()
+    assert [r["id"] for r in bounded["items"]] == [r["id"] for r in rows[20:23]]
+    assert not bounded["has_more"]
+    consent(client, parent, child, False)
+    assert client.get(sessions, params={"before": rows[4]["id"]}, headers=specialist).status_code == 403

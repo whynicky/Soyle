@@ -243,3 +243,33 @@ test('installation metadata follows locale without reloading',async({page})=>{
   expect(manifest.name).toBe(kk['app.title']);
   await expect(page.locator('meta[name="description"]')).toHaveAttribute('content',kk['app.description']);
 });
+
+test('landing cards remain visible when switching languages with motion enabled', async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'no-preference' });
+  await page.goto('/');
+  await page.getByRole('dialog').getByRole('button', { name: 'Русский', exact: true }).click();
+  await expect(page.locator('.sl-page')).toHaveClass(/sl-motion/);
+
+  // Reveal every section before switching, including the cards below the fold.
+  const elements = page.locator('[data-reveal]');
+  const count = await elements.count();
+  for (let i = 0; i < count; i++) {
+    await elements.nth(i).scrollIntoViewIfNeeded();
+    await expect(elements.nth(i)).toHaveClass(/sl-visible/);
+  }
+
+  const question = page.locator('.sl-faq details').first();
+  await question.locator('summary').click();
+  for (const [language, locale] of [['Қазақша', 'kk-KZ'], ['Русский', 'ru-RU']] as const) {
+    await page.locator('.sl-footer').getByRole('button', { name: language, exact: true }).click();
+    await expect(page.locator('html')).toHaveAttribute('lang', locale);
+    await expect(elements).toHaveCount(count);
+    await expect(page.locator('[data-reveal]:not(.sl-visible)')).toHaveCount(0);
+    await expect(question).toHaveAttribute('open', '');
+    for (const selector of ['.sl-game', '.sl-form', '.sl-faq details']) {
+      const card = page.locator(selector).first();
+      await card.scrollIntoViewIfNeeded();
+      await expect(card).toHaveCSS('opacity', '1');
+    }
+  }
+});

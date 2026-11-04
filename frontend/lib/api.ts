@@ -55,7 +55,7 @@ export type Dashboard = {
   progress_delta: number | null;
   daily: Array<{ date: string; label: string; motor: number | null; sensory: number | null; mixed: number | null }>;
   achievements: { first_five: boolean; good_listener: boolean; phrase_master: boolean; week_streak: boolean };
-  recent: Array<{ id: number; module: "motor" | "sensory" | "mixed"; score: number; duration_seconds: number; attempts_count?: number | null; correct_answers?: number | null; prompts_used?: number; attempt_status?: "completed" | "participated" | "refused" | "break" | "technical_error"; created_at: string }>;
+  recent: Array<{ id: number; exercise_title?: string | null; module: "motor" | "sensory" | "mixed"; score: number; duration_seconds: number; attempts_count?: number | null; correct_answers?: number | null; prompts_used?: number; attempt_status?: "completed" | "participated" | "refused" | "break" | "technical_error"; created_at: string }>;
 };
 
 export type AppSettings = {

@@ -9,6 +9,7 @@ import { VocabularyProgress } from "./VocabularyProgress";
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useRefreshOnReturn } from "@/lib/hooks/useRefreshOnReturn";
+import { RecordHistory } from "./RecordHistory";
 import { GoalPracticeProgress } from "./GoalPracticeProgress";
 import type { PracticeGoal } from "@/lib/api";
 import { BrandLogo } from "@/components/BrandLogo";
@@ -21,13 +22,18 @@ import { RecommendationDecision, RecommendationOutcome, familyDecisionLabels } f
 
 type Observation = { id: number; result_type: string; prompt_level: string; context: string; note: string; created_at: string; specialist_name?: string };
 type Workspace = {
+  family_notes: { title: string; observed_at: string; result: string; note: string }[];
   practice_goals: PracticeGoal[];
   available_exercises: Exercise[];
   observations: Observation[];
   recommendations: SpecialistAdvice[];
-  dashboard: { recent: Array<{ id: number; attempt_status: string; exercise_id?: number; title?: string; created_at: string }>; total_sessions: number };
+  dashboard: { recent: Array<{ id: number; attempt_status: string; exercise_id?: number; exercise_title?: string | null; created_at: string }>; total_sessions: number };
 };
 const outcomeLabels = (): Record<string, string> => ({ completed: t("specialist.copy000"), participated: t("specialist.copy001"), independent: t("specialist.copy002"), with_help: t("specialist.copy003"), not_observed: t("specialist.copy004"), refused: t("specialist.copy005"), break: t("specialist.copy006"), technical_error: t("specialist.copy007") });
+
+function promptLabel(level: string) {
+  return ({ independent: t("specialist.copy043"), minimal: t("specialist.copy044"), full: t("specialist.copy045") } as Record<string, string>)[level];
+}
 
 const deskPages = workspacePages.specialist;
 const readDeskRoute = () => ({
@@ -199,6 +205,9 @@ function ChildDesk({ selected, section, open }: { selected: string; section: str
   };
   const observation = workspace?.observations[0];
   const advice = workspace?.recommendations.find(item => item.is_current);
+  const familyResults: Record<string, string> = {
+    ...outcomeLabels(), not_yet: t("familyPractice.ui2"), needs_review: t("familyPractice.ui5"), stopped: t("familyPractice.ui31"),
+  };
   const activeGoals = workspace?.practice_goals.filter(item => item.status === "active") || [];
   return <div className="desk-record">
     {error && <div className="cabinet-notice error" role="alert">{error}<button className="secondary-button" onClick={() => void reload()}>{t("specialist.copy024")}</button></div>}
@@ -215,6 +224,14 @@ function ChildDesk({ selected, section, open }: { selected: string; section: str
           <section><h2>{t("desk.lastObservation")}</h2>{observation ? <><small>{formatDate(observation.created_at)} · {outcomeLabels()[observation.result_type]}</small><h3>{observation.context}</h3><p>{observation.note}</p></> : <p>{t("desk.noObservation")}</p>}</section>
           <section><h2>{t("desk.lastAdvice")}</h2>{advice ? <><small>{formatDate(advice.created_at)} · {familyDecisionLabels[advice.family_decision]}</small><p>{advice.comment}</p></> : <p>{t("desk.noAdvice")}</p>}</section>
         </div>
+        <section className="cabinet-panel">
+          <h2>{t("records.home")}</h2>
+          {workspace.family_notes?.length ? workspace.family_notes.map((item, index) => <article className="cabinet-entry" key={index}>
+            <small>{t("records.parentSource")} · <time dateTime={item.observed_at}>{formatDate(item.observed_at)}</time></small>
+            <h3>{item.title}</h3><small>{familyResults[item.result]}</small>
+            {item.note && <p>{item.note}</p>}
+          </article>) : <p>{t("records.noHome")}</p>}
+        </section>
       </>}
       {section === "observations" && <div className="desk-columns"><section className="cabinet-panel"><div className="cabinet-section-title"><ClipboardList size={22}/><div><h2>{t("specialist.copy037")}</h2><p>{t("specialist.copy038")}</p></div></div><form onSubmit={saveObservation}>
         <label>{t("specialist.copy046")}<input value={context} onChange={e => setContext(e.target.value)} minLength={3} maxLength={300} required placeholder={t("specialist.copy047")}/></label>
@@ -225,14 +242,20 @@ function ChildDesk({ selected, section, open }: { selected: string; section: str
         </div>
         <label>{t("specialist.copy039")}<select value={goal} onChange={e => setGoal(e.target.value)}><option value="">{t("specialist.copy040")}</option>{workspace.practice_goals.map(item => <option key={item.id} value={item.id}>{item.title}</option>)}</select></label>
         <button className="primary-button" disabled={saving}>{saving ? t("common.saving") : t("specialist.copy049")}</button>
-      </form></section><section className="cabinet-panel"><h2>{t("specialist.copy050")}</h2>{workspace.observations.length ? workspace.observations.map(item => <article className="cabinet-entry" key={item.id}><small>{formatDate(item.created_at, {dateStyle:"medium",timeStyle:"short"})}</small><h3>{outcomeLabels()[item.result_type]}</h3><p>{item.context}: {item.note}</p><small>{t("specialist.copy051")}{item.prompt_level === "independent" ? t("specialist.copy043") : item.prompt_level === "minimal" ? t("specialist.copy044") : t("specialist.copy045")}</small></article>) : <div className="cabinet-empty-inline"><ClipboardList size={28}/><p>{t("specialist.copy054")}</p></div>}</section></div>}
+      </form></section><section className="cabinet-panel"><h2>{t("specialist.copy050")}</h2>{workspace.observations.length ? workspace.observations.map(item => <article className="cabinet-entry" key={item.id}><small>{formatDate(item.created_at, {dateStyle:"medium",timeStyle:"short"})}</small><h3>{outcomeLabels()[item.result_type]}</h3><p>{item.context}: {item.note}</p><small>{t("specialist.copy051")}{promptLabel(item.prompt_level)}</small></article>) : <div className="cabinet-empty-inline"><ClipboardList size={28}/><p>{t("specialist.copy054")}</p></div>}</section></div>}
       {section === "recommendations" && <div className="desk-columns"><section className="cabinet-panel"><div className="cabinet-section-title"><MessageSquare size={22}/><div><h2>{t("specialist.copy055")}</h2><p>{t("specialist.copy056")}</p></div></div><form onSubmit={recommend}>
         <label>{t("specialist.copy061")}<textarea value={recommendation} onChange={e => setRecommendation(e.target.value)} required minLength={3} maxLength={1000}/></label>
         <label>{t("specialist.copy057")}<select value={recommendationGoal} onChange={e => { setRecommendationGoal(e.target.value); setExercise(""); }}><option value="">{t("specialist.copy058")}</option>{workspace.practice_goals.filter(item => item.status === "active").map(item => <option key={item.id} value={item.id}>{item.title}</option>)}</select></label>
         <label>{t("specialist.copy059")}<select value={exercise} onChange={e => setExercise(e.target.value)}><option value="">{t("specialist.copy060")}</option>{workspace.available_exercises.filter(item => !recommendationGoal || workspace.practice_goals.find(goal => goal.id === Number(recommendationGoal))?.linked_exercises.some(linked => linked.id === item.id)).map(item => <option key={item.id} value={item.id}>{item.title}</option>)}</select></label>
         <button className="primary-button" disabled={saving}>{t("specialist.copy062")}</button>
       </form></section><section className="cabinet-panel"><h2>{t("specialist.copy063")}</h2>{workspace.recommendations.length ? workspace.recommendations.map(item => <article className="cabinet-entry" key={item.id}><h3>{item.exercise_title || t("specialist.copy064")}</h3><p>{item.comment}</p><RecommendationOutcome item={item}/>{item.is_current ? <button className="secondary-button" disabled={saving} onClick={() => void withdrawRecommendation(item.id)}>{t("specialist.copy065")}</button> : <small>{t("specialist.copy066")}</small>}</article>) : <div className="cabinet-empty-inline"><MessageSquare size={28}/><p>{t("specialist.copy067")}</p></div>}</section></div>}
-      {section === "history" && <><section className="cabinet-panel"><h2>{t("specialist.copy068")}</h2>{workspace.practice_goals.length ? workspace.practice_goals.map(item => <article className="cabinet-entry" key={item.id}><h3>{item.title}</h3><p>{t("specialist.copy069")}{item.baseline}</p><small>{item.status === "active" ? t("specialist.copy070") : item.status === "completed" ? t("specialist.copy071") : t("specialist.copy072")}</small><GoalPracticeProgress progress={item.progress}/></article>) : <p>{t("specialist.copy073")}</p>}</section><section className="cabinet-panel"><div className="cabinet-section-title"><Clock size={22}/><div><h2>{t("specialist.copy074")}</h2><p>{workspace.dashboard.total_sessions} {t("specialist.copy075")}</p></div></div>{!workspace.dashboard.recent.length && <p>{t("desk.noSessions")}</p>}{workspace.dashboard.recent.map(item => <article className="cabinet-entry" key={item.id}><strong>{item.title || workspace.available_exercises.find(exercise => exercise.id === item.exercise_id)?.title || t("specialist.copy076")}</strong><p>{formatDate(item.created_at, {dateStyle:"medium",timeStyle:"short"})} · {outcomeLabels()[item.attempt_status] || t("specialist.copy077")}</p></article>)}</section><VocabularyProgress key={selected} childId={Number(selected)} canEdit refreshKey={workspace.dashboard.total_sessions}/></>}
+      {section === "history" && <><section className="cabinet-panel"><h2>{t("specialist.copy068")}</h2>{workspace.practice_goals.length ? workspace.practice_goals.map(item => <article className="cabinet-entry" key={item.id}><h3>{item.title}</h3><p>{t("specialist.copy069")}{item.baseline}</p><small>{item.status === "active" ? t("specialist.copy070") : item.status === "completed" ? t("specialist.copy071") : t("specialist.copy072")}</small><GoalPracticeProgress progress={item.progress}/></article>) : <p>{t("specialist.copy073")}</p>}</section><section className="cabinet-panel"><div className="cabinet-section-title"><Clock size={22}/><div><h2>{t("specialist.copy074")}</h2><p>{workspace.dashboard.total_sessions} {t("specialist.copy075")}</p></div></div>{!workspace.dashboard.recent.length && <p>{t("desk.noSessions")}</p>}<RecordHistory
+        key={locale + ":" + workspace.dashboard.recent.map(row => row.id).join("-")}
+        initial={workspace.dashboard.recent} hasMore={workspace.dashboard.total_sessions > workspace.dashboard.recent.length}
+        endpoint={`/api/children/${selected}/session-history`} onAccessLost={() => void reload()}>
+        {item => <article className="cabinet-entry"><strong>{item.exercise_title || workspace.available_exercises.find(exercise => exercise.id === item.exercise_id)?.title || t("specialist.copy076")}</strong>
+          <p>{formatDate(item.created_at, {dateStyle:"medium",timeStyle:"short"})} · {outcomeLabels()[item.attempt_status] || t("specialist.copy077")}</p></article>}
+      </RecordHistory></section><VocabularyProgress key={selected} childId={Number(selected)} canEdit refreshKey={workspace.dashboard.total_sessions}/></>}
     </>}
   </div>;
 }
@@ -299,7 +322,8 @@ export function FamilySpecialistAccess({ childId, enabled, onManagePermissions, 
       <details className="known-specialist"><summary>{t("specialist.copy113")}</summary><form onSubmit={grant}><label>{t("specialist.copy114")}<input value={username} onChange={e => setUsername(e.target.value)} required minLength={3} maxLength={40} disabled={!enabled || busy}/></label><button className="secondary-button" disabled={!enabled || busy}>{t("specialist.copy115")}</button></form></details>
     </section>
     <section className="cabinet-panel"><h2>{t("specialist.copy116")}</h2>{items.length ? items.map(item => <div className="connected-specialist" key={item.id}><span className="cabinet-avatar">{item.full_name[0]}</span><div><strong>{item.full_name}</strong><small>@{item.username}</small></div><button className="secondary-button" disabled={busy} onClick={() => revoke(item.id)}>{t("specialist.copy117")}</button></div>) : <p className="cabinet-empty-copy">{t("specialist.copy118")}</p>}</section>
-    <div className="desk-columns"><section className="cabinet-panel"><h2>{t("specialist.copy119")}</h2>{recommendations.length ? recommendations.map(item => <article className="cabinet-entry" key={item.id}><small>{item.specialist_name}</small><h3>{item.exercise_title || t("specialist.copy064")}</h3><p>{item.comment}</p><RecommendationDecision key={`${item.id}:${item.family_decision}`} childId={childId} item={item} onStartPlan={onStartPlan} onChanged={() => { void load().catch(cause => setMessage(cause.message)); }}/></article>) : <p>{t("specialist.copy120")}</p>}</section><section className="cabinet-panel"><h2>{t("specialist.copy121")}</h2>{observations.length ? observations.map(item => <article className="cabinet-entry" key={item.id}><small>{item.specialist_name} · {outcomeLabels()[item.result_type]}</small><p>{item.context}: {item.note}</p></article>) : <p>{t("specialist.copy122")}</p>}</section></div>
+    <div className="desk-columns"><section className="cabinet-panel"><h2>{t("specialist.copy119")}</h2>{recommendations.length ? recommendations.map(item => <article className="cabinet-entry" key={item.id}><small>{item.specialist_name}</small><h3>{item.exercise_title || t("specialist.copy064")}</h3><p>{item.comment}</p><RecommendationDecision key={`${item.id}:${item.family_decision}`} childId={childId} item={item} onStartPlan={onStartPlan} onChanged={() => { void load().catch(cause => setMessage(cause.message)); }}/></article>) : <p>{t("specialist.copy120")}</p>}</section><section className="cabinet-panel"><h2>{t("specialist.copy121")}</h2>{observations.length ? observations.map(item => <article className="cabinet-entry" key={item.id}><small>{item.specialist_name} · <time dateTime={item.created_at}>{formatDate(item.created_at, {dateStyle:"medium",timeStyle:"short"})}</time></small>
+        <p>{item.context}: {item.note}</p><small>{outcomeLabels()[item.result_type]} · {t("specialist.copy042")} — {promptLabel(item.prompt_level)}</small></article>) : <p>{t("specialist.copy122")}</p>}</section></div>
   </div>;
 }
 

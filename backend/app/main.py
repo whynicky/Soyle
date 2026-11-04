@@ -26,7 +26,7 @@ from .tts_library import bundled_tts_path
 from .aac_grammar import compose_aac_phrase
 from .ai_assistant import DISCLAIMER as LOCAL_ASSISTANT_DISCLAIMER, answer_parent
 from .exercise_engine import create_draft, preview_version, publish_version, published_exercise, published_exercise_rows, review_capabilities, review_workspace, submit_content_review, needs_admin_confirmation
-from .family_practice import descriptive_results, home_library, save_home_observation, skill_map, upsert_skill_observation
+from .family_practice import descriptive_results, home_library, recent_family_notes, save_home_observation, skill_map, upsert_skill_observation
 from .progress_period import summarize_period
 from .practice_localization import practice_text, localize_plan_message
 from .adaptive_planner import create_plan as create_adaptive_plan, get_plan as get_adaptive_plan, plan_history as adaptive_plan_history
@@ -1449,6 +1449,26 @@ def build_skill_progress(rows, exercise_rows) -> list[dict]:
     return results
 
 
+def add_session_titles(db, rows: list[dict]) -> None:
+    if not rows:
+        return
+    placeholders = ",".join("?" for _ in rows)
+    titles = db.execute(f"""SELECT s.id,COALESCE(v.title,e.title) title,t.payload_json
+        FROM sessions s LEFT JOIN exercise_versions v ON v.id=s.exercise_version_id
+        LEFT JOIN exercises e ON e.id=s.exercise_id
+        LEFT JOIN exercise_translations t ON t.source_version_id=v.id AND t.locale='kk-KZ'
+            AND t.status='approved' AND t.reviewed_by IS NOT NULL
+        WHERE s.id IN ({placeholders})""", tuple(row["id"] for row in rows)).fetchall()
+    by_id = {}
+    for row in titles:
+        title = row["title"]
+        if LOCALE.get() == "kk-KZ":
+            title = json.loads(row["payload_json"])["title"] if row["payload_json"] else None
+        by_id[row["id"]] = title
+    for row in rows:
+        row["exercise_title"] = by_id.get(row["id"])
+
+
 def progress_data(child_id: int, user: dict, days: int = 0) -> dict:
     child = ensure_child_access(child_id, user)
     with connect() as db:
@@ -1533,7 +1553,10 @@ def progress_data(child_id: int, user: dict, days: int = 0) -> dict:
 def progress(child_id: int, days: int = Query(default=0, ge=0, le=30), user: dict = Depends(require_roles("admin", "parent", "student"))) -> dict:
     if days not in {0, 7, 30}:
         raise HTTPException(status_code=422, detail="Choose 0, 7 or 30 days")
-    return progress_data(child_id, user, days)
+    report = progress_data(child_id, user, days)
+    with connect() as db:
+        add_session_titles(db, report["period"]["recent"])
+    return report
 
 
 @app.get("/api/dashboard/{child_id}")
@@ -1877,9 +1900,29 @@ def specialist_child(child_id: int, user: dict = Depends(require_roles("speciali
         item = dict(row); item["exercise_ids"] = json.loads(item["exercise_ids"]); goal_items.append(item)
     with connect() as db:
         family_goals = list_practice_goals(db, child_id)
+        home_notes = recent_family_notes(db, child_id, family_goals)
+        add_session_titles(db, dashboard_data["recent"])
         available = child_exercise_rows(db, child_id)
         observations = [dict(row) for row in db.execute("SELECT * FROM specialist_observations WHERE child_id=? AND specialist_id=? ORDER BY id DESC LIMIT 50", (child_id, user["id"])).fetchall()]
-    return {"practice_goals": family_goals, "available_exercises": available, "observations": observations, "dashboard": dashboard_data, "support_metrics": progress_details["support_metrics"], "assigned_exercises": [dict(row) for row in assigned], "recommendations": [dict(row) for row in reviews], "goals": goal_items, "homework": [dict(row) for row in homework]}
+    return {"family_notes": home_notes, "practice_goals": family_goals, "available_exercises": available, "observations": observations, "dashboard": dashboard_data, "support_metrics": progress_details["support_metrics"], "assigned_exercises": [dict(row) for row in assigned], "recommendations": [dict(row) for row in reviews], "goals": goal_items, "homework": [dict(row) for row in homework]}
+
+
+@app.get("/api/children/{child_id}/session-history")
+def older_sessions(child_id: int, before: int = Query(gt=0), oldest: int | None = Query(default=None, gt=0),
+                   user: dict = Depends(require_roles("parent", "specialist"))) -> dict:
+    ensure_child_access(child_id, user)
+    query = """SELECT id,exercise_id,module,attempt_status,attempts_count,correct_answers,created_at FROM sessions
+        WHERE child_id=? AND measurement_version>=1 AND response_owner='child' AND support_context<>'unknown'
+        AND (created_at,id)<(SELECT created_at,id FROM sessions WHERE child_id=? AND id=?)"""
+    params = [child_id, child_id, before]
+    if oldest is not None:
+        query += " AND (created_at,id)>=(SELECT created_at,id FROM sessions WHERE child_id=? AND id=?)"
+        params.extend([child_id, oldest])
+    with connect() as db:
+        rows = db.execute(query + " ORDER BY created_at DESC,id DESC LIMIT 11", tuple(params)).fetchall()
+        items = [dict(row) for row in rows[:10]]
+        add_session_titles(db, items)
+    return {"items": items, "has_more": len(rows) > 10}
 
 
 @app.post("/api/specialist/assigned-exercises", status_code=201, include_in_schema=False)
@@ -2038,6 +2081,16 @@ def practice_goals(child_id: int, user: dict = Depends(require_roles("parent")))
     ensure_child_access(child_id, user)
     with connect() as db:
         return list_practice_goals(db, child_id)
+
+
+@app.get("/api/children/{child_id}/goals/{goal_id}/observations")
+def older_goal_observations(child_id: int, goal_id: int, before: int = Query(gt=0), user: dict = Depends(require_roles("parent"))) -> dict:
+    ensure_child_access(child_id, user)
+    with connect() as db:
+        rows = db.execute("""SELECT * FROM practice_goal_observations WHERE child_id=? AND goal_id=?
+            AND (observed_at,id)<(SELECT observed_at,id FROM practice_goal_observations WHERE child_id=? AND goal_id=? AND id=?)
+            ORDER BY observed_at DESC,id DESC LIMIT 11""", (child_id, goal_id, child_id, goal_id, before)).fetchall()
+    return {"items": [dict(row) for row in rows[:10]], "has_more": len(rows) > 10}
 
 
 @app.post("/api/practice-goals", status_code=201)
