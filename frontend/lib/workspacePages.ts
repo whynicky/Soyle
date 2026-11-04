@@ -1,7 +1,7 @@
 import type { MessageKey } from "./locale";
 
-export type WorkspaceRole = "parent" | "admin";
-type WorkspaceScreen = "parent" | "progress" | "goals" | "world" | "aac" | "ai" | "guides" | "admin" | "settings" | "profile";
+export type WorkspaceRole = "parent" | "admin" | "specialist";
+type WorkspaceScreen = "specialist" | "parent" | "progress" | "goals" | "world" | "aac" | "ai" | "guides" | "admin" | "settings" | "profile";
 export type WorkspacePage = {
   slug: string; screen: WorkspaceScreen; section?: string; label: MessageKey; group?: MessageKey;
 };
@@ -20,6 +20,14 @@ export const workspacePages: Record<WorkspaceRole, WorkspacePage[]> = {
     { slug: "access", screen: "parent", section: "access", label: "screen.ParentScreen.ui74", group: "workspace.account" },
     { slug: "profile", screen: "profile", label: "nav.myProfile" },
     { slug: "preferences", screen: "settings", label: "nav.settings" },
+  ],
+  specialist: [
+    { slug: "children", screen: "specialist", section: "children", label: "specialist.copy008", group: "desk.caseload" },
+    { slug: "profile", screen: "specialist", section: "profile", label: "desk.profile", group: "workspace.child" },
+    { slug: "observations", screen: "specialist", section: "observations", label: "specialist.copy009", group: "workspace.child" },
+    { slug: "recommendations", screen: "specialist", section: "recommendations", label: "specialist.copy010", group: "workspace.child" },
+    { slug: "history", screen: "specialist", section: "history", label: "specialist.copy011", group: "workspace.child" },
+    { slug: "translations", screen: "specialist", section: "translations", label: "desk.translations", group: "cabinet.materials" },
   ],
   admin: [
     { slug: "exercises", screen: "admin", section: "exercises", label: "screen.AdminScreen.ui57", group: "cabinet.materials" },
@@ -43,5 +51,5 @@ export function readWorkspacePage(role: WorkspaceRole) {
 
 export function workspaceHref(role: WorkspaceRole, page: WorkspacePage, childId?: number | null) {
   const path = `/app/${role}/${page.slug}`;
-  return role === "parent" && childId ? `${path}?child=${childId}` : path;
+  return role !== "admin" && childId ? `${path}?child=${childId}` : path;
 }

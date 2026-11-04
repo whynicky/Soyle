@@ -34,5 +34,5 @@ export function AccountLanguagePicker() {
     window.addEventListener('soyle-language-selected', selected);
     return () => window.removeEventListener('soyle-language-selected', selected);
   });
-  return <fieldset disabled={busy} style={{border:0,padding:0}}><LanguagePicker onChange={locale => void choose(locale)}/>{error && <p role="alert">{error}</p>}</fieldset>;
+  return <fieldset disabled={busy} style={{border:0,padding:0}}><LanguagePicker compact onChange={locale => void choose(locale)}/>{error && <p role="alert">{error}</p>}</fieldset>;
 }

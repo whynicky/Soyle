@@ -223,8 +223,7 @@ test('specialist reviews an AAC translation through the explicit approval contro
     }
     return route.fulfill({json:[]});
   });
-  await page.goto('/app');
-  await page.locator('.cabinet-panel > summary').first().click();
+  await page.goto('/app/specialist/translations');
   const editor=page.locator('.settings-section').filter({has:page.getByRole('heading',{name:'AAC карточкаларының аудармалары',exact:true})});
   await editor.getByRole('combobox').selectOption('12');
   await editor.getByRole('textbox',{name:'Маманның пікірі',exact:true}).fill('Тест: жеке тексеруді модельдеу.');

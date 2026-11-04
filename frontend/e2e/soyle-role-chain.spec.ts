@@ -61,8 +61,8 @@ test('parent goal → specialist advice → separate child account → matching 
     const goalResponse=await createdGoal;expect(goalResponse.status()).toBe(201);const goal=await goalResponse.json();
     await expect(familyPage.locator('.practice-goal-card')).toContainText('Узнавать 5 знакомых предметов');
     await login(specialistPage,specialist.user.username);
-    await specialistPage.getByRole('button',{name:/Ребёнок проверки Открыть наблюдения/}).click();
-    await specialistPage.getByRole('link',{name:'Рекомендации',exact:true}).click();
+    await specialistPage.locator('.desk-roster a').filter({hasText:'Ребёнок проверки'}).click();
+    await specialistPage.getByRole('button',{name:'Дать рекомендацию',exact:true}).click();
     await specialistPage.getByRole('combobox',{name:'Цель рекомендации',exact:true}).selectOption(String(goal.id));
     await expect(specialistPage.getByRole('combobox',{name:'Упражнение',exact:true}).locator('option')).toHaveCount(4);
     await specialistPage.getByRole('combobox',{name:'Упражнение',exact:true}).selectOption({label:'Домашние животные'});
@@ -141,6 +141,7 @@ test('parent goal → specialist advice → separate child account → matching 
     await expect(entry).toContainText('Практика по рекомендации состоялась');
     await expect(entry).toContainText(`${rounds} из ${rounds}`);
     await expect(entry).toContainText(`Самостоятельно: ${rounds-1}, с помощью: 1`);
+    if (await specialistPage.locator('.desk-menu').isVisible()) await specialistPage.locator('.desk-menu').click();
     await specialistPage.getByRole('link',{name:'Цели и история',exact:true}).click();
     await expect(specialistPage.locator('.goal-practice-progress')).toContainText(`Самостоятельно: ${rounds-1}, с помощью: 1`);
     const audit=await new AxeBuilder({page:specialistPage}).analyze();

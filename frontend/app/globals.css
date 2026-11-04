@@ -1402,7 +1402,7 @@ dialog.locale-welcome { width: 100%; max-width: none; height: 100%; max-height: 
   border: 0;
   border-radius: 10px;
   background: transparent;
-  color: #61746c;
+  color: #51665c;
   box-shadow: none;
   font: 800 12px/1 var(--font-display);
   letter-spacing: .03em;

@@ -172,7 +172,7 @@ import { AccountMenu, SectionNavigation, FamilyMobileNavigation, familyNavigatio
 import { ParentProgress } from "./ParentProgress";
 import { ParentCabinetOverview } from "./ParentCabinetOverview";
 
-type Screen = "learn" | "my-world" | "success" | "comic-preview" | "story-preview" | "home" | "stories" | "world" | "skills" | "achievements" | "guides" | "games" | "session" | "exercise-complete" | "motor" | "sensory" | "mixed" | "aac" | "ai" | "progress" | "goals" | "parent" | "profile" | "settings" | "more" | "admin";
+type Screen = "specialist" | "learn" | "my-world" | "success" | "comic-preview" | "story-preview" | "home" | "stories" | "world" | "skills" | "achievements" | "guides" | "games" | "session" | "exercise-complete" | "motor" | "sensory" | "mixed" | "aac" | "ai" | "progress" | "goals" | "parent" | "profile" | "settings" | "more" | "admin";
 type ModuleName = "motor" | "sensory" | "mixed";
 type GameMeasurement = { attempts_count?: number; correct_answers?: number; prompts_used?: number; gameplay_choices?: number; independent_completions?: number; prompted_completions?: number; attempt_status?: "completed" | "participated" | "refused" | "break" | "technical_error"; independence?: number; prompt_level?: "independent" | "minimal" | "full"; response_ms?: number; communication_initiatives?: number };
 type ExerciseCompletion = { refused?: boolean; title: string; message: string; nextExercise: Exercise | null; sessionMode: boolean; sessionFinished: boolean };

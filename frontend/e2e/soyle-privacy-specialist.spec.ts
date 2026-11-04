@@ -65,6 +65,7 @@ test("family invitation requires confirmation, workspaces stay navigable and rev
   expect(axe.violations.filter(item => ["serious", "critical"].includes(item.impact || ""))).toEqual([]);
   // A second browser context has an independent specialist cookie session.
   const context = await page.context().browser()!.newContext({ viewport: page.viewportSize()! });
+  await context.addInitScript(() => localStorage.setItem("soyle-language", "ru-RU"));
   const specPage = await context.newPage();
   await specPage.route("http://localhost:8010/**", route => route.continue({ url: route.request().url().replace(":8010", ":8011") }));
   await specPage.goto(inviteUrl);
@@ -81,7 +82,13 @@ test("family invitation requires confirmation, workspaces stay navigable and rev
   await page.getByRole("button", { name: "Подтвердить доступ", exact: true }).click();
   await expect(page.getByRole("button", { name: "Отозвать доступ", exact: true })).toBeVisible();
   await specPage.getByRole("button", { name: "Обновить список детей" }).click();
-  await specPage.getByRole("button", { name: /Тестовый профиль Открыть наблюдения/ }).click();
+  const openSpecialistPage = async (name: string) => {
+    const menu = specPage.locator(".desk-menu");
+    if (await menu.isVisible()) await menu.click();
+    await specPage.locator(".desk-rail").getByRole("link", {name, exact: true}).click();
+  };
+  await specPage.locator(".desk-roster a").filter({hasText: "Тестовый профиль"}).click();
+  await specPage.getByRole("button", {name: "Записать наблюдение"}).click();
   await expect(specPage.getByRole("heading", { name: "Наблюдение вне игры" })).toBeVisible();
   await specPage.getByLabel("Что наблюдалось").selectOption("with_help");
   await specPage.getByLabel("Уровень помощи").selectOption("minimal");
@@ -94,7 +101,7 @@ test("family invitation requires confirmation, workspaces stay navigable and rev
   expect(specAxe.violations.filter(item => ["serious", "critical"].includes(item.impact || ""))).toEqual([]);
   expect(await specPage.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)).toBeLessThanOrEqual(1);
   await specPage.screenshot({ path: info.outputPath("specialist-workspace.png"), fullPage: true });
-  await specPage.getByRole("link", {name: "Рекомендации", exact: true}).click();
+  await openSpecialistPage("Рекомендации");
   await specPage.getByLabel("Упражнение", {exact: false}).selectOption({index: 1});
   await specPage.getByLabel("Как поддержать ребёнка").fill("Начните с выбора знакомого предмета, спокойно дождитесь ответа ребёнка.");
   await specPage.getByRole("button", {name: "Сохранить рекомендацию", exact: true}).click();
@@ -114,7 +121,7 @@ test("family invitation requires confirmation, workspaces stay navigable and rev
     expect(await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)).toBeLessThanOrEqual(1);
   }
   for (const name of ["Рекомендации", "Цели и история", "Дети", "Наблюдения"]) {
-    await specPage.getByRole("link", {name, exact: true}).click();
+    await openSpecialistPage(name);
     const audit = await new AxeBuilder({page: specPage}).analyze();
     expect(audit.violations.filter(item => ["serious", "critical"].includes(item.impact || ""))).toEqual([]);
   }

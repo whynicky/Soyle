@@ -4,7 +4,7 @@ import { BarChart3, BookOpen, ClipboardList, FileClock, FileText, FolderOpen, Ho
 import { t } from "@/lib/i18n";
 import { workspaceHref, workspacePages, type WorkspacePage, type WorkspaceRole } from "@/lib/workspacePages";
 
-const icons = { overview: House, observations: ClipboardList, progress: BarChart3, goals: Target, specialist: UserRound, guides: BookOpen, assistant: MessageCircle, photos: Images, words: MessageSquareText, access: KeyRound, exercises: ClipboardList, library: FolderOpen, users: Users, audit: ShieldCheck, usage: FileClock };
+const icons = { children: Users, profile: UserRound, history: Target, recommendations: MessageCircle, translations: BookOpen, overview: House, observations: ClipboardList, progress: BarChart3, goals: Target, specialist: UserRound, guides: BookOpen, assistant: MessageCircle, photos: Images, words: MessageSquareText, access: KeyRound, exercises: ClipboardList, library: FolderOpen, users: Users, audit: ShieldCheck, usage: FileClock };
 
 export function WorkspaceNavigation({ role, current, childId, onOpen }: {
   role: WorkspaceRole; current?: WorkspacePage; childId?: number; onOpen: (page: WorkspacePage) => void;

@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { AccountLanguagePicker } from "./AccountLanguagePicker";
 import { TranslationEditor } from "./TranslationEditor";
 import { t, useLocale, formatDate } from "@/lib/i18n";
@@ -11,11 +12,12 @@ import { useRefreshOnReturn } from "@/lib/hooks/useRefreshOnReturn";
 import { GoalPracticeProgress } from "./GoalPracticeProgress";
 import type { PracticeGoal } from "@/lib/api";
 import { BrandLogo } from "@/components/BrandLogo";
-import { Users, ArrowRight, LogOut, ClipboardList, MessageSquare, Clock, RefreshCw, Link2, Copy, Check } from "lucide-react";
-import { CabinetNavigation, useCabinetSection } from "./CabinetNavigation";
+import { Users, ArrowRight, Menu, Search, LogOut, ClipboardList, MessageSquare, Clock, RefreshCw, Link2, Copy, Check } from "lucide-react";
+import { WorkspaceNavigation } from "./WorkspaceNavigation";
+import { readWorkspacePage, workspaceHref, workspacePages, type WorkspacePage } from "@/lib/workspacePages";
 import { api, type Child, type Exercise, type User, type SpecialistAdvice, type AdaptivePlan } from "@/lib/api";
 
-import { RecommendationDecision, RecommendationOutcome } from "./RecommendationDecision";
+import { RecommendationDecision, RecommendationOutcome, familyDecisionLabels } from "./RecommendationDecision";
 
 type Observation = { id: number; result_type: string; prompt_level: string; context: string; note: string; created_at: string; specialist_name?: string };
 type Workspace = {
@@ -23,22 +25,118 @@ type Workspace = {
   available_exercises: Exercise[];
   observations: Observation[];
   recommendations: SpecialistAdvice[];
-  dashboard: { recent: Array<{ id: number; attempt_status: string; title?: string; created_at: string }>; total_sessions: number };
+  dashboard: { recent: Array<{ id: number; attempt_status: string; exercise_id?: number; title?: string; created_at: string }>; total_sessions: number };
 };
 const outcomeLabels = (): Record<string, string> => ({ completed: t("specialist.copy000"), participated: t("specialist.copy001"), independent: t("specialist.copy002"), with_help: t("specialist.copy003"), not_observed: t("specialist.copy004"), refused: t("specialist.copy005"), break: t("specialist.copy006"), technical_error: t("specialist.copy007") });
 
-const sectionLabels = () => [{id: "children", label: t("specialist.copy008")}, {id: "observations", label: t("specialist.copy009")}, {id: "recommendations", label: t("specialist.copy010")}, {id: "history", label: t("specialist.copy011")}] as const;
+const deskPages = workspacePages.specialist;
+const readDeskRoute = () => ({
+  page: readWorkspacePage("specialist"),
+  childId: Number(new URLSearchParams(window.location.search).get("child")) || undefined,
+});
 
 export function SpecialistWorkspace({ user, onLogout }: { user: User; onLogout: () => void }) {
-  useLocale();
-  const specialistSections = sectionLabels();
-  const [section, navigate] = useCabinetSection("specialist", specialistSections);
-  const [children, setChildren] = useState<Child[]>([]);
-  const [selected, setSelected] = useState("");
+  const locale = useLocale();
+  const [route, setRoute] = useState(readDeskRoute);
+  const [children, setChildren] = useState<Child[] | null>(null);
+  const [error, setError] = useState("");
+  const [query, setQuery] = useState("");
+  const [menuOpen, setMenuOpen] = useState(false);
+  const main = useRef<HTMLElement>(null);
+  const menu = useRef<HTMLButtonElement>(null);
+  const rosterRequest = useRef<AbortController | null>(null);
+  const refreshChildren = useCallback(async () => {
+    rosterRequest.current?.abort();
+    const controller = new AbortController();
+    rosterRequest.current = controller;
+    try {
+      const items = await api<Child[]>("/api/children", { signal: controller.signal });
+      if (!controller.signal.aborted) { setChildren(items); setError(""); }
+    } catch (cause) {
+      if (!controller.signal.aborted) { setChildren(null); setError(cause instanceof Error ? cause.message : t("errors.request")); }
+    }
+  }, []);
+  useEffect(() => {
+    const timer = window.setTimeout(() => void refreshChildren(), 0);
+    return () => { window.clearTimeout(timer); rosterRequest.current?.abort(); };
+  }, [refreshChildren]);
+  useRefreshOnReturn(refreshChildren);
+  useEffect(() => {
+    const sync = () => { setMenuOpen(false); setRoute(readDeskRoute()); };
+    window.addEventListener("popstate", sync);
+    return () => window.removeEventListener("popstate", sync);
+  }, []);
+  const child = route.childId ? children?.find(item => item.id === route.childId) : children?.length === 1 ? children[0] : undefined;
+  const section = route.page.slug;
+  const isChildPage = section !== "children" && section !== "translations";
+  const needsSelection = isChildPage && !route.childId && !child;
+  const rosterDestination = section === "children" ? deskPages[1] : route.page;
+  const childId = route.childId || (isChildPage ? child?.id : undefined);
+  useEffect(() => {
+    const href = workspaceHref("specialist", route.page, childId);
+    if (window.location.pathname + window.location.search !== href) window.history.replaceState(null, "", href + window.location.hash);
+    document.title = t(route.page.label) + " · Söyle";
+  }, [route.page, childId, locale]);
+  const go = (page: WorkspacePage, id = child?.id) => {
+    const href = workspaceHref("specialist", page, id);
+    if (window.location.pathname + window.location.search !== href) window.history.pushState(null, "", href);
+    setRoute({ page, childId: id });
+    setMenuOpen(false);
+    window.scrollTo({ top: 0, behavior: "instant" });
+    requestAnimationFrame(() => main.current?.focus({ preventScroll: true }));
+  };
+  const open = (slug: string, id?: number) => go(deskPages.find(item => item.slug === slug)!, id);
+  const visible = (children || []).filter(item => item.name.toLocaleLowerCase(locale).includes(query.trim().toLocaleLowerCase(locale)));
+  return <div className="clinician-desk">
+    <aside className="desk-rail" onKeyDown={e => { if (e.key === "Escape" && menuOpen) { setMenuOpen(false); menu.current?.focus(); } }}>
+      <div className="desk-brand"><a href={workspaceHref("specialist", deskPages[0])}><BrandLogo variant="compact" width={145} priority/></a>
+        <button type="button" className="desk-menu" ref={menu} aria-controls="desk-navigation" aria-expanded={menuOpen} onClick={() => setMenuOpen(!menuOpen)}><Menu size={18}/>{t("screen.AuthenticatedApp.ui48")}</button>
+      </div>
+      <div id="desk-navigation" className={menuOpen ? "desk-menu-content open" : "desk-menu-content"}>
+        <WorkspaceNavigation role="specialist" current={route.page} childId={child?.id} onOpen={go}/>
+        <div className="desk-identity"><strong>{user.full_name}</strong><small>{t("nav.specialist")}</small><button type="button" onClick={onLogout}><LogOut size={16}/>{t("common.logoutAccount")}</button></div>
+      </div>
+    </aside>
+    <main className="desk-main" tabIndex={-1} ref={main}>
+      <div className="desk-topline"><span>{t("nav.specialist")}</span><AccountLanguagePicker/></div>
+      <header className={section === "children" ? "desk-heading desk-roster-heading" : "desk-heading"}>
+        <div><h1>{section === "children" ? t("desk.rosterTitle") : section === "profile" && child ? child.name : t(route.page.label)}</h1>
+          {section === "children" && <p>{t("desk.rosterHint")}</p>}
+          {section === "profile" && child && <p>{t("desk.profileHint")}</p>}
+          {section === "history" && <p>{t("desk.historyHint")}</p>}
+        </div>
+        {section === "children" && <Image src="/app-illustrations/journey-support.png" alt="" width={180} height={135} priority/>}
+      </header>
+      {section === "translations" ? <div className="desk-translations"><TranslationEditor specialist/><TranslationEditor resource="aac" specialist/></div>
+      : error ? <div className="cabinet-notice error" role="alert">{error}<button onClick={() => void refreshChildren()}>{t("ux.retry")}</button></div>
+      : !children ? <p role="status">{t("specialist.copy025")}</p>
+      : !children.length ? <section className="desk-empty"><Users size={32}/><h2>{t("specialist.copy026")}</h2><p>{t("specialist.copy027")}</p><p>{t("specialist.copy028")} <strong>{user.username}</strong></p><button className="secondary-button" onClick={() => void refreshChildren()}><RefreshCw size={16}/>{t("specialist.copy029")}</button></section>
+      : section === "children" || needsSelection ? <section className="desk-roster">
+        <div className="desk-list-heading"><h2>{t(needsSelection ? "desk.chooseChild" : "desk.roster")} <small>{children.length}</small></h2>
+          {children.length > 1 && <label className="desk-search"><Search size={17}/><input type="search" aria-label={t("desk.search")} placeholder={t("desk.search")} value={query} onChange={e => setQuery(e.target.value)}/></label>}
+        </div>
+        <ul>{visible.map(item => <li key={item.id}><a href={workspaceHref("specialist", rosterDestination, item.id)} onClick={e => {
+          if (e.ctrlKey || e.shiftKey || e.metaKey || e.altKey) return;
+          e.preventDefault(); go(rosterDestination, item.id);
+        }}>
+          <span aria-hidden="true" className="desk-monogram">{item.name.slice(0, 1)}</span>
+          <span className="desk-row-name"><strong>{item.name}</strong>{item.birth_date && <small>{t("desk.birth")} · {formatDate(item.birth_date)}</small>}</span>
+          <span className="desk-row-open">{t(needsSelection ? "desk.select" : "desk.open")} <ArrowRight size={17}/></span>
+        </a></li>)}</ul>
+        {!visible.length && <p>{t("desk.noMatch")} <button onClick={() => setQuery("")}>{t("desk.clear")}</button></p>}
+      </section> : !child ? <section className="desk-empty"><p>{t("desk.missingChild")}</p><button className="secondary-button" onClick={() => open("children")}>{t("desk.roster")}</button></section> : <>
+        <div className="desk-child-context"><label htmlFor="desk-child">{t("specialist.copy035")}</label><select id="desk-child" value={child.id} onChange={e => go(route.page, Number(e.target.value))}>{children.map(item => <option value={item.id} key={item.id}>{item.name}</option>)}</select></div>
+        <ChildDesk key={child.id} selected={String(child.id)} section={section} open={open}/>
+      </>}
+    </main>
+  </div>;
+}
+
+function ChildDesk({ selected, section, open }: { selected: string; section: string; open: (slug: string) => void }) {
+  const locale = useLocale();
   const [workspace, setWorkspace] = useState<Workspace | null>(null);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
-  const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [result, setResult] = useState("not_observed");
   const [prompt, setPrompt] = useState("independent");
@@ -48,12 +146,6 @@ export function SpecialistWorkspace({ user, onLogout }: { user: User; onLogout: 
   const [exercise, setExercise] = useState("");
   const [recommendationGoal, setRecommendationGoal] = useState("");
   const [recommendation, setRecommendation] = useState("");
-  useEffect(() => {
-    let active = true;
-    api<Child[]>("/api/children").then(items => { if (active) { setChildren(items); const requested = Number(new URLSearchParams(window.location.search).get("child")); setSelected(String(items.find(item => item.id === requested)?.id || items[0]?.id || "")); } })
-      .catch(cause => { if (active) setError(cause.message); }).finally(() => { if (active) setLoading(false); });
-    return () => { active = false; };
-  }, []);
   const workspaceRequest = useRef<AbortController | null>(null);
   const reload = useCallback(async (background = false) => {
     workspaceRequest.current?.abort();
@@ -75,7 +167,7 @@ export function SpecialistWorkspace({ user, onLogout }: { user: User; onLogout: 
   useEffect(() => {
     const timer = window.setTimeout(() => void reload(), 0);
     return () => { window.clearTimeout(timer); workspaceRequest.current?.abort(); };
-  }, [reload]);
+  }, [reload, locale]);
   const refreshOnReturn = useCallback(() => reload(true), [reload]);
   useRefreshOnReturn(refreshOnReturn, Boolean(selected));
   const saveObservation = async (event: React.FormEvent) => {
@@ -83,7 +175,7 @@ export function SpecialistWorkspace({ user, onLogout }: { user: User; onLogout: 
     setSaving(true); setError(""); setNotice("");
     try {
       await api(`/api/specialist/children/${selected}/observations`, { method: "POST", body: JSON.stringify({ result_type: result, prompt_level: prompt, context, note, goal_id: goal ? Number(goal) : null }) });
-      setContext(""); setNote(""); setNotice(t("specialist.copy013")); await reload();
+      setContext(""); setNote(""); setNotice(t("specialist.copy013")); await reload(true);
     } catch (cause) { setError(cause instanceof Error ? cause.message : t("specialist.copy014")); setWorkspace(null); }
     finally { setSaving(false); }
   };
@@ -92,7 +184,7 @@ export function SpecialistWorkspace({ user, onLogout }: { user: User; onLogout: 
     setSaving(true); setError(""); setNotice("");
     try {
       await api("/api/specialist/recommendations", { method: "POST", body: JSON.stringify({ child_id: Number(selected), suggested_skill: workspace?.available_exercises.find(item => item.id === Number(exercise))?.skill || "communication", goal_id: recommendationGoal ? Number(recommendationGoal) : null, exercise_id: exercise ? Number(exercise) : null, comment: recommendation }) });
-      setRecommendation(""); setNotice(t("specialist.copy015")); await reload();
+      setRecommendation(""); setNotice(t("specialist.copy015")); await reload(true);
     } catch (cause) { setError(cause instanceof Error ? cause.message : t("specialist.copy016")); setWorkspace(null); }
     finally { setSaving(false); }
   };
@@ -105,40 +197,43 @@ export function SpecialistWorkspace({ user, onLogout }: { user: User; onLogout: 
     } catch (cause) { setError(cause instanceof Error ? cause.message : t("specialist.copy018")); }
     finally { setSaving(false); }
   };
-  const chooseChild = (id: string) => {
-    if (id !== selected) { setWorkspace(null); setGoal(""); setContext(""); setNote(""); setExercise(""); setRecommendationGoal(""); setRecommendation(""); setError(""); setNotice(""); }
-    setSelected(id);
-    const url = new URL(window.location.href); url.searchParams.set("child", id); window.history.replaceState(null, "", url);
-  };
-  return <div className="professional-shell">
-    <aside className="professional-sidebar"><AccountLanguagePicker/><a className="cabinet-brand" href="/app"><BrandLogo variant="compact" width={165}/><small>{t("nav.specialist")}</small></a><CabinetNavigation cabinet="specialist" sections={specialistSections} active={section} onNavigate={navigate}/><div className="professional-account"><strong>{user.full_name}</strong><small>@{user.username}</small><button className="secondary-button" onClick={onLogout}><LogOut size={18}/> {t("common.logoutAccount")}</button></div></aside>
-    <main className="specialist-workspace cabinet-content"><header className="cabinet-heading"><div><p className="kicker">{t("specialist.copy019")}</p><h1>{specialistSections.find(item => item.id === section)?.label}</h1><p>{t("specialist.copy020")}</p></div><span className="cabinet-badge"><Users size={18}/>{children.length} {children.length % 10 === 1 && children.length % 100 !== 11 ? t("specialist.copy021") : children.length % 10 >= 2 && children.length % 10 <= 4 && (children.length % 100 < 12 || children.length % 100 > 14) ? t("specialist.copy022") : t("specialist.copy023")}</span></header><details className="cabinet-panel"><summary>{t("content.translations")}</summary><TranslationEditor specialist/><TranslationEditor resource="aac" specialist/></details>
-    {error && <div className="cabinet-notice error" role="alert">{error}<button className="secondary-button" onClick={() => void reload()}>{t("specialist.copy024")}</button></div>}{notice && <p className="cabinet-notice" role="status">{notice}</p>}
-    {loading ? <p role="status">{t("specialist.copy025")}</p> : !children.length ? <section className="cabinet-empty"><Users size={40}/><h2>{t("specialist.copy026")}</h2><p>{t("specialist.copy027")}</p><p>{t("specialist.copy028")}<strong>{user.username}</strong></p><button className="secondary-button" onClick={() => window.location.reload()}><RefreshCw size={18}/> {t("specialist.copy029")}</button></section> : <>
-    {section === "children" ? <><div className="cabinet-intro"><h2>{t("specialist.copy030")}</h2><p>{t("specialist.copy031")}</p></div><div className="specialist-children-grid">{children.map(child => <button className="specialist-child" key={child.id} onClick={() => { chooseChild(String(child.id)); navigate("observations"); }}><span className="cabinet-avatar" style={{background:child.avatar_color}}>{child.name[0]}</span><span><strong>{child.name}</strong><small>{t("specialist.copy032")}</small></span><ArrowRight size={22}/></button>)}</div><p className="cabinet-footnote">{t("specialist.copy033")}</p></> : <>
-    <button className="secondary-button" disabled={saving} onClick={() => void reload()}><RefreshCw size={17}/> {t("specialist.copy034")}</button>
-    <label className="cabinet-child-picker">{t("specialist.copy035")}<select value={selected} disabled={saving} onChange={e => { chooseChild(e.target.value); }}>{children.map(child => <option key={child.id} value={child.id}>{child.name}</option>)}</select></label>
-    {selected && !workspace && !error && <p role="status">{t("specialist.copy036")}</p>}
+  const observation = workspace?.observations[0];
+  const advice = workspace?.recommendations.find(item => item.is_current);
+  const activeGoals = workspace?.practice_goals.filter(item => item.status === "active") || [];
+  return <div className="desk-record">
+    {error && <div className="cabinet-notice error" role="alert">{error}<button className="secondary-button" onClick={() => void reload()}>{t("specialist.copy024")}</button></div>}
+    {notice && <p className="cabinet-notice" role="status">{notice}</p>}
+    {!workspace && !error && <p role="status">{t("specialist.copy036")}</p>}
     {workspace && <>
-      {section === "observations" && <div className="specialist-columns"><section className="cabinet-panel"><div className="cabinet-section-title"><ClipboardList size={22}/><div><h2>{t("specialist.copy037")}</h2><p>{t("specialist.copy038")}</p></div></div><form onSubmit={saveObservation}>
-        <label>{t("specialist.copy039")}<select value={goal} onChange={e => setGoal(e.target.value)}><option value="">{t("specialist.copy040")}</option>{workspace.practice_goals.map(item => <option key={item.id} value={item.id}>{item.title}</option>)}</select></label>
-        <label>{t("specialist.copy041")}<select value={result} onChange={e => { setResult(e.target.value); if (e.target.value === "independent") setPrompt("independent"); if (e.target.value === "with_help" && prompt === "independent") setPrompt("minimal"); }}>{Object.entries(outcomeLabels()).map(([key, label]) => <option key={key} value={key}>{label}</option>)}</select></label>
-        <label>{t("specialist.copy042")}<select value={prompt} onChange={e => setPrompt(e.target.value)} disabled={result === "independent"}><option value="independent">{t("specialist.copy043")}</option><option value="minimal">{t("specialist.copy044")}</option><option value="full">{t("specialist.copy045")}</option></select></label>
+      {section === "profile" && <>
+        <div className="desk-actions"><button className="primary-button" onClick={() => open("observations")}><ClipboardList size={17}/>{t("desk.newObservation")}</button><button className="secondary-button" onClick={() => open("recommendations")}>{t("desk.newAdvice")}</button></div>
+        <div className="desk-summary">
+          <section className="desk-goal"><h2>{t("desk.activeGoals")}</h2>
+            {activeGoals.length ? <ul>{activeGoals.map(item => <li key={item.id}><strong>{item.title}</strong>{item.target_outcome && <p>{item.target_outcome}</p>}</li>)}</ul> : <p>{t("desk.noGoal")}</p>}
+            <button className="desk-text-button" onClick={() => open("history")}>{t("specialist.copy011")}<ArrowRight size={16}/></button>
+          </section>
+          <section><h2>{t("desk.lastObservation")}</h2>{observation ? <><small>{formatDate(observation.created_at)} · {outcomeLabels()[observation.result_type]}</small><h3>{observation.context}</h3><p>{observation.note}</p></> : <p>{t("desk.noObservation")}</p>}</section>
+          <section><h2>{t("desk.lastAdvice")}</h2>{advice ? <><small>{formatDate(advice.created_at)} · {familyDecisionLabels[advice.family_decision]}</small><p>{advice.comment}</p></> : <p>{t("desk.noAdvice")}</p>}</section>
+        </div>
+      </>}
+      {section === "observations" && <div className="desk-columns"><section className="cabinet-panel"><div className="cabinet-section-title"><ClipboardList size={22}/><div><h2>{t("specialist.copy037")}</h2><p>{t("specialist.copy038")}</p></div></div><form onSubmit={saveObservation}>
         <label>{t("specialist.copy046")}<input value={context} onChange={e => setContext(e.target.value)} minLength={3} maxLength={300} required placeholder={t("specialist.copy047")}/></label>
         <label>{t("specialist.copy048")}<textarea value={note} onChange={e => setNote(e.target.value)} minLength={3} maxLength={1000} required/></label>
+        <div className="desk-field-pair">
+        <label>{t("specialist.copy041")}<select value={result} onChange={e => { setResult(e.target.value); if (e.target.value === "independent") setPrompt("independent"); if (e.target.value === "with_help" && prompt === "independent") setPrompt("minimal"); }}>{Object.entries(outcomeLabels()).map(([key, label]) => <option key={key} value={key}>{label}</option>)}</select></label>
+        <label>{t("specialist.copy042")}<select value={prompt} onChange={e => setPrompt(e.target.value)} disabled={result === "independent"}><option value="independent">{t("specialist.copy043")}</option><option value="minimal">{t("specialist.copy044")}</option><option value="full">{t("specialist.copy045")}</option></select></label>
+        </div>
+        <label>{t("specialist.copy039")}<select value={goal} onChange={e => setGoal(e.target.value)}><option value="">{t("specialist.copy040")}</option>{workspace.practice_goals.map(item => <option key={item.id} value={item.id}>{item.title}</option>)}</select></label>
         <button className="primary-button" disabled={saving}>{saving ? t("common.saving") : t("specialist.copy049")}</button>
-      </form></section><section className="cabinet-panel"><h2>{t("specialist.copy050")}</h2>{workspace.observations.length ? workspace.observations.map(item => <article className="cabinet-entry" key={item.id}><small>{formatDate(item.created_at, {dateStyle:"medium",timeStyle:"short"})}</small><h3>{outcomeLabels()[item.result_type]}</h3><p>{item.context}: {item.note}</p><small>{t("specialist.copy051")}{item.prompt_level === "independent" ? t("specialist.copy052") : t("specialist.copy053")}</small></article>) : <div className="cabinet-empty-inline"><ClipboardList size={28}/><p>{t("specialist.copy054")}</p></div>}</section></div>}
-      {section === "recommendations" && <div className="specialist-columns"><section className="cabinet-panel"><div className="cabinet-section-title"><MessageSquare size={22}/><div><h2>{t("specialist.copy055")}</h2><p>{t("specialist.copy056")}</p></div></div><form onSubmit={recommend}>
+      </form></section><section className="cabinet-panel"><h2>{t("specialist.copy050")}</h2>{workspace.observations.length ? workspace.observations.map(item => <article className="cabinet-entry" key={item.id}><small>{formatDate(item.created_at, {dateStyle:"medium",timeStyle:"short"})}</small><h3>{outcomeLabels()[item.result_type]}</h3><p>{item.context}: {item.note}</p><small>{t("specialist.copy051")}{item.prompt_level === "independent" ? t("specialist.copy043") : item.prompt_level === "minimal" ? t("specialist.copy044") : t("specialist.copy045")}</small></article>) : <div className="cabinet-empty-inline"><ClipboardList size={28}/><p>{t("specialist.copy054")}</p></div>}</section></div>}
+      {section === "recommendations" && <div className="desk-columns"><section className="cabinet-panel"><div className="cabinet-section-title"><MessageSquare size={22}/><div><h2>{t("specialist.copy055")}</h2><p>{t("specialist.copy056")}</p></div></div><form onSubmit={recommend}>
+        <label>{t("specialist.copy061")}<textarea value={recommendation} onChange={e => setRecommendation(e.target.value)} required minLength={3} maxLength={1000}/></label>
         <label>{t("specialist.copy057")}<select value={recommendationGoal} onChange={e => { setRecommendationGoal(e.target.value); setExercise(""); }}><option value="">{t("specialist.copy058")}</option>{workspace.practice_goals.filter(item => item.status === "active").map(item => <option key={item.id} value={item.id}>{item.title}</option>)}</select></label>
         <label>{t("specialist.copy059")}<select value={exercise} onChange={e => setExercise(e.target.value)}><option value="">{t("specialist.copy060")}</option>{workspace.available_exercises.filter(item => !recommendationGoal || workspace.practice_goals.find(goal => goal.id === Number(recommendationGoal))?.linked_exercises.some(linked => linked.id === item.id)).map(item => <option key={item.id} value={item.id}>{item.title}</option>)}</select></label>
-        <label>{t("specialist.copy061")}<textarea value={recommendation} onChange={e => setRecommendation(e.target.value)} required minLength={3} maxLength={1000}/></label>
         <button className="primary-button" disabled={saving}>{t("specialist.copy062")}</button>
       </form></section><section className="cabinet-panel"><h2>{t("specialist.copy063")}</h2>{workspace.recommendations.length ? workspace.recommendations.map(item => <article className="cabinet-entry" key={item.id}><h3>{item.exercise_title || t("specialist.copy064")}</h3><p>{item.comment}</p><RecommendationOutcome item={item}/>{item.is_current ? <button className="secondary-button" disabled={saving} onClick={() => void withdrawRecommendation(item.id)}>{t("specialist.copy065")}</button> : <small>{t("specialist.copy066")}</small>}</article>) : <div className="cabinet-empty-inline"><MessageSquare size={28}/><p>{t("specialist.copy067")}</p></div>}</section></div>}
-      {section === "history" && <><VocabularyProgress key={selected} childId={Number(selected)} canEdit refreshKey={workspace.dashboard.total_sessions}/><section className="cabinet-panel"><h2>{t("specialist.copy068")}</h2>{workspace.practice_goals.length ? workspace.practice_goals.map(item => <article className="cabinet-entry" key={item.id}><h3>{item.title}</h3><p>{t("specialist.copy069")}{item.baseline}</p><small>{item.status === "active" ? t("specialist.copy070") : item.status === "completed" ? t("specialist.copy071") : t("specialist.copy072")}</small><GoalPracticeProgress progress={item.progress}/></article>) : <p>{t("specialist.copy073")}</p>}</section><section className="cabinet-panel"><div className="cabinet-section-title"><Clock size={22}/><div><h2>{t("specialist.copy074")}</h2><p>{workspace.dashboard.total_sessions} {t("specialist.copy075")}</p></div></div>{workspace.dashboard.recent.map(item => <article className="cabinet-entry" key={item.id}><strong>{item.title || t("specialist.copy076")}</strong><p>{formatDate(item.created_at, {dateStyle:"medium",timeStyle:"short"})} · {outcomeLabels()[item.attempt_status] || t("specialist.copy077")}</p></article>)}</section></>}
+      {section === "history" && <><section className="cabinet-panel"><h2>{t("specialist.copy068")}</h2>{workspace.practice_goals.length ? workspace.practice_goals.map(item => <article className="cabinet-entry" key={item.id}><h3>{item.title}</h3><p>{t("specialist.copy069")}{item.baseline}</p><small>{item.status === "active" ? t("specialist.copy070") : item.status === "completed" ? t("specialist.copy071") : t("specialist.copy072")}</small><GoalPracticeProgress progress={item.progress}/></article>) : <p>{t("specialist.copy073")}</p>}</section><section className="cabinet-panel"><div className="cabinet-section-title"><Clock size={22}/><div><h2>{t("specialist.copy074")}</h2><p>{workspace.dashboard.total_sessions} {t("specialist.copy075")}</p></div></div>{!workspace.dashboard.recent.length && <p>{t("desk.noSessions")}</p>}{workspace.dashboard.recent.map(item => <article className="cabinet-entry" key={item.id}><strong>{item.title || workspace.available_exercises.find(exercise => exercise.id === item.exercise_id)?.title || t("specialist.copy076")}</strong><p>{formatDate(item.created_at, {dateStyle:"medium",timeStyle:"short"})} · {outcomeLabels()[item.attempt_status] || t("specialist.copy077")}</p></article>)}</section><VocabularyProgress key={selected} childId={Number(selected)} canEdit refreshKey={workspace.dashboard.total_sessions}/></>}
     </>}
-    </>}
-    </>}
-    </main>
   </div>;
 }
 
@@ -204,7 +299,7 @@ export function FamilySpecialistAccess({ childId, enabled, onManagePermissions, 
       <details className="known-specialist"><summary>{t("specialist.copy113")}</summary><form onSubmit={grant}><label>{t("specialist.copy114")}<input value={username} onChange={e => setUsername(e.target.value)} required minLength={3} maxLength={40} disabled={!enabled || busy}/></label><button className="secondary-button" disabled={!enabled || busy}>{t("specialist.copy115")}</button></form></details>
     </section>
     <section className="cabinet-panel"><h2>{t("specialist.copy116")}</h2>{items.length ? items.map(item => <div className="connected-specialist" key={item.id}><span className="cabinet-avatar">{item.full_name[0]}</span><div><strong>{item.full_name}</strong><small>@{item.username}</small></div><button className="secondary-button" disabled={busy} onClick={() => revoke(item.id)}>{t("specialist.copy117")}</button></div>) : <p className="cabinet-empty-copy">{t("specialist.copy118")}</p>}</section>
-    <div className="specialist-columns"><section className="cabinet-panel"><h2>{t("specialist.copy119")}</h2>{recommendations.length ? recommendations.map(item => <article className="cabinet-entry" key={item.id}><small>{item.specialist_name}</small><h3>{item.exercise_title || t("specialist.copy064")}</h3><p>{item.comment}</p><RecommendationDecision key={`${item.id}:${item.family_decision}`} childId={childId} item={item} onStartPlan={onStartPlan} onChanged={() => { void load().catch(cause => setMessage(cause.message)); }}/></article>) : <p>{t("specialist.copy120")}</p>}</section><section className="cabinet-panel"><h2>{t("specialist.copy121")}</h2>{observations.length ? observations.map(item => <article className="cabinet-entry" key={item.id}><small>{item.specialist_name} · {outcomeLabels()[item.result_type]}</small><p>{item.context}: {item.note}</p></article>) : <p>{t("specialist.copy122")}</p>}</section></div>
+    <div className="desk-columns"><section className="cabinet-panel"><h2>{t("specialist.copy119")}</h2>{recommendations.length ? recommendations.map(item => <article className="cabinet-entry" key={item.id}><small>{item.specialist_name}</small><h3>{item.exercise_title || t("specialist.copy064")}</h3><p>{item.comment}</p><RecommendationDecision key={`${item.id}:${item.family_decision}`} childId={childId} item={item} onStartPlan={onStartPlan} onChanged={() => { void load().catch(cause => setMessage(cause.message)); }}/></article>) : <p>{t("specialist.copy120")}</p>}</section><section className="cabinet-panel"><h2>{t("specialist.copy121")}</h2>{observations.length ? observations.map(item => <article className="cabinet-entry" key={item.id}><small>{item.specialist_name} · {outcomeLabels()[item.result_type]}</small><p>{item.context}: {item.note}</p></article>) : <p>{t("specialist.copy122")}</p>}</section></div>
   </div>;
 }
 

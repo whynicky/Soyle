@@ -1,0 +1,96 @@
+.clinician-desk {
+  --desk-ink: #193e3b; --desk-muted: #526865; --desk-line: #d8e1d9; --desk-paper: #fffefa;
+  min-height: 100dvh; display: grid; grid-template-columns: 252px minmax(0,1fr);
+  background: #f7f7f1; color: var(--desk-ink); line-height: 1.5;
+}
+.clinician-desk :is(h1,h2,h3,p) { overflow-wrap: anywhere; }
+.clinician-desk h2 { margin: 0 0 12px; color: var(--desk-ink); font-size: 22px; line-height: 1.3; }
+.clinician-desk h3 { margin: 8px 0 4px; font-size: 18px; }
+.clinician-desk small { color: var(--desk-muted); font-size: 14px; }
+.desk-rail { position: sticky; top: 0; height: 100dvh; display: flex; flex-direction: column; padding: 26px 18px 20px; background: var(--desk-paper); border-right: 1px solid var(--desk-line); overflow-y: auto; }
+.desk-brand { display: flex; align-items: center; justify-content: space-between; padding: 0 10px 28px; }
+.desk-brand > a { display: inline-flex; }
+.desk-menu-content { flex: 1; display: flex; flex-direction: column; }
+.desk-rail .workspace-nav { display: grid; gap: 24px; }
+.desk-rail .workspace-nav-group a { min-height: 44px; }
+.desk-identity { margin-top: auto; padding: 18px 12px 0; border-top: 1px solid var(--desk-line); }
+.desk-identity :is(strong,small) { display: block; overflow-wrap: anywhere; }
+.desk-identity button,.desk-text-button,.desk-menu { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; border: 0; padding: 4px 0; background: transparent; color: #28594e; font: inherit; cursor: pointer; }
+.desk-menu { display: none; }
+.desk-main { min-width: 0; width: 100%; max-width: 1400px; margin-inline: auto; padding: 0 clamp(24px,4vw,64px) 52px; }
+.desk-main:focus { outline: none; }
+.desk-topline,.desk-list-heading,.desk-child-context,.desk-actions { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; }
+.desk-topline { min-height: 64px; border-bottom: 1px solid var(--desk-line); color: var(--desk-muted); font-size: 14px; }
+.desk-topline fieldset { margin: 0; min-width: 0; }
+.desk-heading { margin: 26px 0 20px; }
+.desk-heading h1 { margin: 0; color: var(--desk-ink); font-size: clamp(32px,3.2vw,48px); line-height: 1.08; letter-spacing: -.035em; }
+.desk-heading p { margin: 12px 0 0; max-width: 54ch; color: var(--desk-muted); font-size: 16px; }
+.desk-roster-heading { display: flex; align-items: center; justify-content: space-between; padding: clamp(20px,3vw,40px); gap: 20px; border-radius: 16px; background: #e5eee5; }
+.desk-roster-heading img { width: clamp(95px,12vw,170px); height: auto; mix-blend-mode: multiply; border-radius: 12px; }
+.desk-list-heading { margin: 0 0 14px; }
+.desk-list-heading h2 { margin: 0; }
+.desk-list-heading h2 small { margin-left: 6px; font-size: 16px; font-weight: 600; }
+.desk-search { display: flex; align-items: center; gap: 8px; padding: 0 12px; border: 1px solid #879d95; border-radius: 8px; background: var(--desk-paper); }
+.desk-search input { width: 100%; min-width: 0; min-height: 42px; border: 0; font: inherit; background: transparent; }
+.desk-roster ul { list-style: none; margin: 0; padding: 0; }
+.desk-roster li a { display: flex; align-items: center; gap: 16px; padding: 18px 12px; color: inherit; text-decoration: none; border-top: 1px solid var(--desk-line); }
+.desk-roster li:last-child a { border-bottom: 1px solid var(--desk-line); }
+.desk-roster li a:hover { background: #edf1e9; }
+.desk-monogram { display: grid; place-items: center; flex: none; width: 44px; height: 48px; border-radius: 8px; background: #e7dccc; color: #654c37; font-size: 22px; font-weight: 750; }
+.desk-roster li:nth-child(3n+2) .desk-monogram { color: #385c50; background: #dbe9dd; }
+.desk-roster li:nth-child(3n) .desk-monogram { color: #475967; background: #dfe7eb; }
+.desk-row-name { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+.desk-row-name strong,.desk-row-name small { display: block; }
+.desk-row-open { display: flex; align-items: center; gap: 8px; color: #326455; font-size: 14px; }
+.desk-child-context { justify-content: start; margin-bottom: 20px; color: var(--desk-muted); font-size: 14px; }
+.clinician-desk :is(.desk-child-context select,.desk-record form select,.desk-record form input,.desk-record textarea,.desk-translations select,.desk-translations textarea) {
+  box-sizing: border-box; min-width: 0; max-width: 100%; min-height: 44px; padding: 10px 12px; border: 1px solid #879d95; border-radius: 8px; background: var(--desk-paper); color: var(--desk-ink); font: inherit; font-size: 16px;
+}
+.desk-child-context select { max-width: 340px; }
+.desk-record,.desk-translations { display: grid; gap: 20px; }
+.desk-actions { justify-content: start; }
+.desk-summary { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); border-radius: 14px; border: 1px solid var(--desk-line); background: var(--desk-paper); overflow: hidden; }
+.desk-summary section { padding: clamp(20px,2.5vw,32px); }
+.desk-summary section:last-child { border-inline-start: 1px solid var(--desk-line); }
+.desk-summary .desk-goal { grid-column: 1/-1; background: #e5eee5; border-bottom: 1px solid var(--desk-line); }
+.desk-summary ul { margin: 0; padding-inline-start: 18px; }
+.desk-summary p { margin: 8px 0; }
+.desk-columns { display: grid; grid-template-columns: minmax(0,1.15fr) minmax(0,.85fr); align-items: start; gap: 24px; }
+.desk-record .cabinet-panel,.desk-empty,.desk-translations .settings-section { min-width: 0; padding: clamp(18px,2.3vw,30px); border-radius: 14px; border: 1px solid var(--desk-line); background: var(--desk-paper); box-shadow: none; }
+.desk-record .cabinet-section-title { align-items: start; }
+.desk-record .cabinet-section-title > svg { flex: none; color: #386457; margin-top: 3px; }
+.desk-record .cabinet-section-title p,.desk-empty p,.desk-record .cabinet-empty-inline { color: var(--desk-muted); }
+.desk-record form { display: grid; gap: 16px; margin-top: 18px; }
+.desk-record form label,.desk-translations label { display: grid; gap: 6px; min-width: 0; font-size: 15px; font-weight: 650; }
+.desk-field-pair { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 12px; }
+.desk-record textarea { min-height: 100px; resize: vertical; }
+.desk-record form button { justify-self: start; }
+.clinician-desk .primary-button { color: #fff; background: #255e50; }
+.clinician-desk :is(.primary-button,.secondary-button) { min-height: 44px; font-size: 15px; white-space: normal; }
+.desk-record .cabinet-entry { border: 0; border-top: 1px solid var(--desk-line); padding: 16px 0; overflow-wrap: anywhere; }
+.desk-record .cabinet-entry p { white-space: pre-line; }
+.desk-record .cabinet-empty-inline { padding: 12px 0; }
+.clinician-desk :is(button,select,a,input,textarea,summary):focus-visible { outline: 3px solid #25756b; outline-offset: 2px; }
+@media(max-width:1000px) {
+  .clinician-desk { grid-template-columns: 1fr; align-content: start; }
+  .desk-rail { height: auto; position: static; padding: 12px 20px; border: 0; border-bottom: 1px solid var(--desk-line); }
+  .desk-brand { padding: 0; }
+  .desk-brand img { max-width: 118px; }
+  .desk-menu { display: inline-flex; }
+  .desk-menu-content { display: none; }
+  .desk-menu-content.open { display: grid; gap: 16px; padding: 18px 0 8px; }
+  .desk-rail .workspace-nav { gap: 12px; }
+  .desk-identity { margin: 0; }
+}
+@media(max-width:720px) {
+  .desk-main { padding: 0 16px 36px; }
+  .desk-heading { margin: 18px 0; }
+  .desk-columns,.desk-summary,.desk-field-pair { grid-template-columns: minmax(0,1fr); }
+  .desk-summary section:last-child { border: 0; border-top: 1px solid var(--desk-line); }
+  .desk-roster-heading { position: relative; display: block; }
+  .desk-roster-heading h1 { padding-right: 66px; }
+  .desk-roster-heading img { width: 58px; position: absolute; top: 12px; right: 14px; }
+  .desk-roster li a { gap: 12px; padding-inline: 4px; }
+  .desk-row-open { font-size: 0; gap: 0; }
+  .desk-topline { min-height: 54px; }
+}
