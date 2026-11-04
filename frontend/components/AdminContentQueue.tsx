@@ -3,7 +3,7 @@ import { t, useLocale } from "@/lib/i18n";
 
 
 import { useState } from "react";
-import { Search, ClipboardList, FileCheck2, LockKeyhole, ArrowRight, BookOpen } from "lucide-react";
+import { Search, FileCheck2, LockKeyhole, ArrowRight } from "lucide-react";
 import type { Exercise } from "@/lib/api";
 import type { DraftExerciseVersion } from "./P1ExerciseRunners";
 import type { HomeActivityDraft } from "./ContentReviewWorkspace";
@@ -15,10 +15,27 @@ function group(item: Draft) {
   return item.can_publish ? "ready" : "waiting";
 }
 
-export function AdminContentQueue({ drafts, exercises, homeDrafts, loading, onReview, onHomePreview, onArchive }: {drafts: Draft[]; exercises: Exercise[]; homeDrafts: HomeActivityDraft[]; loading: boolean; onReview: (id: number) => void; onHomePreview: (item: HomeActivityDraft) => void; onArchive: (id: number) => void}) {
+function ReviewRow({ title, kind, status, tone, objective, nextStep, errors = [], home = false, onOpen }: {
+  title: string; kind: string; status: string; tone: string; objective: string; nextStep: string;
+  errors?: string[]; home?: boolean; onOpen: () => void;
+}) {
+  return <article className={home ? "admin-review-item admin-home-review-item" : "admin-review-item"}>
+    <header><div><span className="admin-content-kind">{kind}</span><h3>{title}</h3></div>
+      <span className={`admin-queue-status ${tone}`}>{status}</span>
+    </header>
+    <button type="button" className="small-button" onClick={onOpen}>
+      {t(home ? "adminQueue.copy037" : "adminQueue.copy033")}<ArrowRight size={16}/>
+    </button>
+    <details><summary>{t("workspace.reviewDetails")}{errors.length > 0 && <> · {t("adminQueue.copy032")}{errors.length}</>}</summary>
+      <p>{objective}</p><strong>{t("adminQueue.copy029")}</strong><p>{nextStep}</p>
+      {errors.length > 0 && <ul>{errors.map(error => <li key={error}>{error}</li>)}</ul>}
+    </details>
+  </article>;
+}
+
+export function AdminContentQueue({ view, drafts, exercises, homeDrafts, loading, onReview, onHomePreview, onArchive }: {view: "review" | "library"; drafts: Draft[]; exercises: Exercise[]; homeDrafts: HomeActivityDraft[]; loading: boolean; onReview: (id: number) => void; onHomePreview: (item: HomeActivityDraft) => void; onArchive: (id: number) => void}) {
   const locale = useLocale();
   const mechanicNames = mechanicLabels();
-  const [view, setView] = useState<"review" | "library">("review");
   const [filter, setFilter] = useState("all");
   const [kind, setKind] = useState("all");
   const [search, setSearch] = useState("");
@@ -31,10 +48,20 @@ export function AdminContentQueue({ drafts, exercises, homeDrafts, loading, onRe
   const ready = drafts.filter(item => group(item) === "ready").length;
   const total = drafts.length + homeDrafts.length;
   return <div className="admin-content-hub" aria-busy={loading}>
-    <div className="admin-queue-counters"><div><span>{t("adminQueue.copy007")}</span><strong>{loading ? "-" : total}</strong></div><div><span>{t("adminQueue.copy008")}</span><strong>{loading ? "-" : changes}</strong></div><div><span>{t("adminQueue.copy009")}</span><strong>{loading ? "-" : ready}</strong></div><div><span>{t("adminQueue.copy010")}</span><strong>{loading ? "-" : exercises.length}</strong></div></div>
-    <nav className="admin-library-views" aria-label={t("adminQueue.copy011")}><button type="button" aria-pressed={view === "review"} onClick={() => setView("review")}><ClipboardList size={18}/> {t("adminQueue.copy012")}<span>{total}</span></button><button type="button" aria-pressed={view === "library"} onClick={() => setView("library")}><BookOpen size={18}/> {t("adminQueue.copy013")}<span>{exercises.length}</span></button></nav>
+    {view === "review" && <div className="admin-queue-counters"><div><span>{t("adminQueue.copy007")}</span><strong>{loading ? "-" : total}</strong></div><div><span>{t("adminQueue.copy008")}</span><strong>{loading ? "-" : changes}</strong></div><div><span>{t("adminQueue.copy009")}</span><strong>{loading ? "-" : ready}</strong></div><div><span>{t("adminQueue.copy010")}</span><strong>{loading ? "-" : exercises.length}</strong></div></div>}
     <div className="admin-content-toolbar"><label className="admin-content-search"><span>{t("adminQueue.copy014")}</span><div><Search size={18}/><input type="search" value={search} onChange={event => setSearch(event.target.value)} placeholder={t("adminQueue.copy015")}/></div></label>{view === "review" && <label>{t("adminQueue.copy016")}<select value={kind} onChange={event => setKind(event.target.value)}><option value="all">{t("adminQueue.copy017")}</option><option value="exercise">{t("adminQueue.copy018")}</option><option value="home">{t("adminQueue.copy019")}</option></select></label>}</div>
     {view === "review" && <><div className="admin-queue-filters" aria-label={t("adminQueue.copy020")}>{[{id: "all", label: t("adminQueue.copy021")}, {id: "waiting", label: t("adminQueue.copy022")}, {id: "changes", label: t("adminQueue.copy008")}, {id: "ready", label: t("adminQueue.copy009")}].map(item => <button key={item.id} type="button" aria-pressed={filter === item.id} onClick={() => setFilter(item.id)}>{item.label}</button>)}</div><div className="admin-queue-note"><LockKeyhole size={18}/><p>{t("adminQueue.copy023")}</p></div></>}
-    {loading ? <p role="status">{t("adminQueue.copy024")}</p> : view === "review" ? <div className="draft-list admin-review-queue">{visibleDrafts.map(item => <article className="admin-review-item" key={`exercise-${item.version.id}`}><header><div><span className="admin-content-kind">{mechanicNames[item.version.mechanic] || t("final.exercise")} {t("adminQueue.copy026")}{item.version.version}</span><h3>{item.version.title}</h3></div><span className={`admin-queue-status ${group(item)}`}>{group(item) === "changes" ? t("adminQueue.copy008") : group(item) === "ready" ? t("adminQueue.copy027") : t("adminQueue.copy028")}</span></header><p className="admin-content-objective">{item.version.objective}</p><div className="admin-next-review"><span>{t("adminQueue.copy029")}</span><p>{item.blocker || (item.can_publish ? t("adminQueue.copy030") : t("adminQueue.copy031"))}</p></div>{item.errors.length > 0 && <details><summary>{t("adminQueue.copy032")}{item.errors.length}</summary><ul>{item.errors.map(error => <li key={error}>{error}</li>)}</ul></details>}<button type="button" className="primary-button" onClick={() => onReview(item.version.id)}>{t("adminQueue.copy033")}<ArrowRight size={17}/></button></article>)}{visibleHome.map(item => <article className="admin-review-item admin-home-review-item" key={`home-${item.id}`}><header><div><span className="admin-content-kind">{t("adminQueue.copy034")}</span><h3>{item.title}</h3></div><span className="admin-queue-status waiting">{item.review_status === "changes_requested" ? t("adminQueue.copy008") : t("adminQueue.copy035")}</span></header><p>{item.objective}</p><div className="admin-next-review"><span>{t("adminQueue.copy029")}</span><p>{t("adminQueue.copy036")}</p></div><button type="button" className="secondary-button" onClick={() => onHomePreview(item)}>{t("adminQueue.copy037")}<ArrowRight size={17}/></button></article>)}{!visibleDrafts.length && !visibleHome.length && <div className="cabinet-empty"><FileCheck2 size={32}/><h3>{total ? t("adminQueue.copy038") : t("adminQueue.copy039")}</h3><p>{total ? t("adminQueue.copy040") : t("adminQueue.copy041")}</p></div>}</div> : <div className="admin-published-grid">{visibleLibrary.map(item => <article key={item.id}><div><span className={`admin-queue-status ${item.engine?.review_gate.demo_only ? "waiting" : "ready"}`}>{item.engine?.review_gate.demo_only ? t("adminQueue.copy042") : t("adminQueue.copy043")}</span><h3>{item.title}</h3><p>{item.instruction}</p><small>{t("adminQueue.copy044")}{item.engine?.version || 1} {t("adminQueue.copy045")}{item.difficulty}</small></div><button type="button" className="secondary-button" onClick={() => onArchive(item.id)}>{t("adminQueue.copy046")}</button></article>)}{!visibleLibrary.length && <p className="cabinet-empty-copy">{t("adminQueue.copy047")}</p>}</div>}
+    {loading ? <p role="status">{t("adminQueue.copy024")}</p> : view === "review" ? <div className="draft-list admin-review-queue">{visibleDrafts.map(item => {
+      const state = group(item);
+      return <ReviewRow key={`exercise-${item.version.id}`} title={item.version.title}
+        kind={`${mechanicNames[item.version.mechanic] || t("final.exercise")} ${t("adminQueue.copy026")}${item.version.version}`}
+        status={t(state === "changes" ? "adminQueue.copy008" : state === "ready" ? "adminQueue.copy027" : "adminQueue.copy028")}
+        tone={state} objective={item.version.objective} errors={item.errors}
+        nextStep={item.blocker || t(item.can_publish ? "adminQueue.copy030" : "adminQueue.copy031")}
+        onOpen={() => onReview(item.version.id)}/>;
+    })}{visibleHome.map(item => <ReviewRow key={`home-${item.id}`} home title={item.title}
+      kind={t("adminQueue.copy034")} status={t(item.review_status === "changes_requested" ? "adminQueue.copy008" : "adminQueue.copy035")}
+      tone={item.review_status === "changes_requested" ? "changes" : "waiting"} objective={item.objective}
+      nextStep={t("adminQueue.copy036")} onOpen={() => onHomePreview(item)}/>)}{!visibleDrafts.length && !visibleHome.length && <div className="cabinet-empty"><FileCheck2 size={32}/><h3>{total ? t("adminQueue.copy038") : t("adminQueue.copy039")}</h3><p>{total ? t("adminQueue.copy040") : t("adminQueue.copy041")}</p></div>}</div> : <div className="admin-published-grid">{visibleLibrary.map(item => <article key={item.id}><div><span className={`admin-queue-status ${item.engine?.review_gate.demo_only ? "waiting" : "ready"}`}>{item.engine?.review_gate.demo_only ? t("adminQueue.copy042") : t("adminQueue.copy043")}</span><h3>{item.title}</h3><p>{item.instruction}</p><small>{t("adminQueue.copy044")}{item.engine?.version || 1} {t("adminQueue.copy045")}{item.difficulty}</small></div><button type="button" className="secondary-button" onClick={() => onArchive(item.id)}>{t("adminQueue.copy046")}</button></article>)}{!visibleLibrary.length && <p className="cabinet-empty-copy">{t("adminQueue.copy047")}</p>}</div>}
   </div>;
 }

@@ -9,7 +9,7 @@ import { P1ResultsSummary } from "./FamilyPractice";
 
 type Metrics = { sessions: number; minutes: number; game_accuracy: number | null; attempts: number; correct: number; participations: number; breaks: number; refusals: number };
 type Report = { child: Child; period: { days: number; start: string | null; end: string; current: Metrics; previous: Metrics | null; record_count: number; recent: Dashboard["recent"] } };
-export function ParentProgress({ childId, onStartPractice, onObservations }: { childId?: number; onStartPractice: () => void; onObservations: () => void }) {
+export function ParentProgress({ childId, onObservations }: { childId?: number; onObservations: () => void }) {
   const locale = useLocale();
   const [days, setDays] = useState<0|7|30>(7);
   const [report, setReport] = useState<Report | null>(null);
@@ -38,7 +38,7 @@ export function ParentProgress({ childId, onStartPractice, onObservations }: { c
         <article><span>{t("journey.practiceMinutes")}</span><strong>{period.current.minutes}</strong><small>{t("journey.timeHint")}</small></article>
         <article><span>{t("journey.gameAccuracy")}</span><strong>{period.current.game_accuracy === null ? '-' : `${period.current.game_accuracy}%`}</strong><small>{period.current.attempts ? t("journey.answerCount", {correct:period.current.correct,total:period.current.attempts}) : t("journey.noScored")}</small></article>
       </section>
-      {!period.record_count && <section className="journey-empty"><Image src="/app-illustrations/journey-progress.png" alt="" width={180} height={180}/><div><h2>{t("journey.noPeriod")}</h2><p>{t("journey.noPeriodHint")}</p><button className="primary-button" onClick={onStartPractice}>{t("ux.chooseExercise")}<ArrowRight size={18}/></button></div></section>}
+      {!period.record_count && <section className="journey-empty"><Image src="/app-illustrations/journey-progress.png" alt="" width={180} height={180}/><div><h2>{t("journey.noPeriod")}</h2><p>{t("journey.noPeriodHint")}</p></div></section>}
       {period.record_count > 0 && <section className="journey-history"><h2>{t("journey.history")}</h2><p>{t("journey.historyHint", {shown:period.recent.length,total:period.record_count})}</p><ol>{period.recent.map(row => <li key={row.id}><div><strong>{moduleNames[row.module]}</strong><time dateTime={row.created_at}>{formatDate(row.created_at,{dateStyle:'medium',timeStyle:'short'})}</time></div><span>{statuses[row.attempt_status || 'completed']}</span><span>{row.attempt_status === 'completed' && (row.attempts_count || 0) > 0 && row.correct_answers != null ? t("journey.answerCount", {correct:row.correct_answers,total:row.attempts_count!}) : '-'}</span></li>)}</ol></section>}
     </>}
     <section className="journey-observations"><Image src="/app-illustrations/journey-family.png" alt="" width={160} height={160}/><div><span className="kicker">{t("journey.separate")}</span><h2>{t("journey.observations")}</h2><p>{t("journey.observationsHint")}</p><button className="small-button" onClick={onObservations}>{t("journey.openObservations")}<ArrowRight size={18}/></button></div></section>

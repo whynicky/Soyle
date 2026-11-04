@@ -5,23 +5,21 @@ import { BarChart3, Gamepad2, Home, ImageIcon, ChevronUp, LogOut, MessageCircle,
 import { t, useLocale } from "@/lib/i18n";
 
 type Destination = "home" | "games" | "stories" | "guides" | "aac" | "world" | "progress" | "achievements" | "skills" | "goals" | "parent" | "ai";
-export function familyNavigation(role: string) {
-  const student = role === "student";
+export function familyNavigation() {
   return [
     { id: "home" as const, label: t("nav.home"), icon: Home, pages: [
       { id: "home" as Destination, label: t("navigation.overview") },
-      ...(!student ? [{ id: "parent" as Destination, label: t("nav.parent") }, { id: "ai" as Destination, label: t("navigation.advice") }] : []),
     ] },
     { id: "games" as const, label: t("nav.lessons"), icon: Gamepad2, pages: [
       { id: "games" as Destination, label: t("navigation.exercises") },
-      student ? { id: "stories" as Destination, label: t("nav.stories") } : { id: "guides" as Destination, label: t("nav.guides") },
+      { id: "stories" as Destination, label: t("nav.stories") },
     ] },
     { id: "aac" as const, label: t("navigation.communication"), icon: MessageCircle, pages: [
       { id: "aac" as Destination, label: t("nav.words") }, { id: "world" as Destination, label: t("nav.world") },
     ] },
-    { id: "progress" as const, label: t("navigation.progress"), icon: BarChart3, pages: student ? [
+    { id: "progress" as const, label: t("navigation.progress"), icon: BarChart3, pages: [
       { id: "progress" as Destination, label: t("navigation.progress") },
-    ] : [{ id: "progress" as Destination, label: t("navigation.results") }, { id: "goals" as Destination, label: t("navigation.goals") }] },
+    ] },
   ];
 }
 export function navigationPage(screen: string) {
@@ -30,24 +28,24 @@ export function navigationPage(screen: string) {
   if (["success", "achievements", "skills"].includes(screen)) return "progress";
   return screen;
 }
-export function familySection(screen: string, role: string) {
+export function familySection(screen: string) {
   if (["session", "exercise-complete", "motor", "sensory", "mixed"].includes(screen)) return "games";
-  return familyNavigation(role).find(section => section.pages.some(page => page.id === navigationPage(screen)))?.id;
+  return familyNavigation().find(section => section.pages.some(page => page.id === navigationPage(screen)))?.id;
 }
-export function SectionNavigation({ screen, role, onOpen, className = "" }: { screen: string; role: string; onOpen: (screen: Destination) => void; className?: string }) {
+export function SectionNavigation({ screen, onOpen, className = "" }: { screen: string; onOpen: (screen: Destination) => void; className?: string }) {
   useLocale();
-  const section = familyNavigation(role).find(item => item.id === familySection(screen, role));
+  const section = familyNavigation().find(item => item.id === familySection(screen));
   if (!section || section.pages.length < 2 || ["session", "exercise-complete", "motor", "sensory", "mixed"].includes(screen)) return null;
   return <nav className={`section-navigation ${className}`} aria-label={`${section.label}: ${t("navigation.pages")}`}>
     {section.pages.map(page => <button type="button" key={page.id} aria-current={navigationPage(screen) === page.id ? "page" : undefined} onClick={() => onOpen(page.id)}>{className && (page.id === "world" ? <ImageIcon aria-hidden="true"/> : <MessageCircle aria-hidden="true"/>)}{page.label}</button>)}
   </nav>;
 }
 
-export function FamilyMobileNavigation({ screen, role, onOpen, inert }: { screen: string; role: string; onOpen: (screen: Destination) => void; inert?: boolean }) {
+export function FamilyMobileNavigation({ screen, onOpen, inert }: { screen: string; onOpen: (screen: Destination) => void; inert?: boolean }) {
   useLocale();
-  const current = familySection(screen, role);
+  const current = familySection(screen);
   return <nav className="family-bottom-nav" aria-label={t("nav.sections")} inert={inert}>
-    {familyNavigation(role).map(({id,label,icon: Icon}) => <button key={id} type="button" onClick={() => { if (screen !== id) onOpen(id); }} aria-current={current === id ? "page" : undefined}><Icon aria-hidden="true"/><span>{label}</span></button>)}
+    {familyNavigation().map(({id,label,icon: Icon}) => <button key={id} type="button" onClick={() => { if (screen !== id) onOpen(id); }} aria-current={current === id ? "page" : undefined}><Icon aria-hidden="true"/><span>{label}</span></button>)}
   </nav>;
 }
 

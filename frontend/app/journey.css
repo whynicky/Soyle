@@ -22,19 +22,19 @@
 .journey-details, .focused-parent-cabinet .cabinet-method-note { padding: 20px; background: var(--paper); border: 1px solid var(--line); border-radius: 16px; }
 .journey-details summary, .focused-parent-cabinet summary { cursor: pointer; min-height: 28px; font-size: 16px; font-weight: 750; }
 .journey-details[open] > section { margin-top: 20px; }
-.cabinet-child-summary { display: flex; flex-wrap: wrap; gap: 24px; align-items: center; padding: 24px; background: var(--paper); border: 1px solid var(--line); border-radius: 20px; }
-.cabinet-child-summary h2 { font-size: 28px; margin: 8px 0; }
-.cabinet-child-summary p { font-size: 16px; color: var(--muted); margin: 0; }
-.cabinet-child-summary dl { display: flex; flex-wrap: wrap; gap: 24px; margin: 0; flex: 1; }
-.cabinet-child-summary dt { font-size: 14px; color: var(--muted); margin-bottom: 6px; }
-.cabinet-child-summary dd { font-size: 16px; font-weight: 750; margin: 0; overflow-wrap: anywhere; }
-.cabinet-destination-cards { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 20px; }
-.cabinet-destination-cards article { display: flex; flex-direction: column; border: 1px solid var(--line); border-radius: 20px; background: var(--paper); overflow: hidden; }
-.cabinet-destination-cards article > img { width: 100%; height: 192px; object-fit: contain; background: #fffaf2; }
-.cabinet-destination-cards article > div { flex: 1; display: flex; flex-direction: column; align-items: start; padding: 24px; }
-.cabinet-destination-cards h3 { font-size: 22px; margin: 0; }
-.cabinet-destination-cards p { font-size: 16px; line-height: 1.5; color: var(--muted); margin: 12px 0 20px; }
-.cabinet-destination-cards button { margin-top: auto; }
+.cabinet-overview-focused { overflow-wrap: anywhere; }
+.family-week, .family-review-pair > section { padding: clamp(20px, 3vw, 32px); border: 1px solid var(--line); border-radius: 20px; background: var(--paper); }
+.family-week-header { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; }
+.cabinet-overview-focused h2 { margin: 0; font-size: 22px; line-height: 1.25; }
+.cabinet-overview-focused h3 { margin: 20px 0 4px; font-size: 24px; }
+.cabinet-overview-focused p { margin: 12px 0; max-width: 62ch; font-size: 16px; line-height: 1.55; }
+.cabinet-overview-focused small { display: block; color: var(--muted); font-size: 14px; line-height: 1.5; }
+.family-review-pair { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; }
+.family-review-pair .family-next { background: #edf7f3; }
+.family-next button { margin-top: 8px; }
+.family-entry { padding: 12px 4px; border-bottom: 1px solid var(--line); }
+.family-entry small { margin-top: 8px; }
+.family-entry p { white-space: pre-line; }
 .focused-parent-cabinet .page-title p, .focused-parent-cabinet .cabinet-intro p { font-size: 16px; line-height: 1.5; }
 .focused-parent-cabinet .cabinet-sections { flex-wrap: wrap; }
 .focused-parent-cabinet .cabinet-sections a { min-height: 44px; font-size: 16px; }
@@ -60,17 +60,16 @@
 :is(.parent-progress-view,.focused-parent-cabinet,.child-journey) :is(button,select,a,summary):focus-visible { outline: 3px solid var(--forest); outline-offset: 3px; }
 @media (max-width: 900px) {
   .journey-heading { flex-direction: column; }
-  .cabinet-destination-cards, .child-journey-skills > div:last-child { grid-template-columns: repeat(2,minmax(0,1fr)); }
+  .child-journey-skills > div:last-child { grid-template-columns: repeat(2,minmax(0,1fr)); }
 }
 @media (max-width: 600px) {
   .journey-heading label, .journey-heading select { width: 100%; }
-  .journey-metrics, .cabinet-destination-cards, .child-journey-skills > div:last-child { grid-template-columns: 1fr; }
+  .journey-metrics, .child-journey-skills > div:last-child { grid-template-columns: 1fr; }
   .journey-empty, .journey-observations, .child-journey-summary { grid-template-columns: 1fr; padding: 20px; gap: 16px; }
   .journey-empty img, .journey-observations img, .child-journey-summary > img { width: 140px; justify-self: start; }
   .journey-history { padding: 20px; }
   .journey-history li { grid-template-columns: 1fr; gap: 8px; }
-  .cabinet-child-summary { padding: 20px; }
-  .cabinet-child-summary dl { flex-direction: column; flex-basis: 100%; }
+  .family-review-pair { grid-template-columns: 1fr; }
   .focused-parent-cabinet .parent-management-grid { grid-template-columns: 1fr; }
 }
 .soyle-unified :is(.parent-progress-view,.focused-parent-cabinet,.child-journey) .kicker { color: #4b6174; font-size: 12px; line-height: 1.5; }

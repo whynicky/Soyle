@@ -135,12 +135,13 @@ test("security headers cover framing, MIME sniffing and browser capabilities", a
 test("parent home avoids a fabricated daily quota and shows a bounded observation", async () => {
   const [app, overview, api] = await Promise.all([
     readProjectFile("components/SoyleApp.tsx"),
-    readProjectFile("components/ParentOverview.tsx"),
+    readProjectFile("components/ParentCabinetOverview.tsx"),
     readProjectFile("lib/api.ts"),
   ]);
   assert.match(api, /week_activity:/);
-  assert.match(overview, /dashboard\?\.week_sessions/);
-  assert.match(overview, /dashboard\?\.total_sessions/);
+  assert.match(overview, /days=7/);
+  assert.match(overview, /week\.sessions/);
+  assert.doesNotMatch(overview, /onStartSession|onResume|chooseExercise/);
   assert.doesNotMatch(app, /weekActivity\.map/);
   assert.doesNotMatch(app, /day\s*<\s*Math\.min\(dashboard\?\.week_sessions/);
 });

@@ -326,7 +326,7 @@ test("admin can preview and publish with one decision", async ({ page }, info) =
   const own = (await created.json()).version;
   try {
     await page.reload();
-    await page.getByRole("tab", { name: "Задания" }).click();
+    await expect(page.locator('.admin-content-panel')).toBeVisible();
     await page.locator(".draft-list article").filter({hasText: title}).getByRole("button", {name: "Открыть проверку"}).click();
     await expect(page.getByText("Материал недоступен детям")).toBeVisible();
     await expect(page.getByRole("button", { name: "Preview механики" })).toBeVisible();

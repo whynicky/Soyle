@@ -23,7 +23,7 @@ async function login(page: Page, admin = true) {
 }
 
 async function openDraft(page: Page, title: string) {
-  await page.getByRole("tab", {name:"Задания", exact:true}).click();
+  await expect(page.locator('.admin-content-panel')).toBeVisible();
   await page.locator(".draft-list article").filter({hasText:title}).getByRole("button", {name:"Открыть проверку"}).click();
 }
 

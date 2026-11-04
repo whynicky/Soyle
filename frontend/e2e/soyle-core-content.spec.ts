@@ -103,7 +103,7 @@ test.beforeEach(async ({ page }) => {
 
 for (const material of [{ title: "Знакомые предметы: разные примеры", count: 8, name: "words" }, { title: "Что делает ребёнок: одинаковые предметы", count: 4, name: "actions" }]) test(`${material.name} preview loads complete art and stays unpublished`, async ({ page }, testInfo) => {
   await login(page, "admin", "Admin123!");
-  await page.getByRole("tab", { name: "Задания", exact: true }).click();
+  await expect(page.locator('.admin-content-panel')).toBeVisible();
   await page.locator(".draft-list article").filter({ hasText: material.title }).getByRole("button", { name: "Открыть проверку" }).click();
   await expect(page.locator(".stimulus-review-grid img")).toHaveCount(material.count);
   await expect(page.locator(".stimulus-review-grid img").first()).toBeVisible();

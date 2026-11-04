@@ -113,7 +113,7 @@ for(const mechanic of ['category_sort','action_sequence','object_match']){
   test(`${mechanic} preview never writes child results`,async({page})=>{
     await login(page);const drafts=await(await page.request.get(`${API}/api/admin/exercise-drafts`)).json();
     const version=drafts.find((item:{version:Version})=>item.version.mechanic===mechanic).version;
-    await page.getByRole('tab',{name:'Задания',exact:true}).click();
+    await expect(page.locator('.admin-content-panel')).toBeVisible();
     await page.locator('.draft-list article').filter({hasText:version.title}).getByRole('button',{name:'Открыть проверку'}).click();
     expect(await page.evaluate(()=>document.documentElement.scrollWidth-document.documentElement.clientWidth)).toBeLessThanOrEqual(1);
     await page.getByRole('button',{name:'Preview механики'}).click();

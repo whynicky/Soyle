@@ -3,11 +3,11 @@
 import { t, useLocale, formatDate } from "@/lib/i18n";
 
 import { Check, ChevronDown, CircleAlert, ClipboardList, Home, LockKeyhole, Pause, Save, ShieldCheck } from "lucide-react";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { api } from "@/lib/api";
 
 type ObservationStatus = "not_observed" | "not_yet" | "with_help" | "independent" | "needs_review";
-type SkillObservation = { category: string; label: string; status: ObservationStatus; note: string; observed_at: string | null; updated_at: string | null };
+export type SkillObservation = { category: string; label: string; status: ObservationStatus; note: string; observed_at: string | null; updated_at: string | null };
 type HomeActivity = { id: number; title: string; objective: string; materials: string[]; adult_instructions: string[]; accepted_responses: string[]; prompts: string[]; stop_conditions: string[] };
 type PendingActivity = { id: number; title: string; review_status: string; publication_status: string };
 type HomeLibrary = { activities: HomeActivity[]; pending_review: PendingActivity[]; observations: Array<{ id: number; activity_id: number; activity_title: string; outcome: string; note: string; observed_at: string }>; notice: string };
@@ -21,8 +21,9 @@ const statusOptions: Array<{ value: ObservationStatus; label: string }> = [
   { value: "needs_review", get label() { return t("familyPractice.ui5"); } },
 ];
 
-export function FunctionalSkillMap({ childId }: { childId?: number }) {
+export function FunctionalSkillMap({ childId, focusCategory, onFocused }: { childId?: number; focusCategory?: string | null; onFocused?: () => void }) {
   useLocale();
+  const target = useRef<HTMLSelectElement>(null);
   const [items, setItems] = useState<SkillObservation[]>([]);
   const [notes, setNotes] = useState<Record<string, string>>({});
   const [saving, setSaving] = useState("");
@@ -31,6 +32,12 @@ export function FunctionalSkillMap({ childId }: { childId?: number }) {
     if (!childId) return;
     api<SkillObservation[]>(`/api/observations/${childId}`).then((value) => { setItems(value); setNotes(Object.fromEntries(value.map((item) => [item.category, item.note]))); }).catch(() => setMessage(t("familyPractice.ui6")));
   }, [childId]);
+  useEffect(() => {
+    if (focusCategory && target.current) {
+      target.current.focus();
+      onFocused?.();
+    }
+  }, [focusCategory, items, onFocused]);
   const save = async (item: SkillObservation, status = item.status) => {
     if (!childId || saving) return;
     setSaving(item.category); setMessage("");
@@ -43,7 +50,7 @@ export function FunctionalSkillMap({ childId }: { childId?: number }) {
   };
   return <section className="admin-card functional-map">
     <div className="admin-card-head"><div><span className="kicker">{t("familyPractice.ui9")}</span><h3>{t("familyPractice.ui10")}</h3><p>{t("familyPractice.ui11")}</p></div><span className="period-pill"><ClipboardList size={15}/>  {t("familyPractice.ui12")}</span></div>
-    <div className="skill-observation-grid">{items.map((item) => <article key={item.category}><label><strong>{item.label}</strong><span className={`observation-status ${item.status}`}>{statusOptions.find((option) => option.value === item.status)?.label}</span><span className="select-wrap"><select aria-label={t("familyPractice.status", { label: item.label })} value={item.status} onChange={(event) => { const status = event.target.value as ObservationStatus; setItems((current) => current.map((entry) => entry.category === item.category ? { ...entry, status } : entry)); }}><option value="not_observed">{t("familyPractice.ui1")}</option><option value="not_yet">{t("familyPractice.ui2")}</option><option value="with_help">{t("familyPractice.ui3")}</option><option value="independent">{t("familyPractice.ui4")}</option><option value="needs_review">{t("familyPractice.ui5")}</option></select><ChevronDown size={16}/></span></label><label className="observation-note"><span>{t("familyPractice.ui13")}</span><textarea value={notes[item.category] || ""} maxLength={500} onChange={(event) => setNotes((current) => ({ ...current, [item.category]: event.target.value }))} placeholder={t("familyPractice.ui14")}/></label><button type="button" className="small-button" disabled={saving === item.category} onClick={() => void save(item)}><Save size={15}/>{saving === item.category ? t("familyPractice.ui15") : t("familyPractice.ui16")}</button></article>)}</div>
+    <div className="skill-observation-grid">{items.map((item) => <article key={item.category}><label><strong>{item.label}</strong><span className={`observation-status ${item.status}`}>{statusOptions.find((option) => option.value === item.status)?.label}</span><span className="select-wrap"><select ref={item.category === focusCategory ? target : undefined} aria-label={t("familyPractice.status", { label: item.label })} value={item.status} onChange={(event) => { const status = event.target.value as ObservationStatus; setItems((current) => current.map((entry) => entry.category === item.category ? { ...entry, status } : entry)); }}><option value="not_observed">{t("familyPractice.ui1")}</option><option value="not_yet">{t("familyPractice.ui2")}</option><option value="with_help">{t("familyPractice.ui3")}</option><option value="independent">{t("familyPractice.ui4")}</option><option value="needs_review">{t("familyPractice.ui5")}</option></select><ChevronDown size={16}/></span></label><label className="observation-note"><span>{t("familyPractice.ui13")}</span><textarea value={notes[item.category] || ""} maxLength={500} onChange={(event) => setNotes((current) => ({ ...current, [item.category]: event.target.value }))} placeholder={t("familyPractice.ui14")}/></label><button type="button" className="small-button" disabled={saving === item.category} onClick={() => void save(item)}><Save size={15}/>{saving === item.category ? t("familyPractice.ui15") : t("familyPractice.ui16")}</button></article>)}</div>
     {message && <div className="family-inline-message" role="status"><Check size={16}/>{message}</div>}
   </section>;
 }

@@ -17,7 +17,7 @@ test.beforeEach(async ({page}) => {
   await page.getByLabel("Логин", {exact: true}).fill("admin");
   await page.getByLabel("Пароль", {exact: true}).fill("Admin123!");
   await page.getByRole("button", {name: "Войти", exact: true}).click();
-  await page.getByRole("tab", {name: "Задания", exact: true}).click();
+  await expect(page.locator('.admin-content-panel')).toBeVisible();
 });
 
 test("actions contain twelve full illustrated scenes", async ({page}, info) => {

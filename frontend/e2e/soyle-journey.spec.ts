@@ -15,16 +15,41 @@ async function login(page: Page, role: 'student'|'parent', locale: 'ru'|'kk') {
   await expect(page.locator('.soyle-unified')).toBeVisible();
   await expect(page.locator('html')).toHaveAttribute('lang',locale === 'ru'?'ru-RU':'kk-KZ');
 }
-async function section(page:Page, index:number) {
-  const menu = page.getByRole('button',{name:/^(Открыть меню|Мәзірді ашу)$/});
-  if(await menu.isVisible()) await menu.click();
-  await page.locator('#primary-navigation nav button').nth(index).click();
-}
-
 for (const locale of ['ru','kk'] as const) {
   test(`parent journey ${locale}`, async ({page}, info) => {
     await login(page,'parent',locale);
-    await section(page,3);
+    await expect(page.locator('.parent-next-step, .v2-global-search')).toHaveCount(0);
+    await expect(page.locator('#primary-navigation nav')).not.toContainText(/Занятия|Сабақтар/);
+    await expect(page.locator('.family-week')).not.toContainText(/Выбрать упражнение|Жаттығуды таңдау/);
+    const cabinet=page.locator('.focused-parent-cabinet');
+    await expect(cabinet.locator('.family-week')).toBeVisible();
+    await expect(cabinet.locator('.family-review-pair section')).toHaveCount(2);
+    await expect(cabinet.locator('.cabinet-sections')).toHaveCount(0);
+    await expect(page).toHaveURL(/\/app\/parent\/overview/);
+    await expect(cabinet.locator('.family-week [role="status"]')).toHaveCount(0);
+    await expect(cabinet.locator('.family-review-pair [role="status"]')).toHaveCount(0);
+    await expect(cabinet.locator('.cabinet-overview-focused [role="alert"]')).toHaveCount(0);
+    expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBeTruthy();
+    await page.screenshot({path:`../output/journey-cabinet-${locale}-${info.project.name}.png`,fullPage:!info.project.name.startsWith("mobile")});
+    if(locale==='ru' && info.project.name==='desktop') expect((await new AxeBuilder({page}).include('.cabinet-overview-focused').analyze()).violations).toEqual([]);
+    await cabinet.locator('.family-next button').click();
+    const field = cabinet.locator('.functional-map select:focus');
+    await expect(field).toBeVisible();
+    const entry = cabinet.locator('.functional-map article').filter({ has: page.locator('select:focus') });
+    const heading = await entry.locator('strong').innerText();
+    const form = cabinet.locator('.functional-map article').filter({ has: page.getByText(heading, { exact: true }) });
+    const note = `Playwright · ${info.project.name} · ${locale}`;
+    await field.selectOption('with_help');
+    await form.locator('textarea').fill(note);
+    const saved = page.waitForResponse(response => response.url().includes('/api/observations/') && response.request().method() === 'PUT');
+    await form.getByRole('button').click();
+    expect((await saved).ok()).toBeTruthy();
+    await expect(page).toHaveURL(/\/app\/parent\/observations/);
+    const menu = page.locator('.menu-button');
+    if (await menu.isVisible()) await menu.click();
+    await page.locator('.workspace-nav a[href*="/parent/overview"]').click();
+    await expect(cabinet.locator('.family-next')).toContainText(note);
+    await cabinet.locator('.family-week-header button').click();
     const progress=page.locator('.parent-progress-view');
     await expect(progress.locator('.journey-metrics article')).toHaveCount(3);
     for (const days of ['30','0','7']) {
@@ -34,22 +59,7 @@ for (const locale of ['ru','kk'] as const) {
       await expect(progress.locator('.journey-metrics article')).toHaveCount(3);
     }
     expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBeTruthy();
-    await page.screenshot({path:`../output/journey-progress-${locale}-${info.project.name}.png`,fullPage:true});
+    await page.screenshot({path:`../output/journey-progress-${locale}-${info.project.name}.png`,fullPage:!info.project.name.startsWith("mobile")});
     if(locale==='ru' && info.project.name==='desktop') expect((await new AxeBuilder({page}).include('.parent-progress-view').analyze()).violations).toEqual([]);
-    await section(page,0);
-    await page.locator('.section-navigation button').nth(1).click();
-    const cabinet=page.locator('.focused-parent-cabinet');
-    await expect(cabinet.locator('.cabinet-destination-cards article')).toHaveCount(3);
-    await expect(cabinet.locator('.cabinet-sections a')).toHaveCount(4);
-    for(const img of await cabinet.locator('.cabinet-destination-cards img').all()) {
-      await img.scrollIntoViewIfNeeded();
-      await expect.poll(()=>img.evaluate((el: HTMLImageElement)=>el.naturalWidth)).toBeGreaterThan(0);
-    }
-    await cabinet.scrollIntoViewIfNeeded();
-    expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBeTruthy();
-    await page.screenshot({path:`../output/journey-cabinet-${locale}-${info.project.name}.png`,fullPage:true});
-    if(locale==='ru' && info.project.name==='desktop') expect((await new AxeBuilder({page}).include('.cabinet-overview-focused').analyze()).violations).toEqual([]);
-    await cabinet.locator('.cabinet-destination-cards button').first().click();
-    await expect(cabinet.locator('.cabinet-destination-cards')).toBeHidden();
   });
 }

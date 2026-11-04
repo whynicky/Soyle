@@ -158,7 +158,6 @@ import { GoalsAndPractice } from "@/components/GoalsAndPractice";
 import { AdminShell, ChildShell, ExerciseFocusShell, ParentShell } from "@/components/AppShells";
 import { ChildProgressExperience } from "@/components/ChildProgressExperience";
 import { LibraryScene } from "./LibraryScene";
-import { ParentOverview } from "@/components/ParentOverview";
 import { InteractiveBook } from "./storybook/book/InteractiveBook";
 import { StoryExperience } from "@/components/StoryExperience";
 import { WorldExperience } from "@/components/WorldExperience";
@@ -211,7 +210,8 @@ function ModuleGlyph({ module, size = 30 }: { module: ModuleName; size?: number 
 }
 
 import { SpecialistWorkspace, FamilySpecialistAccess, ParentAccountDeletion } from "./SpecialistWorkspace";
-import { CabinetNavigation, useCabinetSection } from "./CabinetNavigation";
+import { WorkspaceNavigation } from "./WorkspaceNavigation";
+import { readWorkspacePage, workspaceHref, workspacePages, type WorkspacePage } from "@/lib/workspacePages";
 import { SpecialistInvitation } from "./SpecialistInvitation";
 import { AdminContentQueue } from "./AdminContentQueue";
 
@@ -290,7 +290,12 @@ export function SoyleApp() {
 }
 
 function AuthenticatedApp({ user, onLogout, externalError, onDismissExternalError }: { user: User; onLogout: () => void; externalError: string; onDismissExternalError: () => void }) {
-  const [screen, setScreen] = useState<Screen>(() => user.role === "admin" ? "admin" : user.role === "parent" && new URLSearchParams(window.location.search).get("cabinet") === "parent" ? "parent" : "home");
+  const interfaceLocale = useLocale();
+  const workspaceRole = user.role === "parent" || user.role === "admin" ? user.role : null;
+  const [page, setPage] = useState(() => workspaceRole ? readWorkspacePage(workspaceRole) : null);
+  const [destination, setScreen] = useState<Screen>(() => page?.screen || "home");
+  const screen = destination === "home" && workspaceRole ? workspacePages[workspaceRole][0].screen : destination;
+  const currentPage = destination === "home" && workspaceRole ? workspacePages[workspaceRole][0] : page?.screen === screen ? page : undefined;
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [childNavigationCollapsed, setChildNavigationCollapsed] = useState(false);
   const [compactNavigation, setCompactNavigation] = useState(false);
@@ -300,16 +305,26 @@ function AuthenticatedApp({ user, onLogout, externalError, onDismissExternalErro
   const [children, setChildren] = useState<Child[]>([]);
   const [selectedChildId, setSelectedChildId] = useState<number | null>(() => user.child_id || (user.role === "parent" ? Number(new URLSearchParams(window.location.search).get("child")) || null : null));
   useEffect(() => {
-    if (user.role !== "parent") return;
+    if (!workspaceRole) return;
     const sync = () => {
-      const params = new URLSearchParams(window.location.search);
-      setScreen(params.get("cabinet") === "parent" ? "parent" : "home");
-      const childId = Number(params.get("child"));
-      if (childId > 0) setSelectedChildId(childId);
+      const next = readWorkspacePage(workspaceRole);
+      setPage(next);
+      setScreen(next.screen);
+      setSidebarOpen(false);
+      const childId = Number(new URLSearchParams(window.location.search).get("child"));
+      if (workspaceRole === "parent" && childId > 0) setSelectedChildId(childId);
     };
     window.addEventListener("popstate", sync);
     return () => window.removeEventListener("popstate", sync);
-  }, [user.role]);
+  }, [workspaceRole]);
+  useEffect(() => {
+    if (!workspaceRole || !currentPage) return;
+    const href = workspaceHref(workspaceRole, currentPage, selectedChildId);
+    if (window.location.pathname + window.location.search !== href) {
+      window.history.replaceState(null, "", href + window.location.hash);
+    }
+    document.title = t(currentPage.label) + " · Söyle";
+  }, [workspaceRole, currentPage, selectedChildId, interfaceLocale]);
   const [exercises, setExercises] = useState<Exercise[]>([]);
   const [catalogRevision, setCatalogRevision] = useState(0);
   const [selectedExercise, setSelectedExercise] = useState<Exercise | null>(null);
@@ -323,7 +338,6 @@ function AuthenticatedApp({ user, onLogout, externalError, onDismissExternalErro
   const [dashboard, setDashboard] = useState<Dashboard | null>(null);
   const [notifications, setNotifications] = useState<NotificationsData>({ unread: 0, items: [] });
   const [notificationsOpen, setNotificationsOpen] = useState(false);
-  const [globalSearch, setGlobalSearch] = useState("");
   const [reward, setReward] = useState<{ stars: number; nonce: string; total: number; childId: number } | null>(null);
   const celebratedEvents = useRef(new Set<string>());
   const dismissReward = useCallback(() => setReward(null), []);
@@ -345,7 +359,6 @@ function AuthenticatedApp({ user, onLogout, externalError, onDismissExternalErro
   const [consentError, setConsentError] = useState("");
   const [parentPracticeMode, setParentPracticeMode] = useState<ParentPracticeMode>("adult_preview");
   const [focusStopping, setFocusStopping] = useState(false);
-  const interfaceLocale = useLocale();
 
   useEffect(() => {
     if (user.role !== "student" || screen !== "more") return;
@@ -394,7 +407,7 @@ function AuthenticatedApp({ user, onLogout, externalError, onDismissExternalErro
         window.requestAnimationFrame(() => menuButtonRef.current?.focus());
       }
       if (event.key === "Tab") {
-        const controls = Array.from(document.querySelectorAll<HTMLButtonElement>('#primary-navigation button:not([disabled])')).filter(button => button.getClientRects().length > 0);
+        const controls = Array.from(document.querySelectorAll<HTMLElement>('#primary-navigation a[href], #primary-navigation button:not([disabled])')).filter(button => button.getClientRects().length > 0);
         const first = controls[0], last = controls[controls.length - 1];
         if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last?.focus(); }
         else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first?.focus(); }
@@ -441,11 +454,6 @@ function AuthenticatedApp({ user, onLogout, externalError, onDismissExternalErro
   }, [user.role]);
   useEffect(loadNotifications, [loadNotifications]);
 
-  const familyRole = user.role === "student" || user.role === "parent";
-  const navigation: { id: Screen; label: string; icon: typeof Home }[] = familyRole
-    ? familyNavigation(user.role)
-    : [{ id: "admin", label: t("nav.admin"), icon: LayoutDashboard }];
-
   const child = children.find((item) => item.id === selectedChildId) || children[0];
   const petPreferences = usePetPreferences(["student", "parent"].includes(user.role) ? child?.id : undefined);
 
@@ -477,7 +485,7 @@ function AuthenticatedApp({ user, onLogout, externalError, onDismissExternalErro
   }, [child?.id, user.role, catalogRevision]);
 
   useEffect(() => {
-    if (!child?.id) { queueMicrotask(() => setActiveSessionLoading(false)); return; }
+    if (!child?.id || (user.role === "parent" && screen === "parent")) { queueMicrotask(() => setActiveSessionLoading(false)); return; }
     let cancelled = false;
     api<LearningSession | null>(`/api/children/${child.id}/active-session`).then((session) => {
       if (cancelled) return;
@@ -488,7 +496,7 @@ function AuthenticatedApp({ user, onLogout, externalError, onDismissExternalErro
       setRequestError(cause instanceof Error ? t("shell.template6", { v0: cause.message }) : t("screen.AuthenticatedApp.ui8"));
     }).finally(() => { if (!cancelled) setActiveSessionLoading(false); });
     return () => { cancelled = true; };
-  }, [child?.id, screen, catalogRevision]);
+  }, [child?.id, screen, catalogRevision, user.role]);
 
   const refreshDashboard = useCallback(() => {
     if (child?.id) api<Dashboard>(`/api/dashboard/${child.id}`).then(setDashboard).catch((cause) => {
@@ -764,12 +772,15 @@ function AuthenticatedApp({ user, onLogout, externalError, onDismissExternalErro
   if (user.role === "parent" && !children.length) return <ChildOnboarding user={user} onCreated={(newChild) => { setChildren([newChild]); setSelectedChildId(newChild.id); }} onLogout={onLogout} />;
 
   const openScreen = (next: Screen, cabinetSection = "overview") => {
-    if (user.role === "parent") {
-      const url = new URL(window.location.href);
-      if (next === "parent") { url.searchParams.set("cabinet", "parent"); url.searchParams.set("section", cabinetSection); }
-      else if (!["story-preview", "comic-preview"].includes(next)) { url.searchParams.delete("cabinet"); url.searchParams.delete("section"); }
-      window.history.pushState(null, "", url);
-      if (next === "parent" && screen === "parent") window.dispatchEvent(new PopStateEvent("popstate"));
+    if (workspaceRole) {
+      if (next === "home") next = workspacePages[workspaceRole][0].screen;
+      const section = cabinetSection === "materials" ? "practice" : cabinetSection;
+      const target = workspacePages[workspaceRole].find(item => item.screen === next
+        && (!item.section || item.section === section))
+        || workspacePages[workspaceRole].find(item => item.screen === next);
+      const href = target ? workspaceHref(workspaceRole, target, child?.id) : "/app";
+      if (window.location.pathname + window.location.search !== href) window.history.pushState(null, "", href);
+      setPage(target || null);
     }
     setSessionError("");
     setExerciseCompletion(null);
@@ -792,18 +803,6 @@ function AuthenticatedApp({ user, onLogout, externalError, onDismissExternalErro
       changeScreen();
       window.scrollTo({ top: 0, behavior: "instant" });
     }
-  };
-
-  const submitGlobalSearch = (event: React.FormEvent) => {
-    event.preventDefault();
-    const query = globalSearch.trim().toLocaleLowerCase("ru");
-    if (!query) return;
-    if (/истор|сюжет|оқиға|ертегі/.test(query)) openScreen("stories");
-    else if (/фото|мир|люд|мест|вещ|әлем|адам|орын|зат/.test(query)) openScreen("world");
-    else if (/навык|прогресс|карт|дағды|ілгері/.test(query)) openScreen("skills");
-    else if (/гайд|родител|совет|помощ|нұсқаулық|ата-ана|кеңес|көмек/.test(query)) openScreen("guides");
-    else if (/слово|aac|общен|сказать|сөз|қарым|айту/.test(query)) openScreen("aac");
-    else openScreen("games");
   };
 
   const closeSidebar = () => {
@@ -913,7 +912,7 @@ function AuthenticatedApp({ user, onLogout, externalError, onDismissExternalErro
 
   return (
     <AppRoleShell home={user.role === "student" && screen === "home"} navigationCollapsed={childNavigationCollapsed}>
-      {familyRole && <div className="mobile-account-access"><AccountMenu name={user.full_name} onOpen={next => openScreen(next)} onLogout={onLogout}/></div>}
+      {user.role === "student" && <div className="mobile-account-access"><AccountMenu name={user.full_name} onOpen={next => openScreen(next)} onLogout={onLogout}/></div>}
       {user.role === "student" && compactNavigation && navigationHidden && <button ref={menuButtonRef} type="button" className="child-menu-toggle" onClick={() => { setSidebarOpen(true); }} aria-label={t("landing.copy046")} aria-expanded={false} aria-controls="primary-navigation"><Menu size={23}/><span>{t("screen.AuthenticatedApp.ui48")}</span></button>}
       <div className="ambient ambient-one" />
       <div className="ambient ambient-two" />
@@ -922,22 +921,25 @@ function AuthenticatedApp({ user, onLogout, externalError, onDismissExternalErro
           <BrandLogo variant={user.role === "student" && childNavigationCollapsed && !compactNavigation ? "vertical" : "compact"} width={user.role === "student" && childNavigationCollapsed && !compactNavigation ? 72 : 170} decorative />
         </button>
         {!childRail && <button ref={sidebarCloseRef} type="button" className="sidebar-close" onClick={user.role === "student" && !compactNavigation ? () => { setChildNavigationCollapsed(true); window.requestAnimationFrame(() => sidebarBrandRef.current?.focus()); } : closeSidebar} aria-label={user.role === "student" && !compactNavigation ? t("screen.AuthenticatedApp.ui53") : t("landing.copy045")} aria-expanded={user.role === "student" && !compactNavigation ? true : undefined} aria-controls="primary-navigation">{user.role === "student" && !compactNavigation ? <PanelLeftClose/> : <X/>}</button>}
-        <nav aria-label={t("screen.AuthenticatedApp.ui54")}>
-          {navigation.map((item) => {
-            const active = familyRole ? familySection(screen, user.role) === item.id : screen === item.id;
+        {workspaceRole ? <WorkspaceNavigation role={workspaceRole} current={currentPage} childId={child?.id} onOpen={item => {
+          openScreen(item.screen, item.section);
+          window.requestAnimationFrame(() => document.getElementById("workspace-content")?.focus({ preventScroll: true }));
+        }}/> : <nav aria-label={t("screen.AuthenticatedApp.ui54")}>
+          {familyNavigation().map((item) => {
+            const active = familySection(screen) === item.id;
             const Icon = item.icon;
             return (
-              <button key={item.id} aria-current={active ? "page" : undefined} className={`${active ? "active " : ""}${item.id === "more" ? "mobile-more-link" : ""}`} onClick={() => openScreen(item.id)}>
+              <button key={item.id} aria-current={active ? "page" : undefined} className={active ? "active" : undefined} onClick={() => openScreen(item.id)}>
                 <Icon size={20} strokeWidth={2} /><span>{item.label}</span>
               </button>
             );
           })}
-        </nav>
-        <div className="sidebar-note">
+        </nav>}
+        {!workspaceRole && <div className="sidebar-note">
           <span className="note-spark">{user.role === "student" ? "‖" : "✦"}</span>
           <strong>{user.role === "student" ? t("screen.AuthenticatedApp.ui55") : t("auth.history")}</strong>
           <span>{user.role === "student" ? t("screen.AuthenticatedApp.ui56") : t("shell.template13", { v0: dashboard?.week_sessions || 0 })}</span>
-        </div>
+        </div>}
         <div className="sidebar-account">
           <AccountMenu key={String(sidebarOpen)} name={user.full_name} onExpand={() => setChildNavigationCollapsed(false)} onOpen={next => { openScreen(next); if (sidebarIsDialog) window.requestAnimationFrame(() => menuButtonRef.current?.focus()); }} onLogout={onLogout}/>
         </div>
@@ -945,11 +947,10 @@ function AuthenticatedApp({ user, onLogout, externalError, onDismissExternalErro
 
       {sidebarOpen && sidebarIsDialog && <button className="overlay" onClick={closeSidebar} aria-label={t("landing.copy045")} />}
 
-      <main className="main" inert={sidebarIsDialog && sidebarOpen ? true : undefined}>
+      <main className="main" id={workspaceRole ? "workspace-content" : undefined} tabIndex={workspaceRole ? -1 : undefined} inert={sidebarIsDialog && sidebarOpen ? true : undefined}>
         <header className="topbar v2-topbar">
-          {user.role !== "student" && <button ref={menuButtonRef} className="menu-button" onClick={() => setSidebarOpen(true)} aria-label={t("landing.copy046")} aria-expanded={sidebarOpen} aria-controls="primary-navigation"><Menu /></button>}
+          {user.role !== "student" && <button ref={menuButtonRef} className="menu-button" onClick={() => setSidebarOpen(true)} aria-label={t("landing.copy046")} aria-expanded={sidebarOpen} aria-controls="primary-navigation"><Menu size={20}/><span>{t("screen.AuthenticatedApp.ui48")}</span></button>}
           <div className="mobile-logo"><BrandLogo variant="compact" width={116} /></div>
-          {user.role === "parent" && <form className="v2-global-search" role="search" onSubmit={submitGlobalSearch}><Search/><input value={globalSearch} onChange={(event) => setGlobalSearch(event.target.value)} placeholder={t("screen.AuthenticatedApp.ui57")} aria-label={t("screen.AuthenticatedApp.ui58")}/><button aria-label={t("screen.AuthenticatedApp.ui59")}><ArrowRight/></button></form>}
           <div className="top-actions v2-top-actions">
             {user.role === "parent" && <div className="notification-wrap"><button className="notification-button" onClick={() => setNotificationsOpen((value) => !value)} aria-label={t("nav.notifications")}><Bell size={19}/>{notifications.unread > 0 && <i>{notifications.unread}</i>}</button>{notificationsOpen && <div className="notification-panel"><div className="notification-head"><div><span className="kicker">{t("screen.AuthenticatedApp.ui60")}</span><strong>{t("screen.AuthenticatedApp.ui61")}</strong></div>{notifications.unread > 0 && <button onClick={markAllNotificationsRead}>{t("screen.AuthenticatedApp.ui62")}</button>}</div><div className="notification-list">{notifications.items.length ? notifications.items.map((item) => <button key={item.id} className={item.is_read ? "read" : "unread"} onClick={() => markNotificationRead(item.id)}><span className="notification-symbol"><Trophy size={18}/></span><div><strong>{item.title}</strong><p>{item.message}</p><small>{formatDate(item.created_at, {day: "numeric", month: "long"})}</small></div>{!item.is_read && <i/>}</button>) : <div className="notification-empty"><Bell size={24}/><strong>{t("screen.AuthenticatedApp.ui63")}</strong><span>{t("screen.AuthenticatedApp.ui64")}</span></div>}</div></div>}</div>}
             {user.role === "parent" && <span className="v2-top-divider"/>}
@@ -964,11 +965,13 @@ function AuthenticatedApp({ user, onLogout, externalError, onDismissExternalErro
       {requestError && <div className="game-error global-request-error" role="alert"><ShieldAlert size={18}/><span>{requestError}</span><button type="button" className="small-button" onClick={() => setRequestError("")}>{t("common.close")}</button></div>}
 
         <div className="page">
-          {familyRole && !["games", "learn", "stories", "aac", "world", "my-world"].includes(screen) && <SectionNavigation screen={screen} role={user.role} onOpen={openScreen}/>}
+          {user.role === "student" && !["games", "learn", "stories", "aac", "world", "my-world"].includes(screen) && <SectionNavigation screen={screen} onOpen={openScreen}/>}
 
-          {screen === "home" && <ExercisePetProvider presentation="home" key={`home-${child?.id}`} preferences={{ ...petPreferences.value, visible: user.role === "student" && petPreferences.ready && petPreferences.value.visible }} soundEnabled={settings.sound_enabled} calmMode={settings.calm_mode}><HomeScreen onStartPlan={startPreparedPlan} onOpenSpecialist={() => openScreen("parent", "specialist")} onOpen={openScreen} onExercise={exercise => { if (user.role === "parent") setParentPracticeMode("adult_preview"); openExercise(exercise); }} onStartSession={startDailySession} onResume={resumeSession} onPauseSession={pauseSession} soundEnabled={settings.sound_enabled} activeSession={activeSession} activeSessionLoading={activeSessionLoading} dailyMinutes={dailyMinutes} onMinutesChange={setDailyMinutes} sessionLoading={sessionLoading} sessionError={sessionError} child={child} dashboard={dashboard} consent={consent} userRole={user.role} exercises={exercises} /></ExercisePetProvider>}
+          {user.role === "student" && screen === "home" && <ExercisePetProvider presentation="home" key={child?.id} preferences={{ ...petPreferences.value, visible: petPreferences.ready && petPreferences.value.visible }} soundEnabled={settings.sound_enabled} calmMode={settings.calm_mode}>
+            <ChildHomeScreen onOpen={openScreen} onExercise={openExercise} onStartSession={startDailySession} onResume={resumeSession} soundEnabled={settings.sound_enabled} activeSession={activeSession} activeSessionLoading={activeSessionLoading} sessionLoading={sessionLoading} sessionError={sessionError} child={child} dashboard={dashboard} consent={consent} exercises={exercises}/>
+          </ExercisePetProvider>}
           {screen === "stories" && user.role === "student" && <StoryExperience childId={child?.id} calmMode={settings.calm_mode} onGames={() => openScreen("games")}/>}
-          {(screen === "world" || screen === "my-world") && ["student", "parent"].includes(user.role) && <WorldExperience key={child?.id} childId={child?.id} canManage={user.role === "parent"} navigation={<SectionNavigation screen="world" role={user.role} onOpen={openScreen} className="playroom-tabs"/>} onWords={() => openScreen("aac")} onSpeak={(text) => speak(text, .82, true)}/>}
+          {(screen === "world" || screen === "my-world") && ["student", "parent"].includes(user.role) && <WorldExperience key={child?.id} childId={child?.id} canManage={user.role === "parent"} navigation={user.role === "student" && <SectionNavigation screen="world" onOpen={openScreen} className="playroom-tabs"/>} onWords={() => openScreen("aac")} onSpeak={(text) => speak(text, .82, true)}/>}
 
           {["success", "achievements", "progress", "skills"].includes(screen) && user.role === "student" && <ChildProgressExperience childId={child?.id} dashboard={dashboard} onStories={() => openScreen("stories")} onGames={() => openScreen("games")}/>}
           {screen === "guides" && user.role === "parent" && <GuidesExperience child={child} dashboard={dashboard} exercises={exercises} onNavigate={openScreen} onExercise={openExercise}/>}
@@ -979,20 +982,20 @@ function AuthenticatedApp({ user, onLogout, externalError, onDismissExternalErro
           {user.role === "parent" && parentPracticeMode === "adult_preview" && ["motor", "sensory", "mixed"].includes(screen) && <div className="adult-preview-banner" role="status"><Eye size={19}/><div><strong>{t("cinema.copy054")}</strong><span>{t("screen.AuthenticatedApp.ui67")}</span></div><button type="button" onClick={() => setParentPracticeMode("child_practice")}>{t("screen.AuthenticatedApp.ui68")}</button></div>}
           {sessionError && ["motor", "sensory", "mixed"].includes(screen) && <div className="game-error" role="alert"><ShieldAlert size={18}/><span>{sessionError}</span></div>}
           {activeExerciseContent}
-          {screen === "aac" && <PhraseGame navigation={<SectionNavigation screen="aac" role={user.role} onOpen={openScreen} className="playroom-tabs"/>} key="free-aac" childId={child?.id} canManage={user.role === "parent"} freeMode soundEnabled={settings.sound_enabled} onBack={() => openScreen("home")} />}
+          {screen === "aac" && <PhraseGame navigation={user.role === "student" && <SectionNavigation screen="aac" onOpen={openScreen} className="playroom-tabs"/>} key="free-aac" childId={child?.id} canManage={user.role === "parent"} freeMode soundEnabled={settings.sound_enabled} onBack={() => openScreen("home")} />}
           {screen === "ai" && user.role === "parent" && <AIParentScreen child={child} />}
-          {screen === "progress" && user.role !== "student" && <ParentProgress key={child?.id} childId={child?.id} onStartPractice={() => openScreen("games")} onObservations={() => openScreen("parent", "practice")} />}
+          {screen === "progress" && user.role !== "student" && <ParentProgress key={child?.id} childId={child?.id} onObservations={() => openScreen("parent", "practice")} />}
           {screen === "goals" && user.role === "parent" && <GoalsAndPractice key={child?.id} child={child} targetMinutes={dailyMinutes} onStartPlan={startPreparedPlan} onPracticeChanged={() => { setExercises([]); setCatalogRevision(value => value + 1); refreshDashboard(); }}/>}
-          {screen === "parent" && <ParentScreen key={child?.id} child={child} childProfiles={children} onSelectChild={setSelectedChildId} onDeleted={(id) => { const remaining = children.filter((item) => item.id !== id); setChildren(remaining); setSelectedChildId(remaining[0]?.id || null); setScreen("home"); }} dashboard={dashboard} onConsentChange={setConsent} onNavigate={openScreen} onStartPlan={startPreparedPlan} />}
+          {screen === "parent" && <ParentScreen key={child?.id} page={currentPage || workspacePages.parent[0]} navigate={section => openScreen("parent", section)} exercises={exercises} child={child} childProfiles={children} onSelectChild={setSelectedChildId} onDeleted={(id) => { const remaining = children.filter((item) => item.id !== id); setChildren(remaining); setSelectedChildId(remaining[0]?.id || null); setScreen("home"); }} dashboard={dashboard} onConsentChange={setConsent} onNavigate={openScreen} onStartPlan={startPreparedPlan} />}
           {screen === "more" && user.role === "student" && <ChildMoreScreen onOpen={openScreen}/>}
           {screen === "more" && user.role === "parent" && <ParentMoreScreen onOpen={openScreen}/>}
           {screen === "profile" && user.role === "parent" && <ParentAccountDeletion onDeleted={onLogout}/>}
           {screen === "profile" && <ProfileScreen user={user} child={child} dashboard={dashboard} settings={settings} onOpen={openScreen} onLogout={onLogout}/>}
-          {screen === "admin" && <AdminScreen />}
+          {screen === "admin" && <AdminScreen page={currentPage || workspacePages.admin[0]}/>}
           {screen === "settings" && <SettingsScreen petPreferences={petPreferences} role={user.role} settings={settings} saving={settingsSaving} onChange={changeSettings} onLogout={onLogout} onOpenParent={() => openScreen("parent")} />}
         </div>
       </main>
-      {familyRole && !["session", "exercise-complete", "motor", "sensory", "mixed"].includes(screen) && <FamilyMobileNavigation screen={screen} role={user.role} onOpen={openScreen} inert={sidebarIsDialog && sidebarOpen}/>}
+      {user.role === "student" && !["session", "exercise-complete", "motor", "sensory", "mixed"].includes(screen) && <FamilyMobileNavigation screen={screen} onOpen={openScreen} inert={sidebarIsDialog && sidebarOpen}/>}
       {reward && reward.childId === child?.id && <StarReward key={reward.nonce} stars={reward.stars} total={Math.max(reward.total, dashboard?.stars || 0)} calmMode={settings.calm_mode} onDone={dismissReward}/>}
     </AppRoleShell>
   );
@@ -1062,15 +1065,13 @@ function AuthScreen({ onAuthenticated }: { onAuthenticated: (user: User) => void
   </div>;
 }
 
-type HomeScreenProps = { onPauseSession: () => void; soundEnabled: boolean; onStartPlan: (plan: AdaptivePlan) => Promise<void>; onOpenSpecialist: () => void; onOpen: (screen: Screen) => void; onExercise: (exercise: Exercise) => void; onStartSession: () => void; onResume: () => void; activeSession: LearningSession | null; activeSessionLoading: boolean; dailyMinutes: 3 | 5 | 10; onMinutesChange: (value: 3 | 5 | 10) => void; sessionLoading: boolean; sessionError: string; child?: Child; dashboard: Dashboard | null; consent: ChildConsent | null; userRole: Role; exercises: Exercise[] };
+type ChildHomeProps = {
+  onOpen: (screen: Screen) => void; onExercise: (exercise: Exercise) => void; onStartSession: () => void; onResume: () => void;
+  soundEnabled: boolean; activeSession: LearningSession | null; activeSessionLoading: boolean; sessionLoading: boolean;
+  sessionError: string; child?: Child; dashboard: Dashboard | null; consent: ChildConsent | null; exercises: Exercise[];
+};
 
-function HomeScreen(props: HomeScreenProps) {
-  if (props.userRole === "student") return <ChildHomeScreen {...props}/>;
-  if (props.userRole !== "parent") return null;
-  return <>{props.sessionError && <div className="v2-inline-alert" role="alert">{props.sessionError}</div>}<ParentOverview busy={props.sessionLoading || props.activeSessionLoading} onStartPlan={props.onStartPlan} exercises={props.exercises} onExercise={props.onExercise} onOpenSpecialist={props.onOpenSpecialist} child={props.child} dashboard={props.dashboard} activeSession={props.activeSession} onStartSession={props.onStartSession} onResume={props.onResume} onNavigate={props.onOpen}/></>;
-}
-
-function ChildHomeScreen({ onOpen, onExercise, onStartSession, onResume, soundEnabled, activeSession, activeSessionLoading, sessionLoading, sessionError, child, dashboard, consent, exercises }: HomeScreenProps) {
+function ChildHomeScreen({ onOpen, onExercise, onStartSession, onResume, soundEnabled, activeSession, activeSessionLoading, sessionLoading, sessionError, child, dashboard, consent, exercises }: ChildHomeProps) {
   const currentSession = activeSession && activeSession.status !== "completed" ? activeSession : null;
   return <ChildRoomHome child={child} dashboard={dashboard} exercises={exercises} currentSession={currentSession} busy={activeSessionLoading || sessionLoading} error={sessionError} canSave={Boolean(consent?.privacy_accepted)} soundEnabled={soundEnabled} onStart={onStartSession} onResume={onResume} onNavigate={onOpen} onExercise={onExercise}/>;
 }
@@ -2152,11 +2153,11 @@ function ParentMoreScreen({ onOpen }: { onOpen: (screen: Screen) => void }) {
   return <div className="page-enter parent-more-page"><PageTitle eyebrow={t("screen.ParentMoreScreen.ui11")} title={t("screen.ParentMoreScreen.ui12")} subtitle={t("screen.ParentMoreScreen.ui13")}/><div className="parent-more-grid">{items.map((item) => { const Icon = item.icon; return <button key={item.screen} aria-label={item.title} onClick={() => onOpen(item.screen)}><span><Icon size={25}/></span><div><strong>{item.title}</strong><small>{item.text}</small></div><ChevronRight size={23}/></button>; })}</div></div>;
 }
 
-const parentSections = [{id: "overview", get label() { return t("cabinet.overview"); }}, {id: "practice", get label() { return t("cabinet.practice"); }}, {id: "specialist", get label() { return t("cabinet.specialist"); }}, {id: "materials", get label() { return t("cabinet.materials"); }}, {id: "access", get label() { return t("cabinet.access"); }}] as const;
-
-function ParentScreen({ child, childProfiles, onSelectChild, onDeleted, dashboard, onConsentChange, onNavigate, onStartPlan }: { child?: Child; childProfiles: Child[]; onSelectChild: (id: number) => void; onDeleted: (id: number) => void; dashboard: Dashboard | null; onConsentChange: (consent: ChildConsent) => void; onNavigate: (screen: Screen) => void; onStartPlan: (plan: AdaptivePlan) => Promise<void> }) {
-  useLocale();
-  const [section, navigate] = useCabinetSection("parent", parentSections);
+function ParentScreen({ page, navigate, exercises, child, childProfiles, onSelectChild, onDeleted, dashboard, onConsentChange, onNavigate, onStartPlan }: { page: WorkspacePage; navigate: (section: string) => void; exercises: Exercise[]; child?: Child; childProfiles: Child[]; onSelectChild: (id: number) => void; onDeleted: (id: number) => void; dashboard: Dashboard | null; onConsentChange: (consent: ChildConsent) => void; onNavigate: (screen: Screen) => void; onStartPlan: (plan: AdaptivePlan) => Promise<void> }) {
+  const locale = useLocale();
+  const [recordCategory, setRecordCategory] = useState<string | null>(null);
+  const recordFocused = useCallback(() => setRecordCategory(null), []);
+  const section = page.section;
   const [student, setStudent] = useState<{ username: string } | null>(null);
   const [studentForm, setStudentForm] = useState({ username: "", pin: "" });
   const [accountMessage, setAccountMessage] = useState("");
@@ -2208,15 +2209,18 @@ function ParentScreen({ child, childProfiles, onSelectChild, onDeleted, dashboar
     catch (cause) { setDataMessage(cause instanceof Error ? cause.message : t("screen.ParentScreen.ui7")); }
   };
   return <div className="page-enter stack-xl parent-page focused-parent-cabinet">
-    <PageTitle eyebrow={t("screen.ParentScreen.ui11")} title={child?.name || t("screen.ParentScreen.ui12")} subtitle={t("screen.ParentScreen.ui13")} />
-    <CabinetNavigation cabinet="parent" sections={parentSections.filter(item => item.id !== "materials")} active={section === "materials" ? "practice" : section} onNavigate={navigate}/>
+    <header className="workspace-heading">
+      <span>{t("screen.ParentScreen.ui12")} / {section === "overview" ? t(page.label) : child?.name}</span>
+      <h1>{section === "overview" && child ? child.name : t(page.label)}</h1>
+    </header>
     {childProfiles.length > 1 && <label className="cabinet-child-picker">{t("screen.ParentScreen.ui14")}<select value={child?.id || ""} onChange={event => { const url = new URL(window.location.href); url.searchParams.set("child", event.target.value); window.history.replaceState(null, "", url); onSelectChild(Number(event.target.value)); }}>{childProfiles.map(item => <option key={item.id} value={item.id}>{item.name}</option>)}</select></label>}
-    <div className="cabinet-page" hidden={section !== "overview"}><ParentCabinetOverview child={child} consentReady={consentReady} consent={consent} student={student} onPractice={() => navigate("practice")} onSpecialist={() => navigate("specialist")} onResults={() => onNavigate("progress")} onAccess={() => navigate("access")}/></div>
-    <div className="cabinet-page" hidden={section !== "practice" && section !== "materials"}>
-    <div className="cabinet-intro"><h2>{t("screen.ParentScreen.ui46")}</h2><p>{t("screen.ParentScreen.ui47")}</p><button className="secondary-button" onClick={() => onNavigate("goals")}>{t("screen.ParentScreen.ui48")}</button></div>
-    <section className="admin-card family-support-guide"><div className="admin-card-head"><div><span className="kicker">{t("screen.ParentScreen.ui49")}</span><h3>{t("screen.ParentScreen.ui50")}</h3><p>{t("screen.ParentScreen.ui51")}</p></div></div><div><article><span>1</span><div><strong>{t("screen.ParentScreen.ui52")}</strong><p>{t("screen.ParentScreen.ui53")}</p></div></article><article><span>2</span><div><strong>{t("screen.ParentScreen.ui54")}</strong><p>{t("screen.ParentScreen.ui55")}</p></div></article><article><span>3</span><div><strong>{t("screen.ParentScreen.ui56")}</strong><p>{t("screen.ParentScreen.ui57")}</p></div></article><article className="stop"><Pause size={18}/><div><strong>{t("screen.ParentScreen.ui58")}</strong><p>{t("screen.ParentScreen.ui59")}</p></div></article></div></section>
+    {section === "overview" && (child ? <ParentCabinetOverview key={locale} childId={child.id} exercises={exercises}
+      onRecord={category => { setRecordCategory(category); navigate("practice"); }}
+      onSpecialist={() => navigate("specialist")} onResults={() => onNavigate("progress")}/>
+      : <p>{t("familyReview.noChild")}</p>)}
+    {section === "practice" && <div className="cabinet-page">
+    <FunctionalSkillMap childId={child?.id} focusCategory={section === "practice" ? recordCategory : null} onFocused={recordFocused}/>
     {child&&<VocabularyProgress key={child.id} childId={child.id} refreshKey={dashboard?.total_sessions||0}/>}
-    <FunctionalSkillMap childId={child?.id}/>
     <HomePracticeLibrary childId={child?.id}/>
     <details className="cabinet-method-note"><summary>{t("journey.previewStories")}</summary>
     <section className="storybook-preview-entry"><div><span className="kicker">{t("screen.ParentScreen.ui20")}</span><h2>{t("screen.ParentScreen.ui21")}</h2><p>{t("screen.ParentScreen.ui22")}</p></div><button className="primary-button" onClick={() => onNavigate("comic-preview")}><BookOpen/>  {t("screen.ParentScreen.ui23")} <ChevronRight/></button></section>
@@ -2225,22 +2229,21 @@ function ParentScreen({ child, childProfiles, onSelectChild, onDeleted, dashboar
     <details className="cabinet-method-note"><summary>{t("screen.ParentScreen.ui60")}</summary>
       <section className="recommend-card"><div className="recommend-icon"><Bot /></div><span className="kicker">{t("screen.ParentScreen.ui61")}</span><h2>{t("screen.ParentScreen.ui62")}</h2><p>{t("screen.ParentScreen.ui63")}</p><ul><li><Check size={16}/>{t("screen.ParentScreen.ui64")}</li><li><Check size={16}/>{t("screen.ParentScreen.ui65")}</li><li><Check size={16}/>{t("screen.ParentScreen.ui66")}</li></ul></section>
     </details>
-    </div>
-    <div className="cabinet-page" hidden={section !== "access"}>
-    <div className="cabinet-intro"><h2>{t("screen.ParentScreen.ui74")}</h2><p>{t("screen.ParentScreen.ui75")}</p></div>
+    </div>}
+    {section === "access" && <div className="cabinet-page">
     <div className="parent-management-grid">
       <section className="admin-card student-access"><div className="admin-card-head"><div><span className="kicker">{t("screen.ParentScreen.ui76")}</span><h3>{student ? t("screen.ParentScreen.ui77") : t("screen.ParentScreen.ui78")}</h3><p>{t("screen.ParentScreen.ui79")}</p></div><span className="period-pill">{t("screen.ParentScreen.ui80")}</span></div><form className="student-access-form" onSubmit={saveStudent}><label>{t("screen.ParentScreen.ui81")}<input value={studentForm.username} onChange={(e) => setStudentForm({...studentForm, username:e.target.value})} placeholder={t("screen.ParentScreen.ui82")} pattern={"[A-Za-z0-9_.\\-]+"} minLength={3} required/></label><label>{t("screen.ParentScreen.ui83")}<input value={studentForm.pin} onChange={(e) => setStudentForm({...studentForm, pin:e.target.value.replace(/\D/g, "")})} placeholder={t("screen.ParentScreen.ui84")} inputMode="numeric" minLength={4} maxLength={12} required/></label><button className="primary-button">{t("screen.ParentScreen.ui85")}</button></form>{accountMessage && <div className="usage-note" role="status"><Check size={18}/><p>{accountMessage}</p></div>}</section>
       <section className="admin-card privacy-control"><div className="admin-card-head"><div><span className="kicker">{t("screen.ParentScreen.ui86")}</span><h3>{t("screen.ParentScreen.ui87")}</h3><p>{t("screen.ParentScreen.ui88")}</p></div></div><div className="consent-options"><label><input type="checkbox" disabled={!consentReady || consentSaving} checked={consent.privacy_accepted} onChange={(e)=>setConsent(e.target.checked ? {...consent,privacy_accepted:true} : {...consent,privacy_accepted:false,camera_processing:false,ai_processing:false,analytics_processing:false,specialist_sharing:false})}/><span><b>{t("screen.ParentScreen.ui89")}</b><small>{t("screen.ParentScreen.ui90")}</small></span></label><label className={!consent.privacy_accepted ? "disabled" : ""}><input type="checkbox" disabled={!consentReady || consentSaving || !consent.privacy_accepted} checked={consent.camera_processing} onChange={(e)=>setConsent({...consent,camera_processing:e.target.checked})}/><span><b>{t("screen.ParentScreen.ui91")}</b><small>{t("screen.ParentScreen.ui92")}</small></span></label><label className={!consent.privacy_accepted ? "disabled" : ""}><input type="checkbox" disabled={!consentReady || consentSaving || !consent.privacy_accepted} checked={consent.analytics_processing} onChange={(e)=>setConsent({...consent,analytics_processing:e.target.checked})}/><span><b>{t("screen.ParentScreen.ui93")}</b><small>{t("screen.ParentScreen.ui94")}</small></span></label><label className={!consent.privacy_accepted ? "disabled" : ""}><input type="checkbox" disabled={!consentReady || consentSaving || !consent.privacy_accepted} checked={Boolean(consent.specialist_sharing)} onChange={(e)=>setConsent({...consent,specialist_sharing:e.target.checked})}/><span><b>{t("screen.ParentScreen.ui95")}</b><small>{t("screen.ParentScreen.ui96")}</small></span></label></div><div className="privacy-actions"><button className="primary-button" disabled={!consentReady || consentSaving} onClick={saveConsent}>{t("screen.ParentScreen.ui97")}</button>{consent.updated_at && <small className="consent-updated">{t("screen.ParentScreen.ui98")} {formatDate(consent.updated_at, {dateStyle: "short", timeStyle: "short"})}</small>}</div></section>
     </div>
 
     <section className="data-control"><div><ShieldCheck/><span><strong>{t("screen.ParentScreen.ui99")}</strong><small>{t("screen.ParentScreen.ui100")}</small></span></div><div className="data-actions"><button className="secondary-button" onClick={exportData}>{t("screen.ParentScreen.ui101")}</button><button className="small-button danger-button" onClick={() => setDeleteOpen(!deleteOpen)}>{t("screen.ParentScreen.ui102")}</button></div></section>{deleteOpen && <form className="delete-data-form" onSubmit={deleteData}><div><strong>{t("screen.ParentScreen.ui103")}</strong><p>{t("screen.ParentScreen.ui104")}</p></div><input type="password" value={deletePassword} onChange={(e)=>setDeletePassword(e.target.value)} placeholder={t("screen.ParentScreen.ui105")} required/><button className="small-button danger-button">{t("screen.ParentScreen.ui106")}</button></form>}{dataMessage && <div className="usage-note"><Check size={18}/><p>{dataMessage}</p></div>}
-    </div>
-    <div className="cabinet-page" hidden={section !== "specialist"}>{child && <FamilySpecialistAccess key={child.id} childId={child.id} enabled={consentReady && Boolean(consent.specialist_sharing)} onManagePermissions={() => navigate("access")} onStartPlan={onStartPlan}/>}</div>
-    <div className="medical-note"><ShieldCheck size={25}/><div><strong>{t("screen.ParentScreen.ui107")}</strong><p>{t("screen.ParentScreen.ui108")}</p></div></div>
+    </div>}
+    {section === "specialist" && child && <FamilySpecialistAccess key={child.id} childId={child.id} enabled={consentReady && Boolean(consent.specialist_sharing)} onManagePermissions={() => navigate("access")} onStartPlan={onStartPlan}/>}
+    {section !== "overview" && <div className="medical-note"><ShieldCheck size={25}/><div><strong>{t("screen.ParentScreen.ui107")}</strong><p>{t("screen.ParentScreen.ui108")}</p></div></div>}
   </div>;
 }
 
-function AdminScreen() {
+function AdminScreen({ page }: { page: WorkspacePage }) {
   useLocale();
   type StudentAccount = { id: number; username: string; child_name: string; parent_name: string; is_active: number | boolean };
   type UsageDaily = { date: string; requests: number; input_tokens: number; output_tokens: number; total_tokens: number; estimated_cost_usd: number };
@@ -2262,7 +2265,7 @@ function AdminScreen() {
   const [homeDrafts, setHomeDrafts] = useState<HomeActivityDraft[]>([]);
   const [reviewWorkspace, setReviewWorkspace] = useState<ContentReviewWorkspaceData | null>(null);
   const [homePreview, setHomePreview] = useState<HomeActivityDraft | null>(null);
-  const [tab, setTab] = useState<"users" | "exercises" | "usage" | "audit">("exercises");
+  const tab = page.section;
   const [formOpen, setFormOpen] = useState(false);
   const [form, setForm] = useState({ title: "", objective: "", instruction: "", difficulty: 1, stimuli: "" });
   const [formMessage, setFormMessage] = useState("");
@@ -2307,6 +2310,11 @@ function AdminScreen() {
       setUsageLoading(false);
     }
   }, []);
+  useEffect(() => {
+    if (tab !== "usage") return;
+    const timer = window.setTimeout(() => void loadUsage(usageDays), 0);
+    return () => window.clearTimeout(timer);
+  }, [tab, usageDays, loadUsage]);
   const changeRole = async (id: number, role: Exclude<Role, "student">) => { try { await api(`/api/admin/users/${id}/role`, { method: "PATCH", body: JSON.stringify({ role }) }); await load(); } catch (cause) { setAdminError(cause instanceof Error ? cause.message : t("screen.AdminScreen.ui3")); } };
   const toggleUser = async (item: User) => { try { await api(`/api/admin/users/${item.id}/active`, { method: "PATCH", body: JSON.stringify({ is_active: !item.is_active }) }); await load(); } catch (cause) { setAdminError(cause instanceof Error ? cause.message : t("screen.AdminScreen.ui4")); } };
   const addExercise = async (event: React.FormEvent) => {
@@ -2393,21 +2401,22 @@ function AdminScreen() {
   if (tab === "exercises" && reviewWorkspace) return <div className="page-enter admin-review-page"><ContentReviewWorkspace data={reviewWorkspace} onClose={closeReviewWorkspace} onSpeak={(text, rate) => speak(text, rate, true, reviewWorkspace.version.language || "ru", "exercise", reviewWorkspace.version.id)} onReview={reviewContent} onPublish={publishContent}/></div>;
   if (tab === "exercises" && homePreview) return <div className="page-enter admin-review-page"><HomeActivityReviewPreview activity={homePreview} onClose={closeHomePreview} onPublish={publishHomeContent}/></div>;
   return <div className="page-enter stack-xl admin-page">
-    <div className="admin-heading"><PageTitle eyebrow={t("screen.AdminScreen.ui44")} title={t("screen.AdminScreen.ui45")} subtitle={t("screen.AdminScreen.ui46")}/><span className={`system-status ${apiHealthy === false ? "blocked" : ""}`}><i/> {apiHealthy === null ? t("screen.AdminScreen.ui47") : apiHealthy ? t("screen.AdminScreen.ui48") : t("screen.AdminScreen.ui49")}</span></div>
+    <div className="admin-heading"><header className="workspace-heading"><span>{t("screen.AdminScreen.ui45")}</span><h1>{t(page.label)}</h1></header><span className={`system-status ${apiHealthy === false ? "blocked" : ""}`}><i/> {apiHealthy === null ? t("screen.AdminScreen.ui47") : apiHealthy ? t("screen.AdminScreen.ui48") : t("screen.AdminScreen.ui49")}</span></div>
     {adminError && <div className="game-error" role="alert"><ShieldAlert size={18}/><span>{adminError}</span><button className="small-button" onClick={() => void load()}>{t("screen.AdminScreen.ui50")}</button></div>}
     {tab === "users" && <div className="stats-row admin-stats"><StatCard icon={<Users/>} value={String(stats.users)} label={t("screen.AdminScreen.ui51")}/><StatCard icon={<UserRound/>} value={String(stats.children)} label={t("screen.AdminScreen.ui52")}/><StatCard icon={<Target/>} value={String(stats.sessions)} label={t("screen.AdminScreen.ui53")}/><StatCard icon={<Gamepad2/>} value={String(stats.exercises)} label={t("screen.AdminScreen.ui54")}/></div>}
-    <div className="admin-tabs" role="tablist" aria-label={t("screen.AdminScreen.ui55")}><button type="button" role="tab" aria-selected={tab === "users"} className={tab === "users" ? "active" : ""} onClick={() => setTab("users")}><Users size={17}/>{t("screen.AdminScreen.ui56")}</button><button type="button" role="tab" aria-selected={tab === "exercises"} className={tab === "exercises" ? "active" : ""} onClick={() => setTab("exercises")}><Gamepad2 size={17}/>{t("screen.AdminScreen.ui57")}</button><button type="button" role="tab" aria-selected={tab === "usage"} className={tab === "usage" ? "active" : ""} onClick={() => { setTab("usage"); void loadUsage(usageDays); }}><BarChart3 size={17}/>{t("screen.AdminScreen.ui58")}</button><button type="button" role="tab" aria-selected={tab === "audit"} className={tab === "audit" ? "active" : ""} onClick={() => setTab("audit")}><ShieldCheck size={17}/>{t("screen.AdminScreen.ui59")}</button></div>
     {tab === "users" && <section className="admin-card"><div className="admin-card-head"><div><span className="kicker">{t("screen.AdminScreen.ui60")}</span><h3>{t("screen.AdminScreen.ui61")}</h3><p>{t("screen.AdminScreen.ui62")}</p></div></div><div className="admin-table-wrap"><table className="account-table"><caption className="sr-only">{t("screen.AdminScreen.ui63")}</caption><thead><tr><th scope="col">{t("screen.AdminScreen.ui64")}</th><th scope="col">{t("screen.AdminScreen.ui65")}</th><th scope="col">{t("screen.AdminScreen.ui66")}</th><th scope="col">{t("screen.AdminScreen.ui67")}</th></tr></thead><tbody>{users.map((item) => <tr key={item.id}><td data-label={t("screen.AdminScreen.ui64")}><b>{item.full_name}</b><small>{item.email}</small></td><td data-label={t("screen.AdminScreen.ui65")}><select aria-label={t("screen.AdminScreen.template2", { v0: item.full_name })} value={item.role} onChange={(e) => changeRole(item.id, e.target.value as Exclude<Role,"student">)}><option value="parent">{t("screen.AdminScreen.ui68")}</option><option value="specialist">{t("screen.AdminScreen.ui69")}</option><option value="admin">{t("screen.AdminScreen.ui70")}</option></select></td><td data-label={t("screen.AdminScreen.ui66")}><i className={`status ${item.is_active ? "active" : "blocked"}`}>{item.is_active ? t("screen.AdminScreen.ui71") : t("screen.AdminScreen.ui72")}</i></td><td data-label={t("screen.AdminScreen.ui67")}><button type="button" className="small-button" onClick={() => toggleUser(item)}>{item.is_active ? t("screen.AdminScreen.ui73") : t("screen.AdminScreen.ui74")}</button></td></tr>)}</tbody></table></div><div className="student-accounts"><div className="student-accounts-head"><span className="kicker">{t("screen.AdminScreen.ui75")}</span><small>{students.length}  {t("screen.AdminScreen.ui76")}</small></div><div className="student-account-grid">{students.map((item) => <article key={item.id}><span className="student-icon"><Backpack/></span><div><strong>{item.child_name}</strong><small>{t("screen.AdminScreen.ui77")} {item.username}</small><small>{t("screen.AdminScreen.ui78")} {item.parent_name}</small></div><i className="status active">{t("screen.AdminScreen.ui79")}</i></article>)}</div></div></section>}
-    {tab === "exercises" && <section className="admin-card admin-content-panel">
+    {(tab === "exercises" || tab === "library") && <section className="admin-card admin-content-panel">
+      {tab === "exercises" && <>
       <div className="admin-card-head"><div><span className="kicker">{t("screen.AdminScreen.ui80")}</span><h2>{t("screen.AdminScreen.ui81")}</h2><p>{t("screen.AdminScreen.ui82")}</p></div><button type="button" className="primary-button" aria-expanded={formOpen} onClick={() => setFormOpen(!formOpen)}>{formOpen ? t("screen.AdminScreen.ui83") : t("screen.AdminScreen.ui84")}</button></div>
       {formOpen && <form className="exercise-form exercise-draft-form" onSubmit={addExercise}><label>{t("screen.AdminScreen.ui85")}<input placeholder={t("screen.AdminScreen.ui86")} value={form.title} onChange={(e) => setForm({...form,title:e.target.value})} required/></label><label>{t("screen.AdminScreen.ui87")}<input placeholder={t("screen.AdminScreen.ui88")} value={form.objective} onChange={(e) => setForm({...form,objective:e.target.value})} required/></label><label>{t("screen.AdminScreen.ui89")}<input placeholder={t("screen.AdminScreen.ui90")} value={form.instruction} onChange={(e) => setForm({...form,instruction:e.target.value})} required/></label><label>{t("screen.AdminScreen.ui91")}<select value={form.difficulty} onChange={(e) => setForm({...form,difficulty:Number(e.target.value)})}><option value={1}>{t("screen.AdminScreen.ui92")}</option><option value={2}>{t("screen.AdminScreen.ui93")}</option><option value={3}>{t("screen.AdminScreen.ui94")}</option></select></label><label className="draft-stimuli">{t("screen.AdminScreen.ui95")}<textarea value={form.stimuli} onChange={(e) => setForm({...form,stimuli:e.target.value})} placeholder={t("screen.AdminScreen.ui96")} required/><small>{t("screen.AdminScreen.ui97")}</small></label><div className="draft-form-actions"><button className="primary-button">{t("screen.AdminScreen.ui98")}</button><span>{t("screen.AdminScreen.ui99")}</span></div></form>}
       {formMessage && <div className="usage-note" role="status"><ShieldCheck size={18}/><p>{formMessage}</p></div>}
-      <AdminContentQueue drafts={drafts} exercises={exercises} homeDrafts={homeDrafts} loading={contentLoading} onReview={id => void openReview(id)} onHomePreview={openHomePreview} onArchive={id => void archiveExercise(id)}/>
+      </>}
+      <AdminContentQueue key={tab} view={tab === "library" ? "library" : "review"} drafts={drafts} exercises={exercises} homeDrafts={homeDrafts} loading={contentLoading} onReview={id => void openReview(id)} onHomePreview={openHomePreview} onArchive={id => void archiveExercise(id)}/>
     </section>}
     {tab === "usage" && <section className="usage-dashboard" aria-busy={usageLoading}>
       <div className="usage-toolbar">
         <div><span className="kicker">{t("screen.AdminScreen.ui100")}</span><h2>{t("screen.AdminScreen.ui101")}</h2><p>{t("screen.AdminScreen.ui102")}</p></div>
-        <div className="usage-periods" aria-label={t("screen.AdminScreen.ui103")}>{([7, 30, 90] as const).map((days) => <button key={days} className={usageDays === days ? "active" : ""} aria-pressed={usageDays === days} onClick={() => { setUsageDays(days); void loadUsage(days); }}>{days}  {t("screen.AdminScreen.ui104")}</button>)}</div>
+        <div className="usage-periods" aria-label={t("screen.AdminScreen.ui103")}>{([7, 30, 90] as const).map((days) => <button key={days} className={usageDays === days ? "active" : ""} aria-pressed={usageDays === days} onClick={() => setUsageDays(days)}>{days}  {t("screen.AdminScreen.ui104")}</button>)}</div>
       </div>
       {usageLoading ? <div className="admin-card usage-loading" role="status"><span className="sr-only">{t("screen.AdminScreen.ui105")}</span>{[1,2,3,4].map((item) => <i key={item}/>)}</div> : usageError ? <div className="admin-card usage-error" role="alert"><CircleAlert/><div><strong>{t("screen.AdminScreen.ui106")}</strong><p>{usageError}</p></div><button className="secondary-button" onClick={() => void loadUsage(usageDays)}><RotateCcw size={16}/>{t("screen.AdminScreen.ui50")}</button></div> : <>
         <div className="usage-cards">

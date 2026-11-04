@@ -50,7 +50,7 @@ test('administrator sees all scene maps and preview leaves child history unchang
  const scenes=drafts.filter((d:{version:{mechanic:string}})=>d.version.mechanic==='scene_search') as {version:{id:number;title:string;content:{exploration:{key:string}}}}[];expect(scenes).toHaveLength(4);
  const children=await(await page.request.get(`${API}/api/children`)).json();const child=children[0].id;
  const before=await(await page.request.get(`${API}/api/vocabulary/${child}`)).json();
- await page.goto('/app');await page.getByRole('tab',{name:'Задания',exact:true}).click();
+ await page.goto('/app');await expect(page.locator('.admin-content-panel')).toBeVisible();
  for(const source of scenes){
   await page.locator('.draft-list article').filter({hasText:source.version.title}).getByRole('button',{name:'Открыть проверку',exact:true}).click();
   await expect(page.locator('.exploration-review > svg path')).toHaveCount(12);await page.locator('.exploration-review > svg').screenshot({path:info.outputPath(`map-${source.version.content.exploration.key}.png`)});

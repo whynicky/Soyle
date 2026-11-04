@@ -30,8 +30,13 @@ test("family invitation requires confirmation, workspaces stay navigable and rev
     await page.getByLabel("Пароль", { exact: true }).fill(password);
     await page.getByRole("button", { name: "Войти", exact: true }).click();
   };
+  const openFamilyPage = async (name: string) => {
+    const menu = page.locator(".menu-button");
+    if (await menu.isVisible()) await menu.click();
+    await page.locator(".workspace-nav").getByRole("link", { name, exact: true }).click();
+  };
   await login(parent.user.username);
-  await page.getByRole("button", { name: "Открыть кабинет", exact: true }).click();
+  await expect(page.locator(".cabinet-overview-focused")).toBeVisible();
   await page.getByRole("combobox", {name: "Профиль ребёнка", exact: true}).selectOption(String(otherChild));
   await page.reload();
   await expect(page.getByRole("combobox", {name: "Профиль ребёнка", exact: true})).toHaveValue(String(otherChild));
@@ -42,14 +47,14 @@ test("family invitation requires confirmation, workspaces stay navigable and rev
     await route.continue({ url: route.request().url().replace(":8010", ":8011") });
   });
   await page.getByRole("combobox", {name: "Профиль ребёнка", exact: true}).selectOption(String(child));
-  await page.getByRole("link", { name: "Доступ и данные", exact: true }).click();
+  await openFamilyPage("Доступ и данные ребёнка");
   await expect(page.getByRole("button", { name: "Сохранить разрешения" })).toBeDisabled();
   releaseConsent();
   await expect(page.getByRole("checkbox", { name: /Сохранение программы и результатов/ })).toBeChecked();
   await page.getByRole("checkbox", { name: /Доступ выбранного специалиста/ }).check();
   await page.getByRole("button", { name: "Сохранить разрешения" }).click();
   await expect(page.getByText("Настройки приватности сохранены")).toBeVisible();
-  await page.getByRole("link", { name: "Специалист", exact: true }).click();
+  await openFamilyPage("Специалист");
   await page.getByRole("button", { name: "Создать ссылку-приглашение" }).click();
   const inviteUrl = await page.getByLabel("Ссылка для специалиста").inputValue();
   expect(inviteUrl).toContain("/app#invite=");
@@ -95,19 +100,15 @@ test("family invitation requires confirmation, workspaces stay navigable and rev
   await specPage.getByRole("button", {name: "Сохранить рекомендацию", exact: true}).click();
   await expect(specPage.getByText("Рекомендация сохранена. Семья сама выбирает, когда заниматься.")).toBeVisible();
   await page.goto("/app");
-  await expect(page.getByRole("heading", {name: "С чего начать", exact: true})).toBeVisible();
-  await expect(page.locator(".parent-specialist-advice")).toContainText("Начните с выбора знакомого предмета");
-  await expect(page.locator(".parent-specialist-advice")).toContainText(specialist.user.full_name);
-  await page.screenshot({path: info.outputPath("parent-specialist-first-step.png"), fullPage: true});
-  await page.getByRole("button", {name: "Просмотреть задание", exact: true}).click();
-  await expect(page.getByRole("button", {name: /Назад к занятиям|Вернуться к занятиям/, exact: true})).toBeVisible();
-  await page.goto("/app");
-  await page.getByRole("button", {name: "Все рекомендации", exact: true}).click();
+  const advice = page.locator(".cabinet-overview-focused .family-entry");
+  await expect(advice).toContainText("Начните с выбора знакомого предмета");
+  await expect(advice).toContainText(specialist.user.full_name);
+  await advice.getByRole("button").click();
   await page.reload();
-  await expect(page.getByRole("link", { name: "Специалист", exact: true })).toHaveAttribute("aria-current", "page");
+  await expect(page).toHaveURL(/\/app\/parent\/specialist/);
   await expect(page.getByText("Игра с другой игрушкой дома: Выбрал игрушку после указательного жеста")).toBeVisible();
-  for (const name of ["Обзор", "Практика", "Материалы", "Доступ и данные", "Специалист"]) {
-    await page.getByRole("link", {name, exact: true}).click();
+  for (const name of ["Обзор", "Наблюдения", "Доступ и данные ребёнка", "Специалист"]) {
+    await openFamilyPage(name);
     const audit = await new AxeBuilder({page}).analyze();
     expect(audit.violations.filter(item => ["serious", "critical"].includes(item.impact || ""))).toEqual([]);
     expect(await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)).toBeLessThanOrEqual(1);
@@ -122,8 +123,8 @@ test("family invitation requires confirmation, workspaces stay navigable and rev
   await specPage.reload();
   await expect(specPage.getByRole("heading", { name: "Нет доступных профилей" })).toBeVisible();
   await page.goto("/app");
-  await expect(page.getByRole("heading", {name: "Рекомендации специалиста", exact: true})).toBeVisible();
-  await expect(page.locator(".parent-specialist-advice")).not.toContainText("Начните с выбора знакомого предмета");
+  await expect(page.locator(".cabinet-overview-focused")).toBeVisible();
+  await expect(page.locator(".cabinet-overview-focused")).not.toContainText("Начните с выбора знакомого предмета");
   await context.close();
 });
 

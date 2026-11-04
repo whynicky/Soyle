@@ -15,6 +15,7 @@ import "./communication.css";
 import "./playroom.css";
 import "./mobile-family.css";
 import "./family-refresh.css";
+import "./workspace.css";
 
 export const viewport: Viewport = { width: "device-width", initialScale: 1, viewportFit: "cover" };
 
