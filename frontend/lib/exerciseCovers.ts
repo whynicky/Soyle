@@ -10,6 +10,8 @@ const coverTargets = new Set([
 
 // Cover art belongs to the catalogue only; learning stimuli stay unchanged.
 export function exerciseCover(exercise: Exercise) {
+  const versionCover = exercise.engine?.content.cover_media_ref;
+  if (versionCover) return versionCover;
   if (coverTargets.has(exercise.target)) return `/app-illustrations/exercise-covers/${exercise.target}.webp`;
   return exercise.engine?.content.exploration?.image.media_ref || "/app-illustrations/exercise-covers/toys.webp";
 }

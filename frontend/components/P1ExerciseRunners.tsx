@@ -46,6 +46,7 @@ export type DraftExerciseVersion = {
   release_status?: string;
   method_card?: ExerciseMethodCard;
   content: VariedContent & ObservationContent & ExplorationContent & {
+    cover_media_ref?: string | null;
     exemplar_policy?: "matched_set";
     bank_key?: string;
     round_choices?: number[];

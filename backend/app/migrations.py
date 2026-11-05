@@ -883,7 +883,7 @@ def _migration_29_expanded_practice(db) -> None:
         if exercise['target'] not in TARGET_BANK and exercise['target'] not in INSTRUCTION_TARGETS:
             continue
         versions = db.execute("SELECT * FROM exercise_versions WHERE exercise_id=? AND publication_status IN ('draft','published') ORDER BY version DESC,id DESC", (exercise['id'],)).fetchall()
-        if not versions or json.loads(versions[0]['content_json']).get('revision') == REVISION:
+        if not versions or any(json.loads(row['content_json']).get('revision') == REVISION for row in versions):
             continue
         source = next((row for row in versions if str(json.loads(row['content_json']).get('revision', '')).startswith('practice-')), versions[0])
         latest = dict(source)
@@ -1214,6 +1214,21 @@ def _migration_47_motor_preview_translations(db):
     seed_translation_drafts(db)
 
 
+def _migration_48_paired_practice_drafts(db):
+    from .localization import seed_translation_drafts
+    from .paired_practice import PAIRED_PRACTICE_DRAFTS
+
+    for fixture in PAIRED_PRACTICE_DRAFTS:
+        _insert_p15_draft(db, fixture)
+        for asset in fixture['content']['asset_registry']:
+            db.execute(
+                """INSERT INTO content_assets(media_ref,origin,license,license_status,created_at)
+                   VALUES(?,?,?,?,?) ON CONFLICT(media_ref) DO NOTHING""",
+                (asset['media_ref'], asset['origin'], asset['license'], asset['license_status'], now_iso()),
+            )
+    seed_translation_drafts(db)
+
+
 MIGRATIONS = (
     (9, _migration_9_exercise_engine),
     (10, _migration_10_content_contracts),
@@ -1254,6 +1269,7 @@ MIGRATIONS = (
     (45, _migration_45_remaining_vocabulary_translations),
     (46, _migration_46_guided_aac_translations),
     (47, _migration_47_motor_preview_translations),
+    (48, _migration_48_paired_practice_drafts),
 )
 LATEST_SCHEMA_VERSION = MIGRATIONS[-1][0]
 

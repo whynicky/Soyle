@@ -8,7 +8,7 @@ import pytest
 from app import database, exercise_engine
 from app.database import connect
 from app.expanded_content import BANKS, REVISION, instruction_scenarios, build_expanded_payload
-from app.migrations import _migration_29_expanded_practice
+from app.migrations import _migration_29_expanded_practice, _migration_48_paired_practice_drafts
 from app.practice_content import WORDS, ACTIONS, GIVE, PUT
 from app.schemas import ExerciseDraftCreate
 from app.tts_library import bundled_tts_path
@@ -75,3 +75,26 @@ def test_current_versions_are_not_duplicated_and_expansion_is_repeatable(client,
         for row in current:
             assert row['publication_status'] in {'draft', 'published'}
         assert any(row['publication_status'] == 'archived' and len(json.loads(row['content_json']).get('stimuli', [])) == 8 for row in before)
+
+
+def test_paired_drafts_keep_previous_versions_and_bundle_both_series(client):
+    with connect() as db:
+        before = db.execute('SELECT * FROM exercise_versions ORDER BY id').fetchall()
+        _migration_48_paired_practice_drafts(db)
+        assert db.execute('SELECT * FROM exercise_versions ORDER BY id').fetchall() == before
+        drafts = [row for row in before if json.loads(row['content_json']).get('revision') == 'paired-practice-v1']
+        assert len(drafts) == 2
+        for row in drafts:
+            assert row['publication_status'] == 'draft'
+            expanded = next(version for version in before if version['exercise_id'] == row['exercise_id'] and json.loads(version['content_json']).get('revision') == REVISION)
+            version = exercise_engine.get_version(db, row['id'])
+            assert exercise_engine.validate_version(version) == []
+            content = version['content']
+            assert content['exemplar_policy'] == 'matched_set'
+            assert content['round_choices'] == [6, 12, 24]
+            assert [item['key'] for item in content['stimuli']] == [item['key'] for item in json.loads(expanded['content_json'])['stimuli']]
+            for stimulus in content['stimuli']:
+                assert len(stimulus['exemplars']) == 1
+                original, alternate = (PUBLIC / ref.lstrip('/') for ref in [stimulus['media_ref'], *stimulus['exemplars']])
+                assert original.read_bytes() != alternate.read_bytes()
+            assert (PUBLIC / content['cover_media_ref'].lstrip('/')).is_file()

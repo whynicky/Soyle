@@ -1,0 +1,58 @@
+{
+  "generator": "Built-in ImageGen",
+  "outputs": [
+    {
+      "output": "learning-paired/home/*-b.webp",
+      "export": "3 × 4, left to right: cup, spoon, book, chair, bed, lamp, table, box, plate, toothbrush, towel, basket",
+      "references": [
+        "frontend/public/learning-expanded/home/toothbrush.webp"
+      ],
+      "prompt": "Use case: scientific-educational. Produce one portrait production contact sheet of EXACTLY 12 independent square flashcard illustrations, in a precise 3-column by 4-row grid. Straight equal grid, no lines, no gutters, no frame, entire canvas pale warm ivory paper. Each cell has one isolated, large, centered object with generous margin on all four sides. No object crosses its cell or overlaps another. Left-to-right, top-to-bottom: row 1 mint green ceramic mug with single handle, broad silver tablespoon, closed red hardback book with cream page block; row 2 plain wooden chair with a backrest, single blue bed with a pillow and blanket, coral desk lamp with conical shade; row 3 small rectangular light oak table shown at three-quarter view, closed purple cardboard box with a lid, green flat dinner plate at a shallow angle; row 4 coral and white manual toothbrush, neatly folded teal bath towel, round natural wicker basket with an arched handle. Each one unmistakable to preschool children. Cohesive refined painted storybook gouache with soft short shadow, subtle paper grain, readable form, soft daylight and simple silhouettes. No text, letters, numbers, decorative motifs, labels, characters or secondary objects. Perfectly even 3x4 cell layout suitable for mechanical cropping. The attached image is style reference only."
+    },
+    {
+      "output": "learning-paired/actions/{eat,drink,read,play}-b.webp",
+      "export": "2 × 2: eat, drink, read, play",
+      "references": [
+        "frontend/public/learning-expanded/actions/eat.webp"
+      ],
+      "prompt": "Use case: scientific-educational. One production contact sheet, exact even 2-column by 2-row grid of four landscape 4:3 child-language exercise illustrations. Overall landscape 4:3. Edge-to-edge panels, no margins or gutter or text. In all four independent scenes show the SAME preschool-age girl: medium brown skin, two small dark curly hair puffs, teal long-sleeve shirt, plum trousers. Warm cream home, soft light, restrained gouache and paper texture, visible mouth, hands and pose, clear silhouettes. Treat the attached image as visual style reference only, never copy its boy. Top left: she is EATING, spoon with food visibly at open mouth, second hand near bowl. Top right: she is DRINKING, gently tilting a simple translucent cup with visible water against lips, spoon in bowl. Bottom left: she is looking down into a clearly OPEN picture book held in her hands, calm eyes pointing at page. Bottom right: she is actively PLAYING WITH A BALL, two hands on a round red ball on the floor, eyes on ball. In all four scenes keep the same pale bowl and spoon, blue tinted cup, picture book and red ball visible near her where possible; make only the active prop physically engaged. Keep each scene independent, correctly centered and readable as a small cropped card. Avoid double actions, motion lines, extra people, words or icons."
+    },
+    {
+      "output": "learning-paired/actions/{sleep,walk,run,wash}-b.webp",
+      "export": "2 × 2: sleep, walk, run, wash",
+      "references": [
+        "frontend/public/learning-expanded/actions/eat.webp"
+      ],
+      "prompt": "Use case: scientific-educational. One production contact sheet, exact even 2-column by 2-row grid of four landscape 4:3 illustrations. Overall landscape 4:3. Edge-to-edge panels with no borders, gutters, labels or words. Distinct independent frames. Cohesive painted gouache storybook, cream-and-oak home with pale green accents, indirect morning light, simplified background. Same preschool-age girl in every panel: medium brown skin, two small dark curly hair puffs, teal long-sleeve shirt, plum trousers. Top left SLEEPING: lying sideways in a small bed, head on pillow, blanket, eyes fully closed, calm sleeping posture. Top right WALKING: complete body in profile, upright relaxed posture, taking an easy step, heel of one foot on ground, arms relaxed, minimal cream hallway. Bottom left RUNNING: same complete side-view character and same hallway as top right, longer airborne stride with bent rear leg, bent pumping arms, forward-leaning torso, both feet visibly off floor, no speed marks. Bottom right WASHING HANDS: at a low basin, with both bare hands directly under a plainly visible stream of water from faucet, face and hands visible, no toothbrush or towel in hands. Use reference as style only, not character. Fill each frame generously without clipping gesture, clean non-busy silhouettes."
+    },
+    {
+      "output": "learning-paired/actions/{sit,stand,draw}-b.webp",
+      "export": "Top left, top right, bottom left",
+      "references": [
+        "frontend/public/learning-expanded/actions/eat.webp"
+      ],
+      "prompt": "Use case: scientific-educational. One production contact sheet, exact even 2-column by 2-row grid of four landscape 4:3 scene cards. Overall landscape 4:3, edge-to-edge cells, no gutter, border, text or icons. Soft children's gouache storybook in one warm cream-and-oak home with pale green accents, sunny indirect light. Same preschool-age girl in all four: medium brown skin, two small dark curly hair puffs, teal long-sleeve shirt, plum trousers. Top left SITTING: full body resting on a simple low chair, knees clearly bent, feet on floor, hands idle in lap. Top right STANDING: full body standing still next to same chair in same room, straight knees, both feet flat, relaxed arms idle at sides. Bottom left DRAWING: at low wooden table actively holding chunky red crayon to paper, visible emerging red circle, gaze at tip. Bottom right CLAPPING: relaxed full upper body, two bare palms visibly meeting at mid-chest, happy face, no prop in hand, no praying pose, both elbows raised slightly outward, no motion streaks. Use reference as style only, not character. Crisp silhouettes, fully show the discriminating pose, avoid extra people, visual clutter or split actions."
+    },
+    {
+      "output": "app-illustrations/exercise-covers/familiar-objects-pairs.webp",
+      "references": [
+        "frontend/public/app-illustrations/exercise-covers/match-object-action.webp"
+      ],
+      "prompt": "Use case: illustration-story. Premium children's learning app catalogue cover, landscape 3:2. A welcoming daylight still life of everyday things at home, with a pair of clearly different recognizable cups (blue rounded mug and ochre straight ceramic mug) prominently together, plus a small closed green book and spoon set back on a pale oak low table. Background a softly out-of-focus cream room with hint of sage textile. Tactile storybook gouache with dimensional painted forms, warm high quality editorial illustration, quiet pale mint, ochre and cream palette. Strong legibility at small thumbnail size, balanced composition, subjects safely inside middle 75 percent, no faces, no penguin, no text or letters, no graphic overlay or framing. Reference indicates finish and warmth only."
+    },
+    {
+      "output": "app-illustrations/exercise-covers/familiar-actions-pairs.webp",
+      "references": [
+        "frontend/public/app-illustrations/exercise-covers/match-object-action.webp"
+      ],
+      "prompt": "Use case: illustration-story. Premium children's learning app catalogue cover, landscape 3:2. Two different preschool children in an airy warm home looking at an open picture book together: a curly brown-haired boy in golden yellow and a medium brown-skinned girl with two small curly hair puffs in teal. Their gaze and open book make the familiar action unmistakable. The children sit comfortably on a softly textured rug, book visible at front center, with cream wall, pale oak, daylight and minimal soft background details. Tactile painterly gouache storybook, nuanced but clean silhouettes, refined sage, teal and honey palette. A single natural scene. Composition reads as a small thumbnail with faces and book inside the central 75 percent. No text, logos, watermark, dramatic expression or overlay. Reference is for overall finish, not framing."
+    },
+    {
+      "output": "learning-paired/actions/clap-b.webp",
+      "references": [
+        "actions-posture contact sheet"
+      ],
+      "prompt": "Use case: scientific-educational. Generate one landscape 4:3 standalone gouache picture-book flashcard for a preschool language lesson. The SAME girl as the attached contact sheet: teal long-sleeve shirt, brown skin, two small dark curly hair puffs, in the same pale oak room with soft cream wall. Reference for character and style, never reproduce the grid. She is unmistakably APPLAUDING, seen three-quarters from the front, head and both hands fully visible. The two open hands are slightly separated in front of her upper chest, at different heights and angles, one palm turned toward the other, fingers angled diagonally toward her other hand, with a tiny subtle pair of curved clap movement marks only next to the hands. Elbows lifted out to sides. Visible joyful expression and eyes looking at her hands, as if praising someone. Avoid symmetric vertical joined hands or praying pose, no hand props or objects in hands, no other people, no text, labels, or border. Clear natural five-fingered hands, action remains readable at 130px. Warm indirect daylight, tactile soft gouache, quiet background."
+    }
+  ]
+}

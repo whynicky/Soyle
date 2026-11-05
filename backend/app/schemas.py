@@ -204,6 +204,7 @@ class VocabularyPolicyUpdate(BaseModel):
     cooldown_hours: int = Field(default=24, ge=1, le=168)
 
 class ExerciseDraftContent(BaseModel):
+    cover_media_ref: str | None = Field(default=None, max_length=150, pattern=r"^/app-illustrations/exercise-covers/[a-z0-9-]+\.webp$")
     exploration: ExplorationLocation | None = None
     presentation: Literal['picture_description'] | None = None
     scenes: list[ObservationSceneCreate] = Field(default_factory=list, max_length=60)

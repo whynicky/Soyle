@@ -139,6 +139,7 @@ export type Exercise = {
     prompt_policy: Record<string, unknown>;
     completion_rule: Record<string, unknown>;
     content: VariedContent & ObservationContent & ExplorationContent & {
+      cover_media_ref?: string | null;
       stimuli?: Array<{
         key: string;
         label: string;
