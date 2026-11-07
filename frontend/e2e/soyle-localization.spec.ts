@@ -79,12 +79,18 @@ test('child settings switch both ways and keep saved progress', async ({ page })
 test('landing copy and AAC demonstration follow the selected language', async ({page}) => {
   await page.goto('/');
   await page.getByRole('dialog').getByRole('button',{name:'Қазақша',exact:true}).click();
-  await expect(page.getByRole('heading',{name:'Әр сөз — шағын жаңалық.'})).toBeVisible();
-  await expect(page.locator('.sl-aac > p')).toHaveText('Су ішкім келеді.');
-  await page.locator('.sl-aac').getByRole('button',{name:'Алма',exact:true}).click();
-  await expect(page.locator('.sl-aac > p')).toHaveText('Алма жегім келеді.');
+  await expect(page.getByRole('heading',{name:'Бала ойын жеткізудің түрлі жолын табады'})).toBeVisible();
+  const overview = page.locator('.sl-hero-window');
+  await expect(overview.getByRole('heading', { name: 'Үйдегі жаттығу', exact: true })).toBeVisible();
+  await overview.getByRole('link', { name: 'Сабақты көру', exact: true }).click();
+  await expect(page.getByRole('tab', { selected: true })).toHaveAttribute('id', 'sl-tab-lesson');
+  await page.getByRole('tab', { name: 'Қарым-қатынас карточкалары', exact: true }).click();
+  const board = page.getByRole('tabpanel');
+  await expect(board.locator('.sl-phrase')).toHaveText('Су ішкім келеді.');
+  await board.getByRole('button',{name:'Алма',exact:true}).click();
+  await expect(board.locator('.sl-phrase')).toHaveText('Алма жегім келеді.');
   await page.locator('.sl-footer').getByRole('button',{name:'Русский',exact:true}).click();
-  await expect(page.getByRole('heading',{name:'Каждое слово — маленькое открытие.'})).toBeVisible();
+  await expect(page.getByRole('heading',{name:'Больше способов сказать важное'})).toBeVisible();
 });
 
 
@@ -244,13 +250,11 @@ test('installation metadata follows locale without reloading',async({page})=>{
   await expect(page.locator('meta[name="description"]')).toHaveAttribute('content',kk['app.description']);
 });
 
-test('landing cards remain visible when switching languages with motion enabled', async ({ page }) => {
+test('landing previews remain visible when switching languages with motion enabled', async ({ page }) => {
   await page.emulateMedia({ reducedMotion: 'no-preference' });
   await page.goto('/');
   await page.getByRole('dialog').getByRole('button', { name: 'Русский', exact: true }).click();
-  await expect(page.locator('.sl-page')).toHaveClass(/sl-motion/);
-
-  // Reveal every section before switching, including the cards below the fold.
+  // Reveal each animated section before switching languages.
   const elements = page.locator('[data-reveal]');
   const count = await elements.count();
   for (let i = 0; i < count; i++) {
@@ -260,16 +264,25 @@ test('landing cards remain visible when switching languages with motion enabled'
 
   const question = page.locator('.sl-faq details').first();
   await question.locator('summary').click();
+  await page.getByRole('tab', { name: 'Кабинет родителя' }).click();
   for (const [language, locale] of [['Қазақша', 'kk-KZ'], ['Русский', 'ru-RU']] as const) {
     await page.locator('.sl-footer').getByRole('button', { name: language, exact: true }).click();
     await expect(page.locator('html')).toHaveAttribute('lang', locale);
     await expect(elements).toHaveCount(count);
     await expect(page.locator('[data-reveal]:not(.sl-visible)')).toHaveCount(0);
     await expect(question).toHaveAttribute('open', '');
-    for (const selector of ['.sl-game', '.sl-form', '.sl-faq details']) {
-      const card = page.locator(selector).first();
-      await card.scrollIntoViewIfNeeded();
-      await expect(card).toHaveCSS('opacity', '1');
-    }
+    await expect(page.getByRole('tab', { selected: true })).toHaveAttribute('id', 'sl-tab-history');
+    await expect(page.getByRole('tabpanel')).toBeVisible();
+  }
+
+  const scene = page.locator('.sl-desktop-scene');
+  const initialHeight = (await scene.boundingBox())?.height;
+  const tabs = page.getByRole('tab');
+  await expect(tabs).toHaveCount(4);
+  for (const tab of await tabs.all()) {
+    await tab.click();
+    await expect(tab).toHaveAttribute('aria-selected', 'true');
+    await expect(page.getByRole('tabpanel')).toHaveCount(1);
+    expect((await scene.boundingBox())?.height).toBe(initialHeight);
   }
 });

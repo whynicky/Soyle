@@ -1,828 +1,658 @@
 "use client";
-import { API_URL } from "@/lib/api";
-import { t, useLocale } from "@/lib/i18n";
-import { LanguagePicker } from "./LanguagePicker";
 
 import Image from "next/image";
-import { BrandLogo } from "@/components/BrandLogo";
 import Link from "next/link";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type KeyboardEvent, type ReactNode } from "react";
 import {
-  ArrowRight,
-  BookOpen,
-  Check,
-  ChevronDown,
-  Heart,
-  History,
-  Menu,
-  MessageCircle,
-  Puzzle,
-  ShieldCheck,
-  Target,
-  Volume2,
-  X,
+  ArrowDown, ArrowLeft, ArrowRight, BookOpen, CalendarDays, Check, ChevronDown, CircleHelp, Clock3,
+  ClipboardList, Download, History, LayoutGrid, LockKeyhole, MessageSquare, ShieldCheck,
+  Volume2, X,
 } from "lucide-react";
+import { t, useLocale, type Locale } from "@/lib/i18n";
+import { LanguagePicker } from "./LanguagePicker";
 import "@/app/landing.css";
 
-const art = "/images/landing/";
-const games = () => [
-  {
-    title: t("landing.copy000"),
-    text: t("landing.copy001"),
-    image: "game-first-words",
-    tag: t("landing.copy002"),
-    tone: "peach",
-    alt: t("landing.copy003"),
-  },
-  {
-    title: t("landing.copy004"),
-    text: t("landing.copy005"),
-    image: "game-sentences",
-    tag: t("landing.copy006"),
-    tone: "sky",
-    alt: t("landing.copy007"),
-  },
-  {
-    title: t("landing.copy008"),
-    text: t("landing.copy009"),
-    image: "game-stories",
-    tag: t("landing.copy010"),
-    tone: "sage",
-    alt: t("landing.copy011"),
-  },
-];
-const forms = () => [
-  {
-    title: t("landing.copy012"),
-    text: t("landing.copy013"),
-    image: "alalia-sensory",
-    tone: "rose",
-    icon: Volume2,
-  },
-  {
-    title: t("landing.copy014"),
-    text: t("landing.copy015"),
-    image: "alalia-motor",
-    tone: "sky",
-    icon: MessageCircle,
-  },
-  {
-    title: t("landing.copy016"),
-    text: t("landing.copy017"),
-    image: "alalia-mixed",
-    tone: "sage",
-    icon: Puzzle,
-  },
-];
-const benefits = () => [
-  [
-    "benefit-play",
-    t("landing.copy018"),
-    t("landing.copy019"),
-  ],
-  [
-    "benefit-personalization",
-    t("landing.copy020"),
-    t("landing.copy021"),
-  ],
-  [
-    "benefit-progress",
-    t("landing.copy022"),
-    t("landing.copy023"),
-  ],
-  [
-    "benefit-family",
-    t("landing.copy024"),
-    t("landing.copy025"),
-  ],
-];
-const questions = () => [
-  [
-    "landing.copy026",
-    t("landing.copy026"),
-    t("landing.copy027"),
-  ],
-  [
-    "landing.copy028",
-    t("landing.copy028"),
-    t("landing.copy029"),
-  ],
-  [
-    "landing.copy030",
-    t("landing.copy030"),
-    t("landing.copy031"),
-  ],
-  [
-    "landing.copy032",
-    t("landing.copy032"),
-    t("landing.copy033"),
-  ],
-];
+const scenery = {
+  hero: "/landing/soyle-sculpted-hero.webp",
+  desktop: "/landing/soyle-sculpted-desktop.webp",
+  history: "/landing/soyle-sculpted-history.webp",
+  plan: "/landing/soyle-sculpted-plan.webp",
+  end: "/landing/soyle-sculpted-invitation.webp",
+} as const;
+const choices = [
+  { id: "water", label: "landing.showcase.water" },
+  { id: "apple", label: "landing.showcase.apple" },
+  { id: "play", label: "landing.showcase.play" },
+] as const;
 
-function Illustration({
-  name,
-  alt = "",
-  className = "",
-  priority = false,
-  mobileName,
-  sizes = "(max-width: 760px) 100vw, 40vw",
-}: {
-  name: string;
-  alt?: string;
-  className?: string;
-  priority?: boolean;
-  mobileName?: string;
-  sizes?: string;
-}) {
-  const image = (
-    <Image
-      className={className}
-      src={`${art}${name}.webp`}
-      alt={alt}
-      fill
-      quality={75}
-      sizes={sizes}
-      {...(priority ? { preload: true } : { loading: "lazy" as const })}
-    />
-  );
-  return mobileName ? (
-    <picture>
-      <source media="(max-width: 650px)" srcSet={`${art}${mobileName}.webp`} />
-      {image}
-    </picture>
-  ) : (
-    image
-  );
-}
-function Logo() {
+const previews = [
+  { id: "lesson", icon: BookOpen },
+  { id: "communication", icon: MessageSquare },
+  { id: "history", icon: History },
+  { id: "plan", icon: ClipboardList },
+] as const;
+
+const access = [
+  { id: "permission", icon: LockKeyhole },
+  { id: "camera", icon: ShieldCheck },
+  { id: "export", icon: Download },
+] as const;
+
+const questions = ["start", "cards", "camera", "history", "specialist", "therapy"] as const;
+
+function Wordmark() {
   return (
-    <BrandLogo
-      variant="primary"
-      width={190}
-      responsive
-      className="sl-brand-logo"
-    />
+    <Link className="sl-wordmark" href="/" aria-label={t("landing.copy036")}>
+      <Image src="/landing/soyle-mark-plum.svg" width={28} height={28} alt="" />
+      Söyle<span aria-hidden="true">.</span>
+    </Link>
   );
 }
 
-function Foliage({
-  kind,
-  className,
-}: {
-  kind: "tall" | "canopy" | "garden";
-  className: string;
-}) {
+function StartLink() {
   return (
-    <div
-      className={`sl-foliage sl-foliage-${kind} ${className}`}
-      aria-hidden="true"
-    >
-      <Image
-        src={`${art}foliage-${kind}.webp`}
-        alt=""
-        fill
-        sizes="(max-width: 650px) 80px, 190px"
-        loading="lazy"
-      />
+    <Link className="sl-button sl-start" href="/app">
+      {t("landing.showcase.start")} <ArrowRight size={16} aria-hidden="true" />
+    </Link>
+  );
+}
+
+function useCommunicationBoard(locale: Locale) {
+  const [selected, setSelected] = useState<(typeof choices)[number]["id"]>("water");
+  const [speaking, setSpeaking] = useState(false);
+  const [audioError, setAudioError] = useState(false);
+  const audio = useRef<HTMLAudioElement>(null);
+  const playRequest = useRef(0);
+
+  useEffect(() => {
+    const player = audio.current;
+    const stop = () => {
+      playRequest.current++;
+      player?.pause();
+      setSpeaking(false);
+      setAudioError(false);
+    };
+    window.addEventListener("soyle-locale-changing", stop);
+    return () => {
+      window.removeEventListener("soyle-locale-changing", stop);
+      player?.pause();
+    };
+  }, []);
+
+  function select(id: typeof selected) {
+    playRequest.current++;
+    audio.current?.pause();
+    setSelected(id);
+    setSpeaking(false);
+    setAudioError(false);
+  }
+
+  async function speak() {
+    const player = audio.current;
+    if (!player) return;
+    const request = ++playRequest.current;
+    if (speaking) {
+      player.pause();
+      setSpeaking(false);
+      return;
+    }
+
+    player.src = `/api/public/speech/${locale === "kk-KZ" ? "kk" : "ru"}/${selected}`;
+    setAudioError(false);
+    setSpeaking(true);
+    try {
+      await player.play();
+    } catch {
+      if (player === audio.current && request === playRequest.current) {
+        setSpeaking(false);
+        setAudioError(true);
+      }
+    }
+  }
+
+  const player = (
+    <audio ref={audio} preload="none" onEnded={() => setSpeaking(false)} onError={() => {
+        if (speaking) {
+          setSpeaking(false);
+          setAudioError(true);
+        }
+      }} />
+  );
+  return { selected, speaking, audioError, select, speak, player };
+}
+
+function DemoObject({ id }: { id: (typeof choices)[number]["id"] }) {
+  return <Image className="sl-object" src={`/landing/soyle-object-${id}.webp`} width={72} height={72} alt="" unoptimized />;
+}
+
+function DemoHeading({ title, description }: { title: string; description?: string }) {
+  return (
+    <div className="sl-demo-heading">
+      <h3 className="sl-heading-4">{title}</h3>
+      {description && <p className="sl-caption">{description}</p>}
     </div>
   );
 }
 
-function OrganicWave({
-  edge = "bottom",
-  alternate = false,
-}: {
-  edge?: "top" | "bottom";
-  alternate?: boolean;
-}) {
+function CommunicationBoard({ board }: { board: ReturnType<typeof useCommunicationBoard> }) {
+  const { selected, speaking, audioError, select, speak } = board;
   return (
-    <svg
-      className={`sl-wave sl-wave-${edge}`}
-      viewBox="0 0 1440 64"
-      preserveAspectRatio="none"
-      aria-hidden="true"
-      focusable="false"
-    >
-      <path
-        d={
-          alternate
-            ? "M0 23C145 4 260 57 440 35S690 2 856 30S1130 63 1440 13V64H0Z"
-            : "M0 30C170 60 310 3 487 25S755 57 937 28S1210 4 1440 32V64H0Z"
-        }
-        fill="currentColor"
-      />
-    </svg>
+    <div className="sl-example-sheet sl-aac" id="communication">
+      <DemoHeading title={t("landing.showcase.board")} description={t("landing.showcase.boardHint")} />
+      <div className="sl-tool-grid sl-aac-grid">
+        <div className="sl-work-card">
+          <h4>{t("landing.demo.cardLibrary")}</h4>
+          <div className="sl-object-options">
+            {choices.map(({ id, label }) => (
+              <button key={id} type="button" className="sl-object-choice" aria-pressed={selected === id} onClick={() => select(id)}>
+                <DemoObject id={id} />
+                {t(label)}
+                {selected === id && <Check size={15} aria-hidden="true" />}
+              </button>
+            ))}
+          </div>
+        </div>
+        <div className="sl-work-card sl-phrase-card">
+          <h4>{t("landing.demo.composedPhrase")}</h4>
+          <p className="sl-phrase"><span key={selected}>{t(`landing.aac.${selected}`)}</span></p>
+          <button type="button" className="sl-speak" onClick={speak}>
+            {speaking ? <X size={16} aria-hidden="true" /> : <Volume2 size={16} aria-hidden="true" />}
+            <span>{speaking ? t("landing.copy124") : t("landing.copy125")}</span>
+          </button>
+          <small className="sl-audio-error">{audioError && t("landing.copy126")}</small>
+        </div>
+      </div>
+    </div>
   );
 }
-function Action({
-  secondary = false,
-  href = "/app",
-  children = t("landing.copy034"),
-}: {
-  secondary?: boolean;
-  href?: string;
-  children?: React.ReactNode;
+
+function WorkspaceWindow({ children, sidebar, className = "" }: {
+  children: ReactNode;
+  sidebar: ReactNode;
+  className?: string;
 }) {
   return (
-    <Link
-      className={`sl-button ${secondary ? "sl-secondary" : "sl-primary"}`}
-      href={href}
-    >
-      {children}
-      <ArrowRight size={18} aria-hidden="true" />
-    </Link>
+    <div className={`sl-window sl-glass ${className}`}>
+      <div className="sl-window-bar">
+        <div className="sl-window-brand">
+          <Image src="/landing/soyle-mark-plum.svg" width={21} height={21} alt="" />
+          Söyle
+        </div>
+        <span>{t("landing.showcase.sample")}</span>
+        <span className="sl-window-lights" aria-hidden="true"><i /><i /><i /></span>
+      </div>
+      <div className="sl-window-layout">
+        <div className="sl-window-sidebar">{sidebar}</div>
+        {children}
+      </div>
+    </div>
+  );
+}
+
+const exercise = [
+  { answer: "apple", prompt: "landing.showcase.lessonPrompt" },
+  { answer: "water", prompt: "landing.desktop.waterPrompt" },
+  { answer: "play", prompt: "landing.desktop.ballPrompt" },
+] as const;
+
+function LessonPreview() {
+  const [step, setStep] = useState(0);
+  const [answer, setAnswer] = useState<(typeof choices)[number]["id"] | null>(null);
+  const question = exercise[step];
+  const correct = answer === question.answer;
+  const complete = correct && step === exercise.length - 1;
+
+  return (
+    <div className="sl-example-sheet sl-exercise-sheet">
+      <DemoHeading title={t("landing.desktop.tab.lesson")} description={t("landing.demo.lessonIntro")} />
+      <div className="sl-tool-grid sl-exercise-grid">
+        <div className="sl-work-card sl-exercise-guide">
+          <h4>{t("landing.showcase.lessonLabel")}</h4>
+          <ol>
+            {exercise.map(({ answer, prompt }, index) => (
+              <li key={answer} aria-current={index === step ? "step" : undefined}>
+                <span>{index < step ? <Check size={15} aria-hidden="true" /> : index + 1}</span>
+                {t(prompt)}
+              </li>
+            ))}
+          </ol>
+        </div>
+        <div className="sl-work-card sl-question">
+          <div className="sl-sheet-meta">
+            <span>{t("landing.demo.exerciseQuestion")}</span>
+            <span>{step + 1} / {exercise.length}</span>
+          </div>
+          <div className="sl-exercise-progress" aria-hidden="true">
+            {exercise.map(({ answer }, index) => <i key={answer} data-current={index <= step} />)}
+          </div>
+          <h4>{t(question.prompt)}</h4>
+          <div className="sl-object-options">
+            {choices.map(({ id, label }) => (
+              <button key={id} type="button" className="sl-object-choice" aria-pressed={answer === id} onClick={() => setAnswer(id)}>
+                <DemoObject id={id} />
+                {t(id === "play" ? "landing.desktop.ball" : label)}
+                {answer === id && (correct ? <Check size={15} aria-hidden="true" /> : <X size={15} aria-hidden="true" />)}
+              </button>
+            ))}
+          </div>
+          <div className="sl-lesson-footer">
+            <p className="sl-lesson-feedback" aria-live="polite">
+              {t(complete ? "landing.desktop.complete" : correct ? "landing.desktop.correct" : answer ? "landing.desktop.retry" : "landing.desktop.chooseAnswer")}
+            </p>
+            <button type="button" className="sl-lesson-next" disabled={!correct} onClick={() => {
+              setStep(complete ? 0 : step + 1);
+              setAnswer(null);
+            }}>
+              {t(complete ? "landing.desktop.restart" : "landing.desktop.nextQuestion")} <ArrowRight size={15} aria-hidden="true" />
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+const observations = [
+  { day: 24, title: "landing.desktop.drink", note: "landing.showcase.note" },
+  { day: 22, title: "landing.desktop.listening", note: "landing.desktop.listeningNote" },
+  { day: 19, title: "landing.desktop.playtime", note: "landing.desktop.playtimeNote" },
+] as const;
+
+function SelectedCopy({ items, selected }: {
+  items: ReadonlyArray<{ note: Parameters<typeof t>[0] }>;
+  selected: number;
+}) {
+  return (
+    <div className="sl-selected-copy" aria-live="polite">
+      {items.map(({ note }, index) => <p key={note} hidden={selected !== index}>{t(note)}</p>)}
+    </div>
+  );
+}
+
+function ObservationContent({ locale }: { locale: Locale }) {
+  const [selected, setSelected] = useState(0);
+  const date = new Intl.DateTimeFormat(locale, { month: "short", day: "numeric", timeZone: "UTC" });
+  const current = observations[selected];
+
+  return (
+    <>
+      <div className="sl-work-card">
+        <h4>{t("landing.demo.recent")}</h4>
+        <ul className="sl-records">
+          {observations.map(({ day, title }, index) => (
+            <li key={day}>
+              <button type="button" aria-pressed={selected === index} onClick={() => setSelected(index)}>
+                <span>{t(title)}</span>
+                <time className="sl-record-date" dateTime={`2026-10-${day}`}>{date.format(Date.UTC(2026, 9, day))}</time>
+                <ChevronDown size={15} aria-hidden="true" />
+              </button>
+            </li>
+          ))}
+        </ul>
+      </div>
+      <div className="sl-work-card sl-observation-note">
+        <span className="sl-demo-label"><MessageSquare size={16} aria-hidden="true" />{t("landing.showcase.noteLabel")}</span>
+        <div className="sl-observation-title">
+          {observations.map(({ title }, index) => <h4 key={title} hidden={selected !== index}>{t(title)}</h4>)}
+        </div>
+        <SelectedCopy items={observations} selected={selected} />
+        <time className="sl-record-date" dateTime={`2026-10-${current.day}`}>{date.format(Date.UTC(2026, 9, current.day))}</time>
+      </div>
+    </>
+  );
+}
+
+function HistoryPreview({ locale, compact = false }: { locale: Locale; compact?: boolean }) {
+  return (
+    <div className="sl-example-sheet sl-history-sheet">
+      {compact
+        ? <p className="sl-sheet-meta"><span><History size={16} aria-hidden="true" />{t("landing.desktop.observations")}</span><span>{t("landing.copy116")}</span></p>
+        : <DemoHeading title={t("landing.desktop.observations")} description={t("landing.demo.historyIntro")} />}
+      <div className="sl-tool-grid sl-record-grid"><ObservationContent locale={locale} /></div>
+    </div>
+  );
+}
+
+const tasks = [
+  { title: "landing.showcase.planTask", day: "landing.desktop.monday", note: "landing.showcase.planTip", icon: MessageSquare },
+  { title: "landing.desktop.listenTask", day: "landing.desktop.wednesday", note: "landing.desktop.listenTip", icon: BookOpen },
+  { title: "landing.desktop.phraseTask", day: "landing.desktop.friday", note: "landing.desktop.phraseTip", icon: ClipboardList },
+] as const;
+
+function TaskContent({ daily = false }: { daily?: boolean }) {
+  const [selected, setSelected] = useState(0);
+
+  return (
+    <>
+      <div className="sl-work-card">
+        <h4>{t(daily ? "landing.demo.todayPlan" : "landing.demo.planList")}</h4>
+        <ul className="sl-records sl-task-list">
+          {tasks.map(({ title, day, icon: Icon }, index) => (
+            <li key={title}>
+              <button type="button" aria-pressed={selected === index} onClick={() => setSelected(index)}>
+                <Icon size={16} aria-hidden="true" />
+                <span>{t(title)}</span>
+                {!daily && <span className="sl-record-date">{t(day)}</span>}
+                <ChevronDown size={15} aria-hidden="true" />
+              </button>
+            </li>
+          ))}
+        </ul>
+      </div>
+      <div className="sl-work-card sl-task-note">
+        <span className="sl-demo-label"><BookOpen size={16} aria-hidden="true" />{t("landing.demo.taskDetail")}</span>
+        <div className="sl-observation-title">
+          {tasks.map(({ title }, index) => <h4 key={title} hidden={selected !== index}>{t(title)}</h4>)}
+        </div>
+        <SelectedCopy items={tasks} selected={selected} />
+      </div>
+    </>
+  );
+}
+
+function PlanPreview({ compact = false }: { compact?: boolean }) {
+  return (
+    <div className="sl-example-sheet sl-plan-sheet">
+      {compact
+        ? <p className="sl-sheet-meta"><span><ClipboardList size={16} aria-hidden="true" />{t("landing.showcase.plan")}</span><span>{t("landing.copy116")}</span></p>
+        : <DemoHeading title={t("landing.desktop.weekPlan")} description={t("landing.demo.planIntro")} />}
+      <div className="sl-tool-grid sl-record-grid"><TaskContent /></div>
+    </div>
+  );
+}
+
+function ParentDashboard({ locale, onOpenLesson }: { locale: Locale; onOpenLesson: () => void }) {
+  return (
+    <div className="sl-parent-dashboard">
+      <header className="sl-dashboard-heading">
+        <div className="sl-demo-heading">
+          <p className="sl-demo-label">{t("landing.desktop.tab.history")}</p>
+          <h2 className="sl-heading-4">{t("landing.demo.dashboard")}</h2>
+        </div>
+        <div className="sl-profile">
+          <span className="sl-profile-avatar" aria-hidden="true">А</span>
+          <div><strong>{t("landing.demo.profileName")}</strong><span>{t("landing.demo.sampleProfile")}</span></div>
+        </div>
+      </header>
+      <div className="sl-dashboard-next">
+        <span className="sl-next-icon"><CalendarDays size={19} aria-hidden="true" /></span>
+        <div>
+          <p className="sl-demo-label">{t("landing.demo.nextActivity")}</p>
+          <strong>{t("landing.desktop.listening")}</strong>
+          <span className="sl-next-duration"><Clock3 size={14} aria-hidden="true" />{t("landing.demo.practiceTime")}</span>
+        </div>
+        <a className="sl-lesson-next" href="#journey" onClick={onOpenLesson}>
+          {t("landing.demo.openLesson")}<ArrowRight size={16} aria-hidden="true" />
+        </a>
+      </div>
+      <div className="sl-dashboard-grid">
+        <div className="sl-dashboard-column"><TaskContent daily /></div>
+        <div className="sl-dashboard-column"><ObservationContent locale={locale} /></div>
+      </div>
+    </div>
   );
 }
 
 export function LandingPage() {
   const locale = useLocale();
-  const [menuOpen, setMenuOpen] = useState(false);
-  const [selected, setSelected] = useState("water");
-  const [speaking, setSpeaking] = useState(false);
-  const [audioError, setAudioError] = useState(false);
-  const audio = useRef<HTMLAudioElement>(null);
+  const board = useCommunicationBoard(locale);
+  const [preview, setPreview] = useState(0);
   const root = useRef<HTMLDivElement>(null);
+
   useEffect(() => {
-    const element = root.current;
-    if (!element) return;
-    const media = window.matchMedia("(prefers-reduced-motion: reduce)");
-    const sync = () => element.classList.toggle("sl-motion", !media.matches);
-    sync();
-    media.addEventListener("change", sync);
-    const observer = new IntersectionObserver(
-      (entries) =>
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            entry.target.classList.add("sl-visible");
-            observer.unobserve(entry.target);
-          }
-        }),
-      { threshold: 0.08 },
-    );
-    element
-      .querySelectorAll("[data-reveal]")
-      .forEach((item) => observer.observe(item));
-    const escape = (event: KeyboardEvent) => {
-      if (event.key === "Escape") setMenuOpen(false);
-    };
-    window.addEventListener("keydown", escape);
-    return () => {
-      observer.disconnect();
-      media.removeEventListener("change", sync);
-      window.removeEventListener("keydown", escape);
-    };
+    const page = root.current;
+    if (!page || !("IntersectionObserver" in window)) return;
+
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(({ target, isIntersecting }) => {
+        if (!isIntersecting) return;
+        target.classList.add("sl-visible");
+        observer.unobserve(target);
+      });
+    }, { threshold: 0.12 });
+
+    page.querySelectorAll("[data-reveal]").forEach((element) => observer.observe(element));
+    return () => observer.disconnect();
   }, []);
-  useEffect(() => {
-    const player = audio.current;
-    const stop = () => { player?.pause(); window.speechSynthesis?.cancel(); setSpeaking(false); };
-    window.addEventListener("soyle-locale-changing", stop);
-    return () => { window.removeEventListener("soyle-locale-changing", stop); player?.pause(); window.speechSynthesis?.cancel(); };
-  }, []);
-  const close = () => setMenuOpen(false);
-  const speak = () => {
-    if (!audio.current) return;
-    if (speaking) {
-      audio.current.pause();
-      window.speechSynthesis?.cancel();
-      setSpeaking(false);
-      return;
-    }
-    audio.current.src = `${API_URL}/api/public/speech/${locale === "kk-KZ" ? "kk" : "ru"}/${selected}`;
-    setAudioError(false);
-    setSpeaking(true);
-    void audio.current.play().catch(() => {
-      setSpeaking(false);
-      setAudioError(true);
-    });
-  };
+
+  function onTabKey(event: KeyboardEvent<HTMLButtonElement>) {
+    const last = previews.length - 1;
+    const next = {
+      ArrowLeft: preview === 0 ? last : preview - 1,
+      ArrowRight: preview === last ? 0 : preview + 1,
+      Home: 0,
+      End: last,
+    }[event.key];
+    if (next === undefined) return;
+    event.preventDefault();
+    setPreview(next);
+    root.current?.querySelector<HTMLButtonElement>(`#sl-tab-${previews[next].id}`)?.focus();
+  }
+
+  const current = previews[preview];
+  const links = [
+    { href: "#journey", label: t("landing.showcase.navJourney") },
+    { href: "#family", label: t("landing.showcase.navFamily") },
+    { href: "#questions", label: t("landing.copy042") },
+  ];
 
   return (
     <div className="sl-page" ref={root}>
-      <a className="sl-skip" href="#main-content">
-        {t("landing.copy035")}</a>
-      <header className="sl-header">
-        <div className="sl-container sl-nav">
-          <Link href="/" aria-label={t("landing.copy036")}>
-            <Logo />
-          </Link>
-          <nav
-            id="sl-navigation"
-            className={menuOpen ? "sl-open" : ""}
-            aria-label={t("landing.copy037")}
-          >
-            <a href="#about" onClick={close}>
-              {t("landing.copy038")}</a>
-            <a href="#family" onClick={close}>
-              {t("landing.copy039")}</a>
-            <a href="#journey" onClick={close}>
-              {t("landing.copy040")}</a>
-            <a href="#benefits" onClick={close}>
-              {t("landing.copy041")}</a>
-            <a href="#questions" onClick={close}>
-              {t("landing.copy042")}</a>
-            <Link className="sl-mobile-login" href="/app">
-              {t("landing.copy043")}<ArrowRight size={16} />
-            </Link>
-          </nav>
-          <div className="sl-nav-actions"><LanguagePicker compact/>
-            <Link href="/app" className="sl-login">
-              {t("landing.copy044")}</Link>
-            <Action />
-          </div>
-          <button
-            type="button"
-            className="sl-menu"
-            aria-label={menuOpen ? t("landing.copy045") : t("landing.copy046")}
-            aria-expanded={menuOpen}
-            aria-controls="sl-navigation"
-            onClick={() => setMenuOpen(!menuOpen)}
-          >
-            {menuOpen ? <X /> : <Menu />}
-          </button>
+      {board.player}
+      <div className="sr-only" role="status">
+        {t(board.audioError ? "landing.copy126" : `landing.aac.${board.selected}`)}
+      </div>
+      <a className="sl-skip" href="#main-content">{t("landing.copy035")}</a>
+      <header className="sl-header sl-container">
+        <Wordmark />
+        <nav className="sl-nav" aria-label={t("landing.copy037")}>
+          {links.map(({ href, label }) => <a key={href} href={href}>{label}</a>)}
+        </nav>
+        <div className="sl-header-actions">
+          <LanguagePicker compact />
+          <Link className="sl-login" href="/app">{t("landing.copy044")} <ArrowRight size={14} aria-hidden="true" /></Link>
         </div>
       </header>
-      <main id="main-content">
+
+      <main id="main-content" tabIndex={-1}>
         <section className="sl-hero" id="about">
-          <Foliage kind="tall" className="sl-hero-leaves-left" />
-          <Foliage kind="canopy" className="sl-hero-leaves-right" />
-          <div className="sl-hero-art">
-            <Illustration
-              name="hero-room"
-              priority
-              alt={t("landing.copy047")}
-              sizes="100vw"
-            />
+          <div className="sl-hero-scene">
+            <Image className="sl-hero-photo" src={scenery.hero} alt="" fill loading="eager" fetchPriority="high" quality={75} sizes="100vw" />
           </div>
-          <div className="sl-container sl-hero-inner">
+          <div className="sl-container sl-hero-content">
             <div className="sl-hero-copy">
-              <h1>
-                <span>{t("landing.copy049")}</span>
-                <span>{t("landing.copy050")}</span>
-              </h1>
-              <p>
-                {t("landing.copy051")}</p>
-              <div className="sl-actions">
-                <Action />
-                <Action secondary href="#games">
-                  {t("landing.copy052")}</Action>
-              </div>
-              <div className="sl-trust">
-                <div>
-                  <span className="sl-icon rose">
-                    <Heart fill="currentColor" />
-                  </span>
-                  {t("landing.copy053")}<br />{t("landing.copy054")}</div>
-                <div>
-                  <span className="sl-icon sky">
-                    <MessageCircle fill="currentColor" />
-                  </span>
-                  {t("landing.copy055")}<br />{t("landing.copy056")}</div>
-                <div>
-                  <span className="sl-icon yellow">
-                    <ShieldCheck />
-                  </span>
-                  {t("landing.copy057")}<br />{t("landing.copy058")}</div>
+              <p className="sl-kicker">{t("landing.showcase.audience")}</p>
+              <h1 className="sl-heading-1">{t("landing.showcase.titleFirst")}<br />{t("landing.showcase.titleSecond")}</h1>
+              <p className="sl-body sl-hero-description">{t("landing.showcase.description")}</p>
+              <div className="sl-hero-actions">
+                <StartLink />
+                <a className="sl-text-link" href="#journey">{t("landing.demo.openPreview")} <ArrowDown size={15} aria-hidden="true" /></a>
               </div>
             </div>
-            <div className="sl-speech-bubble" aria-hidden="true">
-              {t("landing.copy059")}<br />
-              {t("landing.copy060")}
-            </div>
-          </div>
-          <OrganicWave />
-        </section>
 
-        <section className="sl-games sl-container" id="games">
-          <div className="sl-section-heading" data-reveal>
-            <div>
-              <h2>
-                {t("landing.copy061")}{" "}
-                <span className="sl-heading-spark" aria-hidden="true">
-                  ✦
-                </span>
-              </h2>
-              <p>
-                {t("landing.copy062")}<br className="sl-desktop-break" /> {t("landing.copy063")}</p>
-            </div>
-            <Action secondary href="/app">
-              {t("landing.copy064")}</Action>
-          </div>
-          <div className="sl-game-grid">
-            {games().map((game, i) => (
-              <Link
-                className={`sl-game ${game.tone}`}
-                href="/app"
-                key={game.image}
-                data-reveal
-                style={{ "--delay": `${i * 85}ms` } as React.CSSProperties}
-              >
-                <div className="sl-game-copy">
-                  <span className="sl-game-number">0{i + 1}</span>
-                  <h3>{game.title}</h3>
-                  <p>{game.text}</p>
+            <WorkspaceWindow
+              className="sl-hero-window"
+              sidebar={(
+                <div className="sl-window-links" aria-hidden="true">
+                  <p className="sl-sidebar-label">{t("landing.desktop.tab.history")}</p>
+                  <span className="sl-window-current"><LayoutGrid size={17} />{t("landing.demo.overview")}</span>
+                  <span><ClipboardList size={17} />{t("landing.showcase.plan")}</span>
+                  <span><History size={17} />{t("screen.ParentScreen.ui18")}</span>
+                  <span><MessageSquare size={17} />{t("landing.desktop.observations")}</span>
                 </div>
-                <div className="sl-game-image">
-                  <Illustration
-                    name={game.image}
-                    alt={game.alt}
-                    sizes="(max-width: 650px) 100vw, 33vw"
-                  />
-                </div>
-                <div className="sl-game-bottom">
-                  <span>{game.tag}</span>
-                  <ArrowRight size={18} />
-                </div>
-              </Link>
-            ))}
+              )}
+            >
+              <ParentDashboard locale={locale} onOpenLesson={() => setPreview(0)} />
+            </WorkspaceWindow>
           </div>
         </section>
 
-        <section className="sl-alalia" id="alalia">
-          <OrganicWave edge="top" alternate />
-          <Foliage kind="tall" className="sl-alalia-leaves" />
-          <div className="sl-container sl-alalia-grid">
-            <div className="sl-alalia-intro" data-reveal>
-              <div className="sl-thoughtful">
-                <Illustration
-                  name="alalia-intro"
-                  alt={t("landing.copy065")}
-                  sizes="(max-width: 650px) 42vw, 20vw"
-                />
-                <span aria-hidden="true">?</span>
-              </div>
-              <div className="sl-alalia-copy">
-                <h2>{t("landing.copy066")}</h2>
-                <p>
-                  {t("landing.copy067")}</p>
-                <p>
-                  {t("landing.copy068")}</p>
-                <a
-                  className="sl-button sl-secondary"
-                  href="#alalia-details"
-                  onClick={() => {
-                    const details = document.getElementById("alalia-details");
-                    if (details instanceof HTMLDetailsElement)
-                      details.open = true;
-                  }}
-                >
-                  {t("landing.copy069")}<ArrowRight size={16} />
-                </a>
-              </div>
-            </div>
-            <div className="sl-form-grid">
-              {forms().map((form, i) => (
-                <article
-                  className={`sl-form ${form.tone}`}
-                  key={form.image}
-                  data-reveal
-                  style={{ "--delay": `${i * 80}ms` } as React.CSSProperties}
-                >
-                  <h3>
-                    <form.icon size={19} />
-                    {form.title}
-                  </h3>
-                  <div className="sl-form-image">
-                    <Illustration
-                      name={form.image}
-                      sizes="(max-width: 650px) 32vw, 16vw"
-                    />
-                  </div>
-                  <p>{form.text}</p>
-                </article>
-              ))}
-            </div>
-          </div>
-          <div className="sl-container sl-alalia-note">
-            <details id="alalia-details">
-              <summary>
-                {t("landing.copy070")}<ChevronDown size={16} />
-              </summary>
-              <p>
-                {t("landing.copy071")}</p>
-            </details>
-            <p>
-              {t("landing.copy072")}</p>
-          </div>
-          <OrganicWave alternate />
+        <section className="sl-intro sl-container" aria-labelledby="sl-intro-title">
+          <p className="sl-kicker">{t("landing.copy038")}</p>
+          <h2 className="sl-heading-3" id="sl-intro-title">{t("landing.showcase.introTitle")}</h2>
+          <p className="sl-body">{t("landing.showcase.intro")}</p>
         </section>
 
-        <section className="sl-family sl-container" id="family">
-          <article className="sl-child-panel" data-reveal>
-            <Illustration
-              name="child-experience"
-              alt={t("landing.copy073")}
-              sizes="(max-width: 800px) 100vw, 50vw"
-            />
-            <div className="sl-child-copy">
-              <span className="sl-tag sl-peach-tag">{t("landing.copy055")}</span>
-              <h2>
-                {t("landing.copy074")}<br />
-                {t("landing.copy075")}</h2>
-              <p>
-                {t("landing.copy076")}</p>
-              <ul>
-                {[
-                  t("landing.copy077"),
-                  t("landing.copy078"),
-                  t("landing.copy079"),
-                  t("landing.copy080"),
-                ].map((text) => (
-                  <li key={text}>
-                    <Check size={15} />
-                    {text}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          </article>
-          <article className="sl-parent-panel" data-reveal>
-            <div className="sl-parent-copy">
-              <span className="sl-tag">{t("landing.copy081")}</span>
-              <h2>
-                {t("landing.copy082")}<br />
-                {t("landing.copy083")}</h2>
-              <p>
-                {t("landing.copy084")}</p>
-              <ul>
-                <li>
-                  <History />
-                  {t("landing.copy085")}</li>
-                <li>
-                  <Target />
-                  {t("landing.copy086")}</li>
-                <li>
-                  <BookOpen />
-                  {t("landing.copy087")}</li>
-                <li>
-                  <Heart />
-                  {t("landing.copy088")}</li>
-              </ul>
-            </div>
-            <div className="sl-parent-preview">
-              <div className="sl-preview-head">
-                <Logo />
-                <span>{t("landing.copy089")}</span>
-              </div>
-              <strong>
-                {t("landing.copy090")}<br />
-                {t("landing.copy091")}</strong>
-              <div className="sl-preview-stats">
-                <div>
-                  <b>-</b>
-                  <span>{t("landing.copy092")}</span>
-                </div>
-                <div>
-                  <b>-</b>
-                  <span>{t("landing.copy093")}</span>
-                </div>
-              </div>
-              <div className="sl-preview-row">
-                <History size={18} />
-                <div>
-                  <b>{t("landing.copy094")}</b>
-                  <small>{t("landing.copy095")}</small>
-                </div>
-              </div>
-              <div className="sl-preview-row">
-                <BookOpen size={18} />
-                <div>
-                  <b>{t("landing.copy096")}</b>
-                  <small>{t("landing.copy097")}</small>
-                </div>
-              </div>
-              <Link href="/app">
-                {t("landing.copy098")}<ArrowRight size={14} />
-              </Link>
-              <small className="sl-preview-caption">
-                {t("landing.copy099")}</small>
-            </div>
-          </article>
-        </section>
-
-        <section className="sl-journey" id="journey">
-          <OrganicWave edge="top" />
-          <div className="sl-journey-art">
-            <Illustration
-              name="speech-journey"
-              mobileName="speech-journey-mobile"
-              alt={t("landing.copy100")}
-              sizes="100vw"
-            />
+        <section className="sl-journey sl-container" id="journey" aria-labelledby="sl-journey-title">
+          <div className="sl-section-lead">
+            <h2 className="sl-heading-2" id="sl-journey-title">{t("landing.showcase.journeyTitle")}</h2>
+            <p className="sl-body">{t("landing.showcase.journeyIntro")}</p>
           </div>
-          <div className="sl-container sl-journey-content">
-            <h2 data-reveal>
-              {t("landing.copy101")}<br />{t("landing.copy102")}</h2>
-            <ol>
-              {[
-                { title: t("landing.copy103"), image: "sounds" },
-                { title: t("landing.copy104"), image: "words" },
-                { title: t("landing.copy004"), image: "phrases" },
-                { title: t("landing.copy105"), image: "situations" },
-              ].map((step, i) => (
-                <li
-                  data-reveal
-                  key={step.image}
-                  style={{ "--delay": `${i * 100}ms` } as React.CSSProperties}
-                >
-                  <div className="sl-journey-card-art"><Image src={`/images/landing/journey-${step.image}-v2.webp`} alt="" fill sizes="(max-width: 640px) 40vw, (max-width: 1000px) 45vw, 24vw"/><span className="sl-step-number">0{i + 1}</span></div>
-                  <h3>{step.title}</h3>
-                </li>
-              ))}
-            </ol>
-            <p>{t("landing.copy106")}</p>
-          </div>
-          <OrganicWave alternate />
-        </section>
-
-        <section className="sl-benefits sl-container" id="benefits">
-          <Foliage kind="tall" className="sl-benefits-leaves-left" />
-          <Foliage kind="garden" className="sl-benefits-leaves-right" />
-          <div data-reveal>
-            <h2>
-              {t("landing.copy107")}{" "}
-              <span className="sl-heading-spark" aria-hidden="true">
-                ✦
-              </span>
-            </h2>
-            <p>
-              {t("landing.copy108")}<br />
-              {t("landing.copy109")}</p>
-          </div>
-          <div className="sl-benefit-grid">
-            {benefits().map(([name, title, text], i) => (
-              <article
-                key={name}
-                data-reveal
-                style={{ "--delay": `${i * 80}ms` } as React.CSSProperties}
-              >
-                <div className="sl-benefit-art">
-                  <Illustration name={name} sizes="110px" />
-                </div>
-                <h3>{title}</h3>
-                <p>{text}</p>
-              </article>
-            ))}
-          </div>
-        </section>
-
-        <section className="sl-try sl-container" id="try" data-reveal>
-          <div>
-            <span className="sl-tag">{t("landing.copy110")}</span>
-            <h2>
-              {t("landing.copy111")}<br />
-              {t("landing.copy112")}</h2>
-            <p>
-              {t("landing.copy113")}<br />
-              {t("landing.copy114")}</p>
-          </div>
-          <div className="sl-aac">
-            <span className="sl-aac-label">
-              {t("landing.copy115")}<span>{t("landing.copy116")}</span>
-            </span>
-            <p aria-live="polite">
-              {locale === "kk-KZ" ? "" : t("landing.copy117")}{" "}
-              <strong>
-                {locale === "kk-KZ" ? (selected === "water" ? t("landing.aac.water") : selected === "apple" ? t("landing.aac.apple") : t("landing.aac.play")) : selected === "water"
-                  ? t("landing.copy118")
-                  : selected === "apple"
-                    ? t("landing.copy119")
-                    : t("landing.copy120")}
-              </strong>
-            </p>
-            <div className="sl-aac-options">
-              {[
-                { id: "water", label: t("landing.copy121"), path: "food/water" },
-                { id: "apple", label: t("landing.copy122"), path: "food/apple" },
-                { id: "play", label: t("landing.copy123"), path: "toys/ball" },
-              ].map((item) => (
+          <div className="sl-preview" data-reveal>
+            <div className="sl-tabs" role="tablist" aria-label={t("landing.desktop.sections")}>
+              {previews.map(({ id, icon: Icon }, index) => (
                 <button
-                  key={item.id}
-                  aria-pressed={selected === item.id}
-                  onClick={() => {
-                    audio.current?.pause();
-                    window.speechSynthesis?.cancel();
-                    setSelected(item.id);
-                    setSpeaking(false);
-                    setAudioError(false);
-                  }}
+                  key={id} id={`sl-tab-${id}`} type="button" role="tab"
+                  aria-selected={preview === index} aria-controls={`sl-panel-${id}`}
+                  tabIndex={preview === index ? 0 : -1}
+                  onClick={() => setPreview(index)} onKeyDown={onTabKey}
                 >
-                  <Image
-                    src={`/p15/nouns/${item.path}.svg`}
-                    width={48}
-                    height={48}
-                    alt=""
-                  />
-                  {item.label}
-                  {selected === item.id && <Check size={13} />}
+                  <Icon size={16} aria-hidden="true" />{t(`landing.desktop.tab.${id}`)}
                 </button>
               ))}
             </div>
-            <button className="sl-button sl-primary" onClick={speak}>
-              <Volume2 size={18} />
-              {speaking ? t("landing.copy124") : t("landing.copy125")}
-            </button>
-            <audio
-              ref={audio}
-              preload="none"
-              onEnded={() => setSpeaking(false)}
-              onError={() => {
-                setSpeaking(false);
-                setAudioError(true);
-              }}
-            />
-            {audioError && (
-              <small role="status">{t("landing.copy126")}</small>
-            )}
+            <div className="sl-desktop-scene">
+              <Image className="sl-scene-photo" src={scenery.desktop} alt="" fill quality={75} sizes="(max-width: 760px) calc(100vw - 40px), (max-width: 1232px) calc(100vw - 64px), 1168px" />
+              <WorkspaceWindow
+                className="sl-desktop-window"
+                sidebar={(
+                  <div className="sl-window-links" role="group" aria-label={t("landing.desktop.sections")}>
+                    <p className="sl-sidebar-label">{t("landing.desktop.sections")}</p>
+                    {previews.map(({ id, icon: Icon }, index) => (
+                      <button key={id} type="button" aria-pressed={preview === index} onClick={() => setPreview(index)}>
+                        <Icon size={17} aria-hidden="true" />{t(`landing.desktop.tab.${id}`)}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              >
+                <div className="sl-desktop-body">
+                  {previews.map(({ id }, index) => (
+                    <div
+                      className="sl-preview-panel"
+                      key={id} id={`sl-panel-${id}`} role="tabpanel" aria-labelledby={`sl-tab-${id}`}
+                      tabIndex={preview === index ? 0 : -1}
+                      hidden={current.id !== id}
+                    >
+                      {id === "lesson" && <LessonPreview />}
+                      {id === "communication" && <CommunicationBoard board={board} />}
+                      {id === "history" && <HistoryPreview locale={locale} />}
+                      {id === "plan" && <PlanPreview />}
+                    </div>
+                  ))}
+                </div>
+              </WorkspaceWindow>
+            </div>
+            <div className="sl-preview-controls">
+              <button type="button" aria-label={t("landing.showcase.previous")} onClick={() => setPreview((preview + previews.length - 1) % previews.length)}>
+                <ArrowLeft size={18} aria-hidden="true" />
+              </button>
+              <span className="sl-caption" aria-live="polite">{t(`landing.desktop.caption.${current.id}`)}</span>
+              <button type="button" aria-label={t("landing.showcase.next")} onClick={() => setPreview((preview + 1) % previews.length)}>
+                <ArrowRight size={18} aria-hidden="true" />
+              </button>
+            </div>
           </div>
         </section>
 
-        <section className="sl-faq sl-container" id="questions">
-          <div data-reveal>
-            <span className="sl-tag">{t("landing.copy127")}</span>
-            <h2>
-              {t("landing.copy128")}<br />
-              {t("landing.copy129")}</h2>
-            <p>{t("landing.copy130")}</p>
+        <section className="sl-family sl-container" id="family" aria-labelledby="sl-family-title">
+          <div className="sl-section-lead">
+            <h2 className="sl-heading-2" id="sl-family-title">{t("landing.showcase.familyTitle")}</h2>
+            <p className="sl-body">{t("landing.showcase.familyIntro")}</p>
+          </div>
+          <div className="sl-family-grid">
+            <article className="sl-family-card">
+              <div className="sl-family-copy">
+                <p className="sl-kicker">{t("landing.showcase.parent")}</p>
+                <h3 className="sl-heading-5">{t("landing.showcase.parentTitle")}</h3>
+                <p className="sl-body">{t("landing.showcase.parentDescription")}</p>
+              </div>
+              <div className="sl-family-visual">
+                <Image className="sl-scene-photo" src={scenery.history} alt="" fill quality={75} sizes="(max-width: 560px) calc(100vw - 40px), (max-width: 1232px) 56vw, 672px" />
+                <div className="sl-family-panel sl-glass"><HistoryPreview locale={locale} compact /></div>
+              </div>
+            </article>
+            <article className="sl-family-card sl-family-card-reverse">
+              <div className="sl-family-copy">
+                <p className="sl-kicker">{t("landing.showcase.specialist")}</p>
+                <h3 className="sl-heading-5">{t("landing.showcase.specialistTitle")}</h3>
+                <p className="sl-body">{t("landing.showcase.specialistDescription")}</p>
+              </div>
+              <div className="sl-family-visual sl-family-visual-plan">
+                <Image className="sl-scene-photo" src={scenery.plan} alt="" fill quality={75} sizes="(max-width: 560px) calc(100vw - 40px), (max-width: 1232px) 56vw, 672px" />
+                <div className="sl-family-panel sl-glass"><PlanPreview compact /></div>
+              </div>
+            </article>
+          </div>
+        </section>
+
+        <section className="sl-access sl-container" id="access" aria-labelledby="sl-access-title">
+          <div className="sl-access-title">
+            <h2 className="sl-heading-3" id="sl-access-title">{t("landing.showcase.accessTitle")}</h2>
+            <p className="sl-body">{t("landing.showcase.accessIntro")}</p>
+            <Link className="sl-text-link" href="/privacy">{t("landing.copy143")} <ArrowRight size={16} aria-hidden="true" /></Link>
+          </div>
+          <ul className="sl-access-list">
+            {access.map(({ id, icon: Icon }) => (
+              <li key={id}>
+                <Icon size={19} aria-hidden="true" />
+                <div>
+                  <strong>{t(`landing.showcase.${id}Title`)}</strong>
+                  <p>{t(`landing.showcase.${id}Description`)}</p>
+                </div>
+              </li>
+            ))}
+          </ul>
+        </section>
+
+        <section className="sl-faq sl-container" id="questions" aria-labelledby="sl-faq-title">
+          <div>
+            <p className="sl-kicker"><CircleHelp size={16} aria-hidden="true" /> FAQ</p>
+            <h2 className="sl-heading-2" id="sl-faq-title">{t("landing.showcase.faqTitle")}</h2>
+            <p className="sl-body">{t("landing.showcase.faqIntro")}</p>
           </div>
           <div className="sl-faq-list">
-            {questions().map(([id, q, a]) => (
-              <details key={id} data-reveal>
-                <summary>
-                  {q}
-                  <ChevronDown size={18} />
-                </summary>
-                <p>{a}</p>
+            {questions.map((id) => (
+              <details key={id}>
+                <summary>{t(`landing.showcase.faq.${id}.question`)}<ChevronDown size={18} aria-hidden="true" /></summary>
+                <p className="sl-body">{t(`landing.showcase.faq.${id}.answer`)}</p>
               </details>
             ))}
           </div>
         </section>
 
-        <section className="sl-night">
-          <OrganicWave edge="top" alternate />
-          <Foliage kind="tall" className="sl-night-leaves" />
-          <div className="sl-night-art">
-            <Illustration
-              name="final-night-scene"
-              alt={t("landing.copy131")}
-              sizes="100vw"
-            />
-          </div>
-          <span className="sl-night-star sl-star-one" aria-hidden="true">
-            ✦
-          </span>
-          <span className="sl-night-star sl-star-two" aria-hidden="true">
-            ✦
-          </span>
-          <div className="sl-container sl-night-inner">
-            <div data-reveal>
-              <h2>
-                {t("landing.copy132")}<br />
-                <em>{t("landing.copy133")}</em>
-              </h2>
-              <p>
-                {t("landing.copy134")}</p>
-              <div className="sl-actions">
-                <Action />
-                <Action secondary href="#games">
-                  {t("landing.copy052")}</Action>
-              </div>
+        <section className="sl-end" aria-labelledby="sl-end-title">
+          <Image className="sl-scene-photo sl-end-photo" src={scenery.end} alt="" fill quality={75} sizes="100vw" />
+          <div className="sl-container sl-end-layout">
+            <div className="sl-end-copy">
+              <h2 className="sl-heading-2" id="sl-end-title">{t("landing.showcase.endTitle")}</h2>
+              <p className="sl-body">{t("landing.showcase.endDescription")}</p>
+              <StartLink />
             </div>
           </div>
-          <OrganicWave />
         </section>
       </main>
-      <footer className="sl-footer">
-        <div className="sl-container sl-footer-grid">
-          <div>
-            <Link href="/" aria-label={t("landing.copy036")}>
-              <Logo />
-            </Link>
-            <p>{t("landing.copy135")}</p>
+
+      <footer className="sl-footer sl-container">
+        <div className="sl-footer-main">
+          <div className="sl-footer-brand">
+            <Wordmark />
+            <p className="sl-caption">{t("landing.showcase.footer")}</p>
           </div>
           <div>
-            <b>{t("landing.copy136")}</b>
-            <a href="#games">{t("landing.copy137")}</a>
-            <a href="#family">{t("landing.copy138")}</a>
-            <a href="#journey">{t("landing.copy040")}</a>
+            <strong>{t("landing.copy038")}</strong>
+            {links.map(({ href, label }) => <a key={href} href={href}>{label}</a>)}
           </div>
           <div>
-            <b>{t("landing.copy139")}</b>
-            <a href="#alalia">{t("landing.copy140")}</a>
-            <a href="#questions">{t("landing.copy141")}</a>
-            <Link href="/app">{t("landing.copy089")}</Link>
-          </div>
-          <div>
-            <b>{t("landing.copy142")}</b>
+            <strong>{t("landing.copy142")}</strong>
             <Link href="/privacy">{t("landing.copy143")}</Link>
             <Link href="/terms">{t("landing.copy144")}</Link>
             <a href="mailto:hello@soyle.app">hello@soyle.app</a>
           </div>
         </div>
-        <div className="sl-container sl-footer-bottom">
-          <span>© 2026 Söyle</span>
-          <p>
-            {t("landing.copy145")}</p>
-          <LanguagePicker/>
+        <div className="sl-footer-bottom">
+          <span>© {new Date().getFullYear()} Söyle</span>
+          <LanguagePicker />
         </div>
       </footer>
     </div>

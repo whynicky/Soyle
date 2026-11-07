@@ -59,16 +59,15 @@ test("frontend does not request blocked external fonts or unsupported image qual
   assert.match(landing, /quality=\{75\}/);
 });
 
-test("landing isolates its illustrated palette from the application theme", async () => {
+test("landing isolates its light palette from the application theme", async () => {
   const [landing, styles] = await Promise.all([
     readProjectFile("components/LandingPage.tsx"),
     readProjectFile("app/landing.css"),
   ]);
   assert.match(landing, /className="sl-page"/);
   assert.doesNotMatch(landing, /document\.documentElement\.dataset\.theme\s*=/);
-  assert.match(styles, /--sl-ink:\s*#102b52/);
-  assert.match(styles, /--sl-teal:\s*#078c91/);
-  assert.match(styles, /--sl-cream:\s*#fff8ed/);
+  assert.match(styles, /\.sl-page\s*\{[^}]*color-scheme:\s*light/);
+  assert.match(styles, /\.sl-page\s*\{[^}]*background:\s*var\(--sl-paper\)/);
 });
 
 test("child AAC vocabulary is not persisted in browser storage", async () => {
