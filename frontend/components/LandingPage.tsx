@@ -4,7 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useRef, useState, type CSSProperties, type KeyboardEvent, type ReactNode } from "react";
 import {
-  ArrowDown, ArrowRight, BookOpen, CalendarDays, Check, ChevronDown, Clock3,
+  ArrowDown, ArrowRight, BookOpen, Check, ChevronDown, Clock3,
   ClipboardList, Download, History, LayoutGrid, LockKeyhole, Menu, MessageSquare, ShieldCheck, UserRound,
   Volume2, X,
 } from "lucide-react";
@@ -488,32 +488,26 @@ function DemoProfile() {
   );
 }
 
-function ParentDashboard({ locale, onOpenLesson }: { locale: Locale; onOpenLesson: () => void }) {
+function ParentDashboard({ onOpenLesson }: { onOpenLesson: () => void }) {
   return (
     <div className="sl-parent-dashboard">
       <header className="sl-dashboard-heading">
-        <div className="sl-demo-heading">
-          <h2 className="sl-heading-4">
-            <span className="sl-desktop-copy">{t("landing.demo.dashboard")}</span>
-            <span className="sl-mobile-copy">{t("landing.demo.todayPractice")}</span>
-          </h2>
-        </div>
+        <h2 className="sl-heading-4">
+          <span className="sl-desktop-copy">{t("landing.demo.dashboard")}</span>
+          <span className="sl-mobile-copy">{t("landing.demo.todayPractice")}</span>
+        </h2>
         <DemoProfile />
       </header>
-      <div className="sl-dashboard-next">
-        <span className="sl-next-icon"><CalendarDays size={19} aria-hidden="true" /></span>
-        <div>
-          <p className="sl-demo-label">{t("landing.demo.nextActivity")}</p>
-          <strong>{t("landing.desktop.listening")}</strong>
-          <span className="sl-next-duration"><Clock3 size={14} aria-hidden="true" />{t("landing.demo.practiceTime")}</span>
+      <div className="sl-hero-lesson">
+        <div className="sl-hero-lesson-art" aria-hidden="true" />
+        <div className="sl-hero-lesson-copy">
+          <span className="sl-demo-label">{t("landing.demo.nextActivity")}</span>
+          <h3>{t("landing.desktop.listening")}</h3>
+          <span className="sl-next-duration"><Clock3 size={15} aria-hidden="true" />{t("landing.demo.practiceTime")}</span>
+          <a className="sl-lesson-next" href="#journey" onClick={onOpenLesson}>
+            {t("landing.demo.openLesson")}<ArrowRight size={16} aria-hidden="true" />
+          </a>
         </div>
-        <a className="sl-lesson-next" href="#journey" onClick={onOpenLesson}>
-          {t("landing.demo.openLesson")}<ArrowRight size={16} aria-hidden="true" />
-        </a>
-      </div>
-      <div className="sl-dashboard-grid">
-        <div className="sl-dashboard-column"><TaskContent daily /></div>
-        <div className="sl-dashboard-column"><ObservationContent locale={locale} /></div>
       </div>
       <div className="sl-dashboard-observation">
         <span className="sl-demo-label"><MessageSquare size={16} aria-hidden="true" />{t("landing.showcase.noteLabel")}</span>
@@ -603,7 +597,7 @@ const practiceSteps = [
   { id: "review", icon: History },
 ] as const;
 
-function PracticeStart() {
+function PracticeStart({ locale, onOpenLesson }: { locale: Locale; onOpenLesson: () => void }) {
   const [selected, setSelected] = useState(0);
 
   return (
@@ -629,19 +623,28 @@ function PracticeStart() {
             {practiceSteps.map(({ id, icon: Icon }, index) => (
               <div key={id} className="sl-practice-fragment" hidden={selected !== index}>
                 <h3><Icon size={19} aria-hidden="true" />{t(`landing.practice.${id}.sample`)}</h3>
-                {id === "profile" && <DemoProfile />}
-                {id === "choose" && (
-                  <ul className="sl-practice-plan">
-                    {tasks.slice(0, 2).map(({ title, icon: TaskIcon }) => <li key={title}><TaskIcon size={16} aria-hidden="true" />{t(title)}</li>)}
-                  </ul>
-                )}
-                {id === "together" && (
-                  <div className="sl-practice-together">
-                    <strong>{t("landing.desktop.listening")}</strong>
-                    <span><Clock3 size={16} aria-hidden="true" />{t("landing.demo.practiceTime")}</span>
+                {id === "profile" && (
+                  <div className="sl-practice-profile">
+                    <DemoProfile />
+                    <div><ClipboardList size={17} aria-hidden="true" />{t("landing.showcase.plan")}</div>
+                    <div><History size={17} aria-hidden="true" />{t("screen.ParentScreen.ui18")}</div>
                   </div>
                 )}
-                {id === "review" && <p className="sl-practice-note">{t("landing.showcase.note")}</p>}
+                {id === "choose" && <div className="sl-practice-records"><TaskContent /></div>}
+                {id === "together" && (
+                  <div className="sl-practice-together">
+                    <p>{t("landing.showcase.lessonPrompt")}</p>
+                    <ul aria-label={t("landing.desktop.chooseAnswer")}>
+                      {choices.map(({ id: choice, label }) => (
+                        <li key={choice}><DemoObject id={choice} />{t(choice === "play" ? "landing.desktop.ball" : label)}</li>
+                      ))}
+                    </ul>
+                    <a className="sl-lesson-next" href="#journey" onClick={onOpenLesson}>
+                      {t("landing.demo.openLesson")} <ArrowRight size={16} aria-hidden="true" />
+                    </a>
+                  </div>
+                )}
+                {id === "review" && <div className="sl-practice-records"><ObservationContent locale={locale} /></div>}
               </div>
             ))}
           </div>
@@ -739,9 +742,10 @@ export function LandingPage({ initialTheme }: { initialTheme: LandingTheme }) {
                 </div>
               )}
             >
-              <ParentDashboard locale={locale} onOpenLesson={() => setPreview(0)} />
+              <ParentDashboard onOpenLesson={() => setPreview(0)} />
             </WorkspaceWindow>
           </div>
+          <div className="sl-hero-foreground" aria-hidden="true" />
         </section>
 
         <ProductIntro />
@@ -801,7 +805,7 @@ export function LandingPage({ initialTheme }: { initialTheme: LandingTheme }) {
           </div>
         </section>
 
-        <PracticeStart />
+        <PracticeStart locale={locale} onOpenLesson={() => setPreview(0)} />
 
         <section className="sl-family sl-container" id="family" aria-labelledby="sl-family-title">
           <div className="sl-section-lead">
