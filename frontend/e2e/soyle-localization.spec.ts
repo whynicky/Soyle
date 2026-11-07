@@ -81,16 +81,29 @@ test('landing copy and AAC demonstration follow the selected language', async ({
   await page.getByRole('dialog').getByRole('button',{name:'Қазақша',exact:true}).click();
   await expect(page.getByRole('heading',{name:'Бала ойын жеткізудің түрлі жолын табады'})).toBeVisible();
   const overview = page.locator('.sl-hero-window');
-  await expect(overview.getByRole('heading', { name: 'Үйдегі жаттығу', exact: true })).toBeVisible();
+  const overviewTitle = (page.viewportSize()?.width ?? 1440) <= 760 ? 'Бүгінгі жаттығу' : 'Үйдегі жаттығу';
+  await expect(overview.getByRole('heading', { name: overviewTitle, exact: true })).toBeVisible();
   await overview.getByRole('link', { name: 'Сабақты көру', exact: true }).click();
   await expect(page.getByRole('tab', { selected: true })).toHaveAttribute('id', 'sl-tab-lesson');
-  await page.getByRole('tab', { name: 'Қарым-қатынас карточкалары', exact: true }).click();
+  const lesson = page.getByRole('tabpanel');
+  await expect(lesson.getByRole('heading', { name: 'Алма қайда?' })).toBeVisible();
+  const audio = page.waitForResponse(response => response.url().endsWith('/audio/landing/lesson-kk-apple.mp3'));
+  await lesson.getByRole('button', { name: 'Сұрақты тыңдау' }).click();
+  expect((await audio).ok()).toBe(true);
+  await lesson.getByRole('button', { name: 'Алма', exact: true }).click();
+  await lesson.locator('.sl-lesson-next').click();
+  await expect(lesson.getByRole('heading', { name: 'Су қайда?' })).toBeVisible();
+
+  await page.locator('#sl-tab-communication').click();
   const board = page.getByRole('tabpanel');
   await expect(board.locator('.sl-phrase')).toHaveText('Су ішкім келеді.');
   await board.getByRole('button',{name:'Алма',exact:true}).click();
   await expect(board.locator('.sl-phrase')).toHaveText('Алма жегім келеді.');
   await page.locator('.sl-footer').getByRole('button',{name:'Русский',exact:true}).click();
   await expect(page.getByRole('heading',{name:'Больше способов сказать важное'})).toBeVisible();
+  const practice = page.locator('.sl-practice');
+  await practice.getByRole('button', { name: /Вернитесь к истории/ }).click();
+  await expect(practice.getByRole('heading', { name: 'Наблюдение родителя' })).toBeVisible();
 });
 
 
@@ -157,6 +170,9 @@ test('landing follows the system theme and serves a saved theme without JavaScri
     await serverPage.goto('/');
     await expect(serverPage.locator('.sl-page')).toHaveAttribute('data-landing-theme', 'light');
     await expect(serverPage.locator('.sl-page')).toHaveCSS('background-color', 'rgb(250, 248, 245)');
+    const intro = serverPage.locator('.sl-intro-copy');
+    await expect(intro.locator('p')).toHaveCount(3);
+    await expect(intro.locator('span').last()).toHaveCSS('color', 'rgb(41, 41, 41)');
   } finally {
     await withoutJavaScript.close();
   }
@@ -319,7 +335,7 @@ test('landing previews remain visible when switching languages with motion enabl
 
   const question = page.locator('.sl-faq details').first();
   await question.locator('summary').click();
-  await page.getByRole('tab', { name: 'Кабинет родителя' }).click();
+  await page.locator('#sl-tab-history').click();
   for (const [language, locale] of [['Қазақша', 'kk-KZ'], ['Русский', 'ru-RU']] as const) {
     await page.locator('.sl-footer').getByRole('button', { name: language, exact: true }).click();
     await expect(page.locator('html')).toHaveAttribute('lang', locale);

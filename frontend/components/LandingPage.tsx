@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useEffect, useRef, useState, type CSSProperties, type KeyboardEvent, type ReactNode } from "react";
 import {
   ArrowDown, ArrowRight, BookOpen, CalendarDays, Check, ChevronDown, Clock3,
-  ClipboardList, Download, History, LayoutGrid, LockKeyhole, Menu, MessageSquare, ShieldCheck,
+  ClipboardList, Download, History, LayoutGrid, LockKeyhole, Menu, MessageSquare, ShieldCheck, UserRound,
   Volume2, X,
 } from "lucide-react";
 import { t, useLocale, type Locale } from "@/lib/i18n";
@@ -54,7 +54,7 @@ const access = [
   { id: "export", icon: Download },
 ] as const;
 
-const questions = ["start", "cards", "camera", "history", "specialist", "therapy"] as const;
+const questions = ["audience", "adult", "cards", "specialist", "history", "therapy", "camera"] as const;
 
 function BrandMark({ size }: { size: number }) {
   return (
@@ -284,8 +284,7 @@ function WorkspaceWindow({ children, sidebar, className = "" }: {
           <BrandMark size={21} />
           Söyle
         </div>
-        <span>{t("landing.showcase.sample")}</span>
-        <span className="sl-window-lights" aria-hidden="true"><i /><i /><i /></span>
+        <span className="sl-window-caption">{t("landing.copy116")}</span>
       </div>
       <div className="sl-window-layout">
         <div className="sl-window-sidebar">{sidebar}</div>
@@ -301,57 +300,70 @@ const exercise = [
   { answer: "play", prompt: "landing.desktop.ballPrompt" },
 ] as const;
 
-function LessonPreview() {
+function LessonPreview({ locale, active }: { locale: Locale; active: boolean }) {
   const [step, setStep] = useState(0);
   const [answer, setAnswer] = useState<(typeof choices)[number]["id"] | null>(null);
+  const [failedSource, setFailedSource] = useState<string | null>(null);
+  const audio = useRef<HTMLAudioElement>(null);
   const question = exercise[step];
+  const source = `/audio/landing/lesson-${locale === "kk-KZ" ? "kk" : "ru"}-${question.answer}.mp3`;
   const correct = answer === question.answer;
   const complete = correct && step === exercise.length - 1;
 
+  useEffect(() => {
+    const player = audio.current;
+    if (!active) player?.pause();
+    return () => player?.pause();
+  }, [active, source]);
+
+  function playQuestion() {
+    const player = audio.current;
+    if (!player) return;
+    setFailedSource(null);
+    player.currentTime = 0;
+    void player.play().catch((error: unknown) => {
+      if (!(error instanceof DOMException && error.name === "AbortError")) setFailedSource(source);
+    });
+  }
+
   return (
     <div className="sl-example-sheet sl-exercise-sheet">
-      <DemoHeading title={t("landing.desktop.tab.lesson")} description={t("landing.demo.lessonIntro")} />
-      <div className="sl-tool-grid sl-exercise-grid">
-        <div className="sl-exercise-guide">
-          <h4>{t("landing.showcase.lessonLabel")}</h4>
-          <ol>
-            {exercise.map(({ answer, prompt }, index) => (
-              <li key={answer} aria-current={index === step ? "step" : undefined}>
-                <span>{index < step ? <Check size={15} aria-hidden="true" /> : index + 1}</span>
-                {t(prompt)}
-              </li>
-            ))}
-          </ol>
-        </div>
-        <div className="sl-question">
-          <div className="sl-sheet-meta">
-            <span>{t("landing.demo.exerciseQuestion")}</span>
-            <span>{step + 1} / {exercise.length}</span>
-          </div>
-          <div className="sl-exercise-progress" aria-hidden="true">
-            {exercise.map(({ answer }, index) => <i key={answer} data-current={index <= step} />)}
-          </div>
+      <audio ref={audio} src={source} preload="none" />
+      <div className="sl-lesson-heading">
+        <h3 className="sl-heading-4">{t("landing.showcase.lessonLabel")}</h3>
+        <span className="sl-caption">{step + 1} / {exercise.length}</span>
+      </div>
+      <div className="sl-exercise-progress" aria-hidden="true">
+        {exercise.map(({ answer }, index) => <i key={answer} data-current={index <= step} />)}
+      </div>
+      <div className="sl-question">
+        <div className="sl-question-prompt">
           <h4>{t(question.prompt)}</h4>
-          <div className="sl-object-options">
-            {choices.map(({ id, label }) => (
-              <button key={id} type="button" className="sl-object-choice" aria-pressed={answer === id} onClick={() => setAnswer(id)}>
-                <DemoObject id={id} />
-                {t(id === "play" ? "landing.desktop.ball" : label)}
-                {answer === id && (correct ? <Check size={15} aria-hidden="true" /> : <X size={15} aria-hidden="true" />)}
-              </button>
-            ))}
-          </div>
-          <div className="sl-lesson-footer">
-            <p className="sl-lesson-feedback" aria-live="polite">
-              {t(complete ? "landing.desktop.complete" : correct ? "landing.desktop.correct" : answer ? "landing.desktop.retry" : "landing.desktop.chooseAnswer")}
-            </p>
-            <button type="button" className="sl-lesson-next" disabled={!correct} onClick={() => {
-              setStep(complete ? 0 : step + 1);
-              setAnswer(null);
-            }}>
-              {t(complete ? "landing.desktop.restart" : "landing.desktop.nextQuestion")} <ArrowRight size={15} aria-hidden="true" />
+          <button className="sl-speak" type="button" onClick={playQuestion}>
+            <Volume2 size={16} aria-hidden="true" />
+            {t("landing.demo.listenQuestion")}
+          </button>
+        </div>
+        {failedSource === source && <p className="sl-lesson-audio-error" role="status">{t("landing.copy126")}</p>}
+        <div className="sl-object-options">
+          {choices.map(({ id, label }) => (
+            <button key={id} type="button" className="sl-object-choice" aria-pressed={answer === id} onClick={() => setAnswer(id)}>
+              <DemoObject id={id} />
+              {t(id === "play" ? "landing.desktop.ball" : label)}
+              {answer === id && (correct ? <Check size={15} aria-hidden="true" /> : <X size={15} aria-hidden="true" />)}
             </button>
-          </div>
+          ))}
+        </div>
+        <div className="sl-lesson-footer">
+          <p className="sl-lesson-feedback" aria-live="polite">
+            {t(complete ? "landing.desktop.complete" : correct ? "landing.desktop.correct" : answer ? "landing.desktop.retry" : "landing.desktop.chooseAnswer")}
+          </p>
+          <button type="button" className="sl-lesson-next" disabled={!correct} onClick={() => {
+            setStep(complete ? 0 : step + 1);
+            setAnswer(null);
+          }}>
+            {t(complete ? "landing.desktop.restart" : "landing.desktop.nextQuestion")} <ArrowRight size={15} aria-hidden="true" />
+          </button>
         </div>
       </div>
     </div>
@@ -467,18 +479,26 @@ function PlanPreview({ compact = false }: { compact?: boolean }) {
   );
 }
 
+function DemoProfile() {
+  return (
+    <div className="sl-profile">
+      <span className="sl-profile-avatar" aria-hidden="true">А</span>
+      <div><strong>{t("landing.demo.profileName")}</strong><span>{t("landing.demo.sampleProfile")}</span></div>
+    </div>
+  );
+}
+
 function ParentDashboard({ locale, onOpenLesson }: { locale: Locale; onOpenLesson: () => void }) {
   return (
     <div className="sl-parent-dashboard">
       <header className="sl-dashboard-heading">
         <div className="sl-demo-heading">
-          <p className="sl-demo-label">{t("landing.desktop.tab.history")}</p>
-          <h2 className="sl-heading-4">{t("landing.demo.dashboard")}</h2>
+          <h2 className="sl-heading-4">
+            <span className="sl-desktop-copy">{t("landing.demo.dashboard")}</span>
+            <span className="sl-mobile-copy">{t("landing.demo.todayPractice")}</span>
+          </h2>
         </div>
-        <div className="sl-profile">
-          <span className="sl-profile-avatar" aria-hidden="true">А</span>
-          <div><strong>{t("landing.demo.profileName")}</strong><span>{t("landing.demo.sampleProfile")}</span></div>
-        </div>
+        <DemoProfile />
       </header>
       <div className="sl-dashboard-next">
         <span className="sl-next-icon"><CalendarDays size={19} aria-hidden="true" /></span>
@@ -495,7 +515,139 @@ function ParentDashboard({ locale, onOpenLesson }: { locale: Locale; onOpenLesso
         <div className="sl-dashboard-column"><TaskContent daily /></div>
         <div className="sl-dashboard-column"><ObservationContent locale={locale} /></div>
       </div>
+      <div className="sl-dashboard-observation">
+        <span className="sl-demo-label"><MessageSquare size={16} aria-hidden="true" />{t("landing.showcase.noteLabel")}</span>
+        <p>{t("landing.showcase.note")}</p>
+      </div>
     </div>
+  );
+}
+
+const introduction = ["opening", "roles", "daily"] as const;
+
+function ProductIntro() {
+  const locale = useLocale();
+  const copy = useRef<HTMLDivElement>(null);
+  const paragraphs = introduction.map((id) => t(`landing.story.${id}`).match(/\S+(?: +\S+){0,2}/g) ?? []);
+  const phraseCount = paragraphs.reduce((total, phrases) => total + phrases.length, 0);
+
+  useEffect(() => {
+    const element = copy.current;
+    if (!element) return;
+
+    const motion = window.matchMedia("(prefers-reduced-motion: reduce)");
+    let frame = 0;
+    let previous = -1;
+
+    const update = () => {
+      frame = 0;
+      if (motion.matches) {
+        element.removeAttribute("data-progressive");
+        element.style.removeProperty("--sl-intro-progress");
+        previous = -1;
+        return;
+      }
+
+      const bounds = element.getBoundingClientRect();
+      const start = window.innerHeight * 0.82;
+      const distance = bounds.height + window.innerHeight * 0.14;
+      const progress = Math.max(0, Math.min(1, (start - bounds.top) / distance));
+      if (progress === previous) return;
+      previous = progress;
+      element.style.setProperty("--sl-intro-progress", progress.toFixed(4));
+      element.setAttribute("data-progressive", "");
+    };
+
+    function schedule() {
+      if (!frame) frame = window.requestAnimationFrame(update);
+    }
+
+    update();
+    window.addEventListener("scroll", schedule, { passive: true });
+    window.addEventListener("resize", schedule);
+    motion.addEventListener("change", schedule);
+    return () => {
+      if (frame) window.cancelAnimationFrame(frame);
+      window.removeEventListener("scroll", schedule);
+      window.removeEventListener("resize", schedule);
+      motion.removeEventListener("change", schedule);
+    };
+  }, [locale]);
+
+  let index = 0;
+  return (
+    <section className="sl-intro sl-container" aria-labelledby="sl-intro-title">
+      <h2 className="sr-only" id="sl-intro-title">{t("landing.story.heading")}</h2>
+      <div className="sl-intro-copy" ref={copy}>
+        {paragraphs.map((phrases, paragraph) => (
+          <p key={introduction[paragraph]}>
+            {phrases.map((phrase, position) => {
+              const delay = index++ * 250 / Math.max(1, phraseCount - 1);
+              return (
+                <span key={position} style={{ "--sl-phrase-delay": `${delay}%` } as CSSProperties}>
+                  {phrase}{position < phrases.length - 1 ? " " : ""}
+                </span>
+              );
+            })}
+          </p>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+const practiceSteps = [
+  { id: "profile", icon: UserRound },
+  { id: "choose", icon: ClipboardList },
+  { id: "together", icon: BookOpen },
+  { id: "review", icon: History },
+] as const;
+
+function PracticeStart() {
+  const [selected, setSelected] = useState(0);
+
+  return (
+    <section className="sl-practice sl-container" aria-labelledby="sl-practice-title">
+      <h2 className="sl-heading-2" id="sl-practice-title">{t("landing.practice.heading")}</h2>
+      <div className="sl-practice-layout">
+        <ol className="sl-practice-steps">
+          {practiceSteps.map(({ id }, index) => (
+            <li key={id}>
+              <button type="button" aria-pressed={selected === index} aria-controls="sl-practice-sample" onClick={() => setSelected(index)}>
+                <span className="sl-step-number" aria-hidden="true">{index + 1}</span>
+                <span><strong>{t(`landing.practice.${id}.title`)}</strong><span>{t(`landing.practice.${id}.description`)}</span></span>
+              </button>
+            </li>
+          ))}
+        </ol>
+        <div className="sl-practice-sample">
+          <div className="sl-practice-toolbar">
+            <span><BrandMark size={19} /> Söyle</span>
+            <span>{t("landing.copy116")}</span>
+          </div>
+          <div className="sl-practice-fragments" id="sl-practice-sample" aria-live="polite">
+            {practiceSteps.map(({ id, icon: Icon }, index) => (
+              <div key={id} className="sl-practice-fragment" hidden={selected !== index}>
+                <h3><Icon size={19} aria-hidden="true" />{t(`landing.practice.${id}.sample`)}</h3>
+                {id === "profile" && <DemoProfile />}
+                {id === "choose" && (
+                  <ul className="sl-practice-plan">
+                    {tasks.slice(0, 2).map(({ title, icon: TaskIcon }) => <li key={title}><TaskIcon size={16} aria-hidden="true" />{t(title)}</li>)}
+                  </ul>
+                )}
+                {id === "together" && (
+                  <div className="sl-practice-together">
+                    <strong>{t("landing.desktop.listening")}</strong>
+                    <span><Clock3 size={16} aria-hidden="true" />{t("landing.demo.practiceTime")}</span>
+                  </div>
+                )}
+                {id === "review" && <p className="sl-practice-note">{t("landing.showcase.note")}</p>}
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </section>
   );
 }
 
@@ -592,10 +744,7 @@ export function LandingPage({ initialTheme }: { initialTheme: LandingTheme }) {
           </div>
         </section>
 
-        <section className="sl-intro sl-container" aria-labelledby="sl-intro-title">
-          <h2 className="sl-heading-3" id="sl-intro-title">{t("landing.showcase.introTitle")}</h2>
-          <p className="sl-body">{t("landing.showcase.intro")}</p>
-        </section>
+        <ProductIntro />
 
         <section className="sl-journey sl-container" id="journey" aria-labelledby="sl-journey-title">
           <div className="sl-section-lead">
@@ -611,7 +760,9 @@ export function LandingPage({ initialTheme }: { initialTheme: LandingTheme }) {
                   tabIndex={preview === index ? 0 : -1}
                   onClick={() => setPreview(index)} onKeyDown={onTabKey}
                 >
-                  <Icon size={16} aria-hidden="true" />{t(`landing.desktop.tab.${id}`)}
+                  <Icon size={16} aria-hidden="true" />
+                  <span className="sl-desktop-copy">{t(`landing.desktop.tab.${id}`)}</span>
+                  <span className="sl-mobile-copy">{t(`landing.mobile.tab.${id}`)}</span>
                 </button>
               ))}
             </div>
@@ -621,7 +772,6 @@ export function LandingPage({ initialTheme }: { initialTheme: LandingTheme }) {
                 className="sl-desktop-window"
                 sidebar={(
                   <div className="sl-window-links" role="group" aria-label={t("landing.desktop.sections")}>
-                    <p className="sl-sidebar-label">{t("landing.desktop.sections")}</p>
                     {previews.map(({ id, icon: Icon }, index) => (
                       <button key={id} type="button" aria-pressed={preview === index} onClick={() => setPreview(index)}>
                         <Icon size={17} aria-hidden="true" />{t(`landing.desktop.tab.${id}`)}
@@ -638,7 +788,7 @@ export function LandingPage({ initialTheme }: { initialTheme: LandingTheme }) {
                       tabIndex={preview === index ? 0 : -1}
                       hidden={current.id !== id}
                     >
-                      {id === "lesson" && <LessonPreview />}
+                      {id === "lesson" && <LessonPreview locale={locale} active={current.id === id} />}
                       {id === "communication" && <CommunicationBoard board={board} />}
                       {id === "history" && <HistoryPreview locale={locale} />}
                       {id === "plan" && <PlanPreview />}
@@ -650,6 +800,8 @@ export function LandingPage({ initialTheme }: { initialTheme: LandingTheme }) {
             <p className="sl-caption sl-preview-caption" aria-live="polite">{t(`landing.desktop.caption.${current.id}`)}</p>
           </div>
         </section>
+
+        <PracticeStart />
 
         <section className="sl-family sl-container" id="family" aria-labelledby="sl-family-title">
           <div className="sl-section-lead">
