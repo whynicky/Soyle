@@ -14,24 +14,54 @@ import { LanguagePicker } from "./LanguagePicker";
 import "@/app/landing.css";
 
 const scenery = {
-  hero: "soyle-sculpted-hero",
   desktop: "soyle-sculpted-desktop",
   history: "soyle-heather-closeup",
   plan: "soyle-sculpted-plan",
-  end: "soyle-closing-valley",
 } as const;
 
-function ScenePhoto({ scene, className = "" }: { scene: keyof typeof scenery; className?: string }) {
-  const file = scenery[scene];
+const heroSizes = "(max-width: 760px) 1040px, (max-width: 1200px) 1200px, 100vw";
+const mobileScenery = "(max-width: 480px)";
+
+function ScenePhoto({ scene, theme, className = "" }: {
+  scene: keyof typeof scenery | "hero" | "foreground" | "end";
+  theme: LandingTheme;
+  className?: string;
+}) {
+  const heroLayer = scene === "hero" || scene === "foreground";
+  const hasCrop = heroLayer || scene === "end";
+  const sizes = heroLayer ? heroSizes : scene === "end" ? "100vw" : scene === "desktop" ? "(max-width: 760px) calc(100vw - 40px), 1168px" : "(max-width: 760px) calc(100vw - 40px), 760px";
+  const mobileSizes = heroLayer ? "488px" : "max(100vw, 480px)";
+  const tone = theme === "dark" ? "night" : "day";
+
+  function variant(color: "day" | "night", mobile = false) {
+    if (scene === "hero" || scene === "foreground" || scene === "end") {
+      const prefix = `/landing/scenery/${scene}-${color}${mobile ? "-mobile" : ""}`;
+      const widths = mobile ? [520, 1040, 1560] : [1280, 2400, 3840];
+      return { src: `${prefix}-${widths[0]}.webp`, srcSet: widths.map(width => `${prefix}-${width}.webp ${width}w`).join(", ") };
+    }
+    const file = scenery[scene] + (color === "night" ? "-night" : "");
+    const width = scene === "desktop" ? 1536 : 1080;
+    return { src: `/landing/${file}.webp`, srcSet: `/landing/scenery/${file}-768.webp 768w, /landing/${file}.webp ${width}w` };
+  }
+
   return (
-    <div
-      className={`sl-scene-photo ${className}`}
-      aria-hidden="true"
-      style={{
-        "--sl-scene-day": `url("/landing/${file}.webp")`,
-        "--sl-scene-night": `url("/landing/${file}-night.webp")`,
-      } as CSSProperties}
-    />
+    <picture className={`sl-scene-photo ${className}`}>
+      {theme === "system" && hasCrop && (
+        <source media={`${mobileScenery} and (prefers-color-scheme: dark)`} srcSet={variant("night", true).srcSet} sizes={mobileSizes} />
+      )}
+      {theme === "system" && (
+        <source media="(prefers-color-scheme: dark)" srcSet={variant("night").srcSet} sizes={sizes} />
+      )}
+      {hasCrop && <source media={mobileScenery} srcSet={variant(tone, true).srcSet} sizes={mobileSizes} />}
+      <img
+        {...variant(tone)}
+        sizes={sizes}
+        alt=""
+        loading={heroLayer ? "eager" : "lazy"}
+        fetchPriority={scene === "hero" ? "high" : heroLayer ? "auto" : "low"}
+        decoding="async"
+      />
+    </picture>
   );
 }
 
@@ -272,20 +302,21 @@ function CommunicationBoard({ board }: { board: ReturnType<typeof useCommunicati
   );
 }
 
-function WorkspaceWindow({ children, sidebar, className = "" }: {
+function WorkspaceWindow({ children, sidebar, className = "", cover = false }: {
   children: ReactNode;
   sidebar: ReactNode;
   className?: string;
+  cover?: boolean;
 }) {
   return (
     <div className={`sl-window sl-glass ${className}`}>
-      <div className="sl-window-bar">
+      {!cover && <div className="sl-window-bar">
         <div className="sl-window-brand">
           <BrandMark size={21} />
           Söyle
         </div>
         <span className="sl-window-caption">{t("landing.copy116")}</span>
-      </div>
+      </div>}
       <div className="sl-window-layout">
         <div className="sl-window-sidebar">{sidebar}</div>
         {children}
@@ -488,30 +519,17 @@ function DemoProfile() {
   );
 }
 
-function ParentDashboard({ onOpenLesson }: { onOpenLesson: () => void }) {
+function PlatformCover({ onOpenLesson }: { onOpenLesson: () => void }) {
   return (
-    <div className="sl-parent-dashboard">
-      <header className="sl-dashboard-heading">
-        <h2 className="sl-heading-4">
-          <span className="sl-desktop-copy">{t("landing.demo.dashboard")}</span>
-          <span className="sl-mobile-copy">{t("landing.demo.todayPractice")}</span>
-        </h2>
-        <DemoProfile />
-      </header>
-      <div className="sl-hero-lesson">
-        <div className="sl-hero-lesson-art" aria-hidden="true" />
-        <div className="sl-hero-lesson-copy">
-          <span className="sl-demo-label">{t("landing.demo.nextActivity")}</span>
-          <h3>{t("landing.desktop.listening")}</h3>
-          <span className="sl-next-duration"><Clock3 size={15} aria-hidden="true" />{t("landing.demo.practiceTime")}</span>
-          <a className="sl-lesson-next" href="#journey" onClick={onOpenLesson}>
-            {t("landing.demo.openLesson")}<ArrowRight size={16} aria-hidden="true" />
-          </a>
-        </div>
-      </div>
-      <div className="sl-dashboard-observation">
-        <span className="sl-demo-label"><MessageSquare size={16} aria-hidden="true" />{t("landing.showcase.noteLabel")}</span>
-        <p>{t("landing.showcase.note")}</p>
+    <div className="sl-platform-cover">
+      <div className="sl-platform-art" aria-hidden="true" />
+      <div className="sl-platform-copy">
+        <span className="sl-platform-mark"><BrandMark size={32} />Söyle</span>
+        <h2>{t("landing.cover.title")}</h2>
+        <p>{t("landing.cover.description")}</p>
+        <a className="sl-lesson-next" href="#journey" onClick={onOpenLesson}>
+          {t("landing.cover.action")}<ArrowRight size={16} aria-hidden="true" />
+        </a>
       </div>
     </div>
   );
@@ -717,7 +735,7 @@ export function LandingPage({ initialTheme }: { initialTheme: LandingTheme }) {
       <main id="main-content" tabIndex={-1}>
         <section className="sl-hero" id="about">
           <div className="sl-hero-scene">
-            <ScenePhoto scene="hero" className="sl-hero-photo" />
+            <ScenePhoto scene="hero" theme={theme} className="sl-hero-photo" />
           </div>
           <div className="sl-container sl-hero-content">
             <div className="sl-hero-copy">
@@ -732,20 +750,21 @@ export function LandingPage({ initialTheme }: { initialTheme: LandingTheme }) {
 
             <WorkspaceWindow
               className="sl-hero-window"
+              cover
               sidebar={(
                 <div className="sl-window-links" aria-hidden="true">
                   <p className="sl-sidebar-label">{t("landing.desktop.tab.history")}</p>
                   <span className="sl-window-current"><LayoutGrid size={17} />{t("landing.demo.overview")}</span>
                   <span><ClipboardList size={17} />{t("landing.showcase.plan")}</span>
-                  <span><History size={17} />{t("screen.ParentScreen.ui18")}</span>
-                  <span><MessageSquare size={17} />{t("landing.desktop.observations")}</span>
+                  <span><History size={17} />{t("landing.cover.history")}</span>
+                  <span><MessageSquare size={17} />{t("nav.observations")}</span>
                 </div>
               )}
             >
-              <ParentDashboard onOpenLesson={() => setPreview(0)} />
+              <PlatformCover onOpenLesson={() => setPreview(0)} />
             </WorkspaceWindow>
           </div>
-          <div className="sl-hero-foreground" aria-hidden="true" />
+          <ScenePhoto scene="foreground" theme={theme} className="sl-hero-foreground" />
         </section>
 
         <ProductIntro />
@@ -771,14 +790,14 @@ export function LandingPage({ initialTheme }: { initialTheme: LandingTheme }) {
               ))}
             </div>
             <div className="sl-desktop-scene">
-              <ScenePhoto scene="desktop" />
+              <ScenePhoto scene="desktop" theme={theme} />
               <WorkspaceWindow
                 className="sl-desktop-window"
                 sidebar={(
                   <div className="sl-window-links" role="group" aria-label={t("landing.desktop.sections")}>
                     {previews.map(({ id, icon: Icon }, index) => (
                       <button key={id} type="button" aria-pressed={preview === index} onClick={() => setPreview(index)}>
-                        <Icon size={17} aria-hidden="true" />{t(`landing.desktop.tab.${id}`)}
+                        <Icon size={17} aria-hidden="true" />{t(`landing.mobile.tab.${id}`)}
                       </button>
                     ))}
                   </div>
@@ -813,25 +832,25 @@ export function LandingPage({ initialTheme }: { initialTheme: LandingTheme }) {
             <p className="sl-body">{t("landing.showcase.familyIntro")}</p>
           </div>
           <div className="sl-family-grid">
-            <article className="sl-family-card">
+            <article className="sl-family-card" data-reveal>
               <div className="sl-family-copy">
                 <p className="sl-kicker">{t("landing.showcase.parent")}</p>
                 <h3 className="sl-heading-5">{t("landing.showcase.parentTitle")}</h3>
                 <p className="sl-body">{t("landing.showcase.parentDescription")}</p>
               </div>
               <div className="sl-family-visual">
-                <ScenePhoto scene="history" />
+                <ScenePhoto scene="history" theme={theme} />
                 <div className="sl-family-panel sl-glass"><HistoryPreview locale={locale} compact /></div>
               </div>
             </article>
-            <article className="sl-family-card sl-family-card-reverse">
+            <article className="sl-family-card sl-family-card-reverse" data-reveal>
               <div className="sl-family-copy">
                 <p className="sl-kicker">{t("landing.showcase.specialist")}</p>
                 <h3 className="sl-heading-5">{t("landing.showcase.specialistTitle")}</h3>
                 <p className="sl-body">{t("landing.showcase.specialistDescription")}</p>
               </div>
               <div className="sl-family-visual sl-family-visual-plan">
-                <ScenePhoto scene="plan" />
+                <ScenePhoto scene="plan" theme={theme} />
                 <div className="sl-family-panel sl-glass"><PlanPreview compact /></div>
               </div>
             </article>
@@ -866,7 +885,7 @@ export function LandingPage({ initialTheme }: { initialTheme: LandingTheme }) {
             {questions.map((id) => (
               <details key={id}>
                 <summary>{t(`landing.showcase.faq.${id}.question`)}<ChevronDown size={18} aria-hidden="true" /></summary>
-                <p className="sl-body">{t(`landing.showcase.faq.${id}.answer`)}</p>
+                <div className="sl-faq-answer"><p className="sl-body">{t(`landing.showcase.faq.${id}.answer`)}</p></div>
               </details>
             ))}
           </div>
@@ -875,7 +894,7 @@ export function LandingPage({ initialTheme }: { initialTheme: LandingTheme }) {
       </main>
 
       <footer className="sl-closing">
-        <ScenePhoto scene="end" className="sl-end-photo" />
+        <ScenePhoto scene="end" theme={theme} className="sl-end-photo" />
         <section className="sl-end" aria-labelledby="sl-end-title">
           <div className="sl-container sl-end-layout">
             <div className="sl-end-copy">

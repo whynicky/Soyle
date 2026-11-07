@@ -81,9 +81,8 @@ test('landing copy and AAC demonstration follow the selected language', async ({
   await page.getByRole('dialog').getByRole('button',{name:'Қазақша',exact:true}).click();
   await expect(page.getByRole('heading',{name:'Бала ойын жеткізудің түрлі жолын табады'})).toBeVisible();
   const overview = page.locator('.sl-hero-window');
-  const overviewTitle = (page.viewportSize()?.width ?? 1440) <= 760 ? 'Бүгінгі жаттығу' : 'Үйдегі жаттығу';
-  await expect(overview.getByRole('heading', { name: overviewTitle, exact: true })).toBeVisible();
-  await overview.getByRole('link', { name: 'Сабақты көру', exact: true }).click();
+  await expect(overview.getByRole('heading', { name: 'Қарым-қатынас кеңістігі', exact: true })).toBeVisible();
+  await overview.getByRole('link', { name: 'Жаттығуларды көру', exact: true }).click();
   await expect(page.getByRole('tab', { selected: true })).toHaveAttribute('id', 'sl-tab-lesson');
   const lesson = page.getByRole('tabpanel');
   await expect(lesson.getByRole('heading', { name: 'Алма қайда?' })).toBeVisible();
@@ -149,14 +148,19 @@ test('landing follows the system theme and serves a saved theme without JavaScri
   await page.goto('/');
   await page.getByRole('dialog').getByRole('button', { name: 'Русский', exact: true }).click();
   const landing = page.locator('.sl-page');
+  const heroPhoto = page.locator('.sl-hero-photo img');
   const demoTitle = page.locator('#sl-journey-title');
   const selectedTab = page.getByRole('tab', { selected: true });
   await expect(page.getByRole('radio', { name: 'Системная' })).toBeChecked();
   await expect(landing).toHaveCSS('background-color', 'rgb(0, 0, 0)');
+  await expect(heroPhoto).toHaveJSProperty('fetchPriority', 'high');
+  await expect.poll(() => heroPhoto.evaluate(image => (image as HTMLImageElement).currentSrc)).toContain('/scenery/hero-night-');
+  await expect(page.locator('.sl-end-photo img')).toHaveAttribute('loading', 'lazy');
   await expect(demoTitle).toHaveCSS('font-weight', '400');
   await expect(selectedTab).toHaveCSS('background-color', 'rgba(0, 0, 0, 0)');
   await page.getByText('Светлая', { exact: true }).click();
   await expect(landing).toHaveCSS('background-color', 'rgb(250, 248, 245)');
+  await expect.poll(() => heroPhoto.evaluate(image => (image as HTMLImageElement).currentSrc)).toContain('/scenery/hero-day-');
   await expect(demoTitle).toHaveCSS('font-weight', '600');
 
   const withoutJavaScript = await browser.newContext({
