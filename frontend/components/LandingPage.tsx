@@ -2,23 +2,39 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useEffect, useRef, useState, type KeyboardEvent, type ReactNode } from "react";
+import { useEffect, useRef, useState, type CSSProperties, type KeyboardEvent, type ReactNode } from "react";
 import {
-  ArrowDown, ArrowLeft, ArrowRight, BookOpen, CalendarDays, Check, ChevronDown, CircleHelp, Clock3,
-  ClipboardList, Download, History, LayoutGrid, LockKeyhole, MessageSquare, ShieldCheck,
+  ArrowDown, ArrowRight, BookOpen, CalendarDays, Check, ChevronDown, Clock3,
+  ClipboardList, Download, History, LayoutGrid, LockKeyhole, Menu, MessageSquare, ShieldCheck,
   Volume2, X,
 } from "lucide-react";
 import { t, useLocale, type Locale } from "@/lib/i18n";
+import { landingThemeCookie, landingThemes, type LandingTheme } from "@/lib/landingTheme";
 import { LanguagePicker } from "./LanguagePicker";
 import "@/app/landing.css";
 
 const scenery = {
-  hero: "/landing/soyle-sculpted-hero.webp",
-  desktop: "/landing/soyle-sculpted-desktop.webp",
-  history: "/landing/soyle-sculpted-history.webp",
-  plan: "/landing/soyle-sculpted-plan.webp",
-  end: "/landing/soyle-sculpted-invitation.webp",
+  hero: "soyle-sculpted-hero",
+  desktop: "soyle-sculpted-desktop",
+  history: "soyle-heather-closeup",
+  plan: "soyle-sculpted-plan",
+  end: "soyle-closing-valley",
 } as const;
+
+function ScenePhoto({ scene, className = "" }: { scene: keyof typeof scenery; className?: string }) {
+  const file = scenery[scene];
+  return (
+    <div
+      className={`sl-scene-photo ${className}`}
+      aria-hidden="true"
+      style={{
+        "--sl-scene-day": `url("/landing/${file}.webp")`,
+        "--sl-scene-night": `url("/landing/${file}-night.webp")`,
+      } as CSSProperties}
+    />
+  );
+}
+
 const choices = [
   { id: "water", label: "landing.showcase.water" },
   { id: "apple", label: "landing.showcase.apple" },
@@ -40,12 +56,102 @@ const access = [
 
 const questions = ["start", "cards", "camera", "history", "specialist", "therapy"] as const;
 
+function BrandMark({ size }: { size: number }) {
+  return (
+    <svg className="sl-brand-mark" width={size} height={size} viewBox="0 0 64 64" aria-hidden="true">
+      <path fill="var(--sl-mark)" d="M32 5C17.64 5 6 15.52 6 28.5c0 6.82 3.22 12.97 8.38 17.27L10.9 56.2a2 2 0 0 0 2.53 2.5l12.24-6.78c2.05.39 4.17.58 6.33.58 14.36 0 26-10.52 26-24S46.36 5 32 5Z" />
+      <path fill="none" stroke="var(--sl-mark-letter)" strokeLinecap="round" strokeWidth="6" d="M41.25 19.7c-2.3-2.12-5.4-3.2-9.02-3.2-5.52 0-9.23 2.65-9.23 6.52 0 3.6 2.94 5.31 9.34 6.7 6.01 1.31 8.66 3.16 8.66 6.72 0 4.12-3.98 7.06-9.85 7.06-4.14 0-7.52-1.27-9.9-3.74" />
+      <circle cx="46.5" cy="13.5" r="4.5" fill="var(--sl-mark-dot)" />
+    </svg>
+  );
+}
+
 function Wordmark() {
   return (
     <Link className="sl-wordmark" href="/" aria-label={t("landing.copy036")}>
-      <Image src="/landing/soyle-mark-plum.svg" width={28} height={28} alt="" />
+      <BrandMark size={28} />
       Söyle<span aria-hidden="true">.</span>
     </Link>
+  );
+}
+
+function LandingHeader({ links }: { links: ReadonlyArray<{ href: string; label: string }> }) {
+  const [open, setOpen] = useState(false);
+  const header = useRef<HTMLElement>(null);
+  const menuButton = useRef<HTMLButtonElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    const dismiss = (event: PointerEvent) => {
+      if (event.target instanceof Node && !header.current?.contains(event.target)) setOpen(false);
+    };
+    document.addEventListener("pointerdown", dismiss);
+    return () => document.removeEventListener("pointerdown", dismiss);
+  }, [open]);
+
+  return (
+    <header
+      className="sl-header"
+      ref={header}
+      onBlur={(event) => {
+        if (!event.currentTarget.contains(event.relatedTarget)) setOpen(false);
+      }}
+      onKeyDown={(event) => {
+        if (event.key === "Escape" && open) {
+          event.preventDefault();
+          setOpen(false);
+          menuButton.current?.focus();
+        }
+      }}
+    >
+      <div className="sl-island">
+        <Wordmark />
+        <nav className="sl-nav" aria-label={t("landing.copy037")}>
+          {links.map(({ href, label }) => <a key={href} href={href}>{label}</a>)}
+        </nav>
+        <Link className="sl-login" href="/app">{t("landing.copy044")} <ArrowRight size={14} aria-hidden="true" /></Link>
+        <button
+          className="sl-menu-toggle"
+          type="button"
+          ref={menuButton}
+          aria-expanded={open}
+          aria-controls="sl-mobile-navigation"
+          aria-label={t(open ? "landing.nav.close" : "landing.nav.open")}
+          onClick={() => setOpen(!open)}
+        >
+          <Menu size={20} className="sl-menu-open-icon" aria-hidden="true" />
+          <X size={20} className="sl-menu-close-icon" aria-hidden="true" />
+        </button>
+      </div>
+      <div id="sl-mobile-navigation" className="sl-mobile-menu" hidden={!open}>
+        <nav aria-label={t("landing.copy037")}>
+          {links.map(({ href, label }) => <a key={href} href={href} onClick={() => setOpen(false)}>{label}</a>)}
+        </nav>
+        <LanguagePicker compact />
+      </div>
+    </header>
+  );
+}
+
+function ThemePicker({ theme, onChange }: { theme: LandingTheme; onChange: (value: LandingTheme) => void }) {
+  return (
+    <fieldset className="sl-theme-picker">
+      <legend>{t("landing.theme.label")}</legend>
+      <div className="sl-theme-options">
+        {landingThemes.map((mode) => (
+          <label key={mode}>
+            <input
+              className="sr-only"
+              type="radio"
+              name="soyle-landing-theme"
+              checked={theme === mode}
+              onChange={() => onChange(mode)}
+            />
+            <span>{t(`landing.theme.${mode}`)}</span>
+          </label>
+        ))}
+      </div>
+    </fieldset>
   );
 }
 
@@ -175,7 +281,7 @@ function WorkspaceWindow({ children, sidebar, className = "" }: {
     <div className={`sl-window sl-glass ${className}`}>
       <div className="sl-window-bar">
         <div className="sl-window-brand">
-          <Image src="/landing/soyle-mark-plum.svg" width={21} height={21} alt="" />
+          <BrandMark size={21} />
           Söyle
         </div>
         <span>{t("landing.showcase.sample")}</span>
@@ -206,7 +312,7 @@ function LessonPreview() {
     <div className="sl-example-sheet sl-exercise-sheet">
       <DemoHeading title={t("landing.desktop.tab.lesson")} description={t("landing.demo.lessonIntro")} />
       <div className="sl-tool-grid sl-exercise-grid">
-        <div className="sl-work-card sl-exercise-guide">
+        <div className="sl-exercise-guide">
           <h4>{t("landing.showcase.lessonLabel")}</h4>
           <ol>
             {exercise.map(({ answer, prompt }, index) => (
@@ -217,7 +323,7 @@ function LessonPreview() {
             ))}
           </ol>
         </div>
-        <div className="sl-work-card sl-question">
+        <div className="sl-question">
           <div className="sl-sheet-meta">
             <span>{t("landing.demo.exerciseQuestion")}</span>
             <span>{step + 1} / {exercise.length}</span>
@@ -393,7 +499,15 @@ function ParentDashboard({ locale, onOpenLesson }: { locale: Locale; onOpenLesso
   );
 }
 
-export function LandingPage() {
+export function LandingPage({ initialTheme }: { initialTheme: LandingTheme }) {
+  const [theme, setTheme] = useState(initialTheme);
+
+  function changeTheme(next: LandingTheme) {
+    setTheme(next);
+    const secure = location.protocol === "https:" ? "; Secure" : "";
+    document.cookie = `${landingThemeCookie}=${next}; Path=/; Max-Age=31536000; SameSite=Lax${secure}`;
+  }
+
   const locale = useLocale();
   const board = useCommunicationBoard(locale);
   const [preview, setPreview] = useState(0);
@@ -437,27 +551,18 @@ export function LandingPage() {
   ];
 
   return (
-    <div className="sl-page" ref={root}>
+    <div className="sl-page" data-landing-theme={theme} ref={root}>
       {board.player}
       <div className="sr-only" role="status">
         {t(board.audioError ? "landing.copy126" : `landing.aac.${board.selected}`)}
       </div>
       <a className="sl-skip" href="#main-content">{t("landing.copy035")}</a>
-      <header className="sl-header sl-container">
-        <Wordmark />
-        <nav className="sl-nav" aria-label={t("landing.copy037")}>
-          {links.map(({ href, label }) => <a key={href} href={href}>{label}</a>)}
-        </nav>
-        <div className="sl-header-actions">
-          <LanguagePicker compact />
-          <Link className="sl-login" href="/app">{t("landing.copy044")} <ArrowRight size={14} aria-hidden="true" /></Link>
-        </div>
-      </header>
+      <LandingHeader links={links} />
 
       <main id="main-content" tabIndex={-1}>
         <section className="sl-hero" id="about">
           <div className="sl-hero-scene">
-            <Image className="sl-hero-photo" src={scenery.hero} alt="" fill loading="eager" fetchPriority="high" quality={75} sizes="100vw" />
+            <ScenePhoto scene="hero" className="sl-hero-photo" />
           </div>
           <div className="sl-container sl-hero-content">
             <div className="sl-hero-copy">
@@ -488,7 +593,6 @@ export function LandingPage() {
         </section>
 
         <section className="sl-intro sl-container" aria-labelledby="sl-intro-title">
-          <p className="sl-kicker">{t("landing.copy038")}</p>
           <h2 className="sl-heading-3" id="sl-intro-title">{t("landing.showcase.introTitle")}</h2>
           <p className="sl-body">{t("landing.showcase.intro")}</p>
         </section>
@@ -512,7 +616,7 @@ export function LandingPage() {
               ))}
             </div>
             <div className="sl-desktop-scene">
-              <Image className="sl-scene-photo" src={scenery.desktop} alt="" fill quality={75} sizes="(max-width: 760px) calc(100vw - 40px), (max-width: 1232px) calc(100vw - 64px), 1168px" />
+              <ScenePhoto scene="desktop" />
               <WorkspaceWindow
                 className="sl-desktop-window"
                 sidebar={(
@@ -543,15 +647,7 @@ export function LandingPage() {
                 </div>
               </WorkspaceWindow>
             </div>
-            <div className="sl-preview-controls">
-              <button type="button" aria-label={t("landing.showcase.previous")} onClick={() => setPreview((preview + previews.length - 1) % previews.length)}>
-                <ArrowLeft size={18} aria-hidden="true" />
-              </button>
-              <span className="sl-caption" aria-live="polite">{t(`landing.desktop.caption.${current.id}`)}</span>
-              <button type="button" aria-label={t("landing.showcase.next")} onClick={() => setPreview((preview + 1) % previews.length)}>
-                <ArrowRight size={18} aria-hidden="true" />
-              </button>
-            </div>
+            <p className="sl-caption sl-preview-caption" aria-live="polite">{t(`landing.desktop.caption.${current.id}`)}</p>
           </div>
         </section>
 
@@ -568,7 +664,7 @@ export function LandingPage() {
                 <p className="sl-body">{t("landing.showcase.parentDescription")}</p>
               </div>
               <div className="sl-family-visual">
-                <Image className="sl-scene-photo" src={scenery.history} alt="" fill quality={75} sizes="(max-width: 560px) calc(100vw - 40px), (max-width: 1232px) 56vw, 672px" />
+                <ScenePhoto scene="history" />
                 <div className="sl-family-panel sl-glass"><HistoryPreview locale={locale} compact /></div>
               </div>
             </article>
@@ -579,7 +675,7 @@ export function LandingPage() {
                 <p className="sl-body">{t("landing.showcase.specialistDescription")}</p>
               </div>
               <div className="sl-family-visual sl-family-visual-plan">
-                <Image className="sl-scene-photo" src={scenery.plan} alt="" fill quality={75} sizes="(max-width: 560px) calc(100vw - 40px), (max-width: 1232px) 56vw, 672px" />
+                <ScenePhoto scene="plan" />
                 <div className="sl-family-panel sl-glass"><PlanPreview compact /></div>
               </div>
             </article>
@@ -607,7 +703,6 @@ export function LandingPage() {
 
         <section className="sl-faq sl-container" id="questions" aria-labelledby="sl-faq-title">
           <div>
-            <p className="sl-kicker"><CircleHelp size={16} aria-hidden="true" /> FAQ</p>
             <h2 className="sl-heading-2" id="sl-faq-title">{t("landing.showcase.faqTitle")}</h2>
             <p className="sl-body">{t("landing.showcase.faqIntro")}</p>
           </div>
@@ -621,8 +716,11 @@ export function LandingPage() {
           </div>
         </section>
 
+      </main>
+
+      <footer className="sl-closing">
+        <ScenePhoto scene="end" className="sl-end-photo" />
         <section className="sl-end" aria-labelledby="sl-end-title">
-          <Image className="sl-scene-photo sl-end-photo" src={scenery.end} alt="" fill quality={75} sizes="100vw" />
           <div className="sl-container sl-end-layout">
             <div className="sl-end-copy">
               <h2 className="sl-heading-2" id="sl-end-title">{t("landing.showcase.endTitle")}</h2>
@@ -631,28 +729,36 @@ export function LandingPage() {
             </div>
           </div>
         </section>
-      </main>
 
-      <footer className="sl-footer sl-container">
-        <div className="sl-footer-main">
-          <div className="sl-footer-brand">
-            <Wordmark />
-            <p className="sl-caption">{t("landing.showcase.footer")}</p>
+        <div className="sl-footer">
+          <div className="sl-container">
+            <div className="sl-footer-main">
+              <div className="sl-footer-brand">
+                <Wordmark />
+                <p className="sl-caption">{t("landing.showcase.footer")}</p>
+              </div>
+              <div>
+                <strong>{t("landing.copy038")}</strong>
+                {links.map(({ href, label }) => <a key={href} href={href}>{label}</a>)}
+              </div>
+              <div>
+                <strong>{t("landing.copy142")}</strong>
+                <Link href="/privacy">{t("landing.copy143")}</Link>
+                <Link href="/terms">{t("landing.copy144")}</Link>
+                <a href="mailto:hello@soyle.app">hello@soyle.app</a>
+              </div>
+            </div>
+            <div className="sl-footer-bottom">
+              <span>© {new Date().getFullYear()} Söyle</span>
+              <div className="sl-footer-settings">
+                <fieldset className="sl-footer-language">
+                  <legend>{t("landing.theme.language")}</legend>
+                  <LanguagePicker />
+                </fieldset>
+                <ThemePicker theme={theme} onChange={changeTheme} />
+              </div>
+            </div>
           </div>
-          <div>
-            <strong>{t("landing.copy038")}</strong>
-            {links.map(({ href, label }) => <a key={href} href={href}>{label}</a>)}
-          </div>
-          <div>
-            <strong>{t("landing.copy142")}</strong>
-            <Link href="/privacy">{t("landing.copy143")}</Link>
-            <Link href="/terms">{t("landing.copy144")}</Link>
-            <a href="mailto:hello@soyle.app">hello@soyle.app</a>
-          </div>
-        </div>
-        <div className="sl-footer-bottom">
-          <span>© {new Date().getFullYear()} Söyle</span>
-          <LanguagePicker />
         </div>
       </footer>
     </div>

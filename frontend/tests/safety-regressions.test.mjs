@@ -56,17 +56,16 @@ test("frontend does not request blocked external fonts or unsupported image qual
   ]);
   assert.doesNotMatch(styles, /fonts\.googleapis\.com|fonts\.gstatic\.com/);
   assert.doesNotMatch(landing, /quality=\{92\}/);
-  assert.match(landing, /quality=\{75\}/);
 });
 
-test("landing isolates its light palette from the application theme", async () => {
+test("landing isolates its palette from the application theme", async () => {
   const [landing, styles] = await Promise.all([
     readProjectFile("components/LandingPage.tsx"),
     readProjectFile("app/landing.css"),
   ]);
   assert.match(landing, /className="sl-page"/);
   assert.doesNotMatch(landing, /document\.documentElement\.dataset\.theme\s*=/);
-  assert.match(styles, /\.sl-page\s*\{[^}]*color-scheme:\s*light/);
+  assert.match(styles, /html:has\(> body > \.sl-page\[data-landing-theme="dark"\]\)\s*\{\s*color-scheme:\s*dark/);
   assert.match(styles, /\.sl-page\s*\{[^}]*background:\s*var\(--sl-paper\)/);
 });
 

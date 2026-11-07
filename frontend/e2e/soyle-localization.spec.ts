@@ -94,21 +94,76 @@ test('landing copy and AAC demonstration follow the selected language', async ({
 });
 
 
-test('header language buttons stay aligned inside the header', async ({page}, info) => {
+test('landing navigation stays within the viewport and opens its mobile menu', async ({ page }) => {
   await page.goto('/');
-  await page.getByRole('dialog').getByRole('button',{name:'Қазақша',exact:true}).click();
-  const picker = page.locator('.sl-header .locale-picker--compact');
-  const buttons = picker.getByRole('button');
-  await expect(picker).toBeVisible();
-  const first = await buttons.nth(0).boundingBox();
-  const second = await buttons.nth(1).boundingBox();
-  const header = await page.locator('.sl-header').boundingBox();
-  expect(first && second && header).toBeTruthy();
-  expect(Math.abs(first!.y-second!.y)).toBeLessThan(1);
-  expect(first!.height).toBe(second!.height);
-  expect(second!.x+second!.width).toBeLessThanOrEqual(info.project.use.viewport!.width);
-  expect(second!.y+second!.height).toBeLessThanOrEqual(header!.y+header!.height);
-  await page.screenshot({path:`../output/header-language-${info.project.name}.png`});
+  await page.getByRole('dialog').getByRole('button', { name: 'Қазақша', exact: true }).click();
+  const header = page.locator('.sl-header');
+  const width = await page.evaluate(() => innerWidth);
+  const bounds = await header.boundingBox();
+  expect(bounds).not.toBeNull();
+  expect(bounds!.x).toBeGreaterThan(0);
+  expect(bounds!.width).toBeLessThan(width);
+  expect(bounds!.y).toBeGreaterThan(0);
+
+  const openMenu = header.getByRole('button', { name: 'Мәзірді ашу' });
+  if (width <= 760) {
+    await expect(openMenu).toBeVisible();
+    await openMenu.click();
+    const menu = header.locator('.sl-mobile-menu');
+    await expect(menu).toBeVisible();
+    await expect(menu.getByRole('button', { name: 'Қазақша' })).toBeVisible();
+    await menu.getByRole('link', { name: 'Қалай жұмыс істейді' }).focus();
+    await page.keyboard.press('Escape');
+    await expect(menu).toBeHidden();
+    await expect(openMenu).toBeFocused();
+    await openMenu.click();
+    await menu.getByRole('link', { name: 'Қалай жұмыс істейді' }).click();
+    await expect(menu).toBeHidden();
+  } else {
+    await expect(openMenu).toBeHidden();
+    await header.getByRole('link', { name: 'Қалай жұмыс істейді' }).click();
+  }
+  await expect(page).toHaveURL(/#journey$/);
+  await expect.poll(async () => {
+    const target = await page.locator('#journey').boundingBox();
+    const island = await header.boundingBox();
+    return Boolean(target && island && target.y >= island.y + island.height && target.y < 160);
+  }).toBe(true);
+});
+
+test('landing follows the system theme and serves a saved theme without JavaScript', async ({ page, browser, baseURL }) => {
+  await page.emulateMedia({ colorScheme: 'dark' });
+  await page.goto('/');
+  await page.getByRole('dialog').getByRole('button', { name: 'Русский', exact: true }).click();
+  const landing = page.locator('.sl-page');
+  const demoTitle = page.locator('#sl-journey-title');
+  const selectedTab = page.getByRole('tab', { selected: true });
+  await expect(page.getByRole('radio', { name: 'Системная' })).toBeChecked();
+  await expect(landing).toHaveCSS('background-color', 'rgb(0, 0, 0)');
+  await expect(demoTitle).toHaveCSS('font-weight', '400');
+  await expect(selectedTab).toHaveCSS('background-color', 'rgba(0, 0, 0, 0)');
+  await page.getByText('Светлая', { exact: true }).click();
+  await expect(landing).toHaveCSS('background-color', 'rgb(250, 248, 245)');
+  await expect(demoTitle).toHaveCSS('font-weight', '600');
+
+  const withoutJavaScript = await browser.newContext({
+    baseURL,
+    javaScriptEnabled: false,
+    colorScheme: 'dark',
+    storageState: await page.context().storageState(),
+  });
+  try {
+    const serverPage = await withoutJavaScript.newPage();
+    await serverPage.goto('/');
+    await expect(serverPage.locator('.sl-page')).toHaveAttribute('data-landing-theme', 'light');
+    await expect(serverPage.locator('.sl-page')).toHaveCSS('background-color', 'rgb(250, 248, 245)');
+  } finally {
+    await withoutJavaScript.close();
+  }
+  await page.getByText('Системная', { exact: true }).click();
+  await expect(landing).toHaveCSS('background-color', 'rgb(0, 0, 0)');
+  await page.emulateMedia({ colorScheme: 'light' });
+  await expect(landing).toHaveCSS('background-color', 'rgb(250, 248, 245)');
 });
 
 
