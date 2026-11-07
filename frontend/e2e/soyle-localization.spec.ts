@@ -57,9 +57,11 @@ test('child settings switch both ways and keep saved progress', async ({ page })
     const me = await (await fetch('/api/auth/me')).json();
     return (await fetch(`/api/dashboard/${me.child_id}`)).json();
   });
-  const menu = page.getByRole('button',{name:/^(Открыть меню|Мәзірді ашу)$/});
-  if ((page.viewportSize()?.width || 1440) <= 760) { await expect(menu).toBeVisible(); await menu.click(); }
-  await page.locator('.sidebar-account').getByRole('button',{name:/^(Меню аккаунта|Аккаунт мәзірі)$/}).click();
+  const account = page.getByRole('button',{name:/^(Меню аккаунта|Аккаунт мәзірі)$/});
+  if (!(await account.isVisible())) {
+    await page.getByRole('button',{name:/^(Открыть меню|Мәзірді ашу)$/}).click();
+  }
+  await account.click();
   await page.locator('.account-menu-panel').getByRole('button',{name:/^(Настройки|Баптаулар)$/}).click();
   await page.getByRole('button',{name:'Қазақша',exact:true}).click();
   await expect(page.getByRole('heading',{name:'Саған қалай ыңғайлы?'})).toBeVisible();
@@ -106,7 +108,7 @@ test('landing copy and AAC demonstration follow the selected language', async ({
 });
 
 
-test('landing navigation stays within the viewport and opens its mobile menu', async ({ page }) => {
+test('landing island stays compact and reloading from the demo returns to the hero', async ({ page }) => {
   await page.goto('/');
   await page.getByRole('dialog').getByRole('button', { name: 'Қазақша', exact: true }).click();
   const header = page.locator('.sl-header');
@@ -117,30 +119,24 @@ test('landing navigation stays within the viewport and opens its mobile menu', a
   expect(bounds!.width).toBeLessThan(width);
   expect(bounds!.y).toBeGreaterThan(0);
 
-  const openMenu = header.getByRole('button', { name: 'Мәзірді ашу' });
-  if (width <= 760) {
-    await expect(openMenu).toBeVisible();
-    await openMenu.click();
-    const menu = header.locator('.sl-mobile-menu');
-    await expect(menu).toBeVisible();
-    await expect(menu.getByRole('button', { name: 'Қазақша' })).toBeVisible();
-    await menu.getByRole('link', { name: 'Қалай жұмыс істейді' }).focus();
-    await page.keyboard.press('Escape');
-    await expect(menu).toBeHidden();
-    await expect(openMenu).toBeFocused();
-    await openMenu.click();
-    await menu.getByRole('link', { name: 'Қалай жұмыс істейді' }).click();
-    await expect(menu).toBeHidden();
-  } else {
-    await expect(openMenu).toBeHidden();
-    await header.getByRole('link', { name: 'Қалай жұмыс істейді' }).click();
-  }
+  await expect(header.getByRole('link')).toHaveCount(2);
+  await expect(header.getByRole('link', { name: 'Кіру' })).toHaveAttribute('href', '/app');
+  await expect(header.locator('.public-theme-toggle')).toBeVisible();
+  await expect(header.getByRole('navigation')).toHaveCount(0);
+  await page.getByRole('link', { name: 'Интерфейсті көру' }).click();
   await expect(page).toHaveURL(/#journey$/);
   await expect.poll(async () => {
     const target = await page.locator('#journey').boundingBox();
     const island = await header.boundingBox();
     return Boolean(target && island && target.y >= island.y + island.height && target.y < 160);
   }).toBe(true);
+  await page.reload();
+  await expect.poll(() => page.evaluate(() => [location.hash, scrollY])).toEqual(['', 0]);
+
+  await page.goto('/?source=direct#journey');
+  await expect.poll(() => page.evaluate(() => scrollY)).toBeGreaterThan(0);
+  await page.reload();
+  await expect.poll(() => page.evaluate(() => [location.search, location.hash, scrollY])).toEqual(['?source=direct', '', 0]);
 });
 
 test('landing follows the system theme and serves a saved theme without JavaScript', async ({ page, browser, baseURL }) => {
@@ -161,7 +157,7 @@ test('landing follows the system theme and serves a saved theme without JavaScri
   await page.getByText('Светлая', { exact: true }).click();
   await expect(landing).toHaveCSS('background-color', 'rgb(250, 248, 245)');
   await expect.poll(() => heroPhoto.evaluate(image => (image as HTMLImageElement).currentSrc)).toContain('/scenery/hero-day-');
-  await expect(demoTitle).toHaveCSS('font-weight', '600');
+  await expect(demoTitle).toHaveCSS('font-weight', '400');
 
   const withoutJavaScript = await browser.newContext({
     baseURL,
@@ -184,6 +180,44 @@ test('landing follows the system theme and serves a saved theme without JavaScri
   await expect(landing).toHaveCSS('background-color', 'rgb(0, 0, 0)');
   await page.emulateMedia({ colorScheme: 'light' });
   await expect(landing).toHaveCSS('background-color', 'rgb(250, 248, 245)');
+});
+
+
+test('landing theme reveal keeps the active demo and scroll and follows through to auth', async ({ page }) => {
+  await page.emulateMedia({ colorScheme: 'light', reducedMotion: 'no-preference' });
+  await page.addInitScript(() => localStorage.setItem('soyle-language', 'ru-RU'));
+  await page.goto('/');
+  await page.locator('#sl-tab-history').click();
+  await expect(page.locator('#sl-tab-history')).toBeFocused();
+  const position = await page.evaluate(() => scrollY);
+  const themeControl = (await page.getByRole('button', { name: 'Включить тёмную тему' }).boundingBox())!;
+  await page.mouse.click(themeControl.x + themeControl.width / 2, themeControl.y + themeControl.height / 2);
+  await expect(page.locator('html')).toHaveAttribute('data-public-theme-transition', 'circle');
+  await expect(page.locator('.sl-page')).toHaveAttribute('data-landing-theme', 'dark');
+  await expect(page.locator('html')).not.toHaveAttribute('data-public-theme-transition', /.+/);
+  await expect(page.locator('#sl-tab-history')).toBeFocused();
+  await expect(page.locator('#sl-tab-history')).toHaveAttribute('aria-selected', 'true');
+  expect(await page.evaluate(() => scrollY)).toBe(position);
+
+  await page.locator('.sl-island .sl-login').click();
+  await expect(page.locator('.sa-page')).toHaveAttribute('data-entry-theme', 'dark');
+  await page.getByRole('button', { name: 'Создать аккаунт родителя' }).click();
+  const login = page.getByLabel('Логин', { exact: true });
+  const password = page.getByLabel('Пароль', { exact: true });
+  await expect(password).toHaveAttribute('autocomplete', 'new-password');
+  await login.fill('sample-parent');
+  await password.fill('Sample1234!');
+  await expect(password).toBeFocused();
+  await page.getByRole('button', { name: 'Включить светлую тему' }).click();
+  await expect(page.locator('.sa-page')).toHaveAttribute('data-entry-theme', 'light');
+  await expect(page.locator('html')).not.toHaveAttribute('data-public-theme-transition', /.+/);
+  await expect(page.getByRole('heading', { name: 'Регистрация родителя' })).toBeVisible();
+  await expect(login).toHaveValue('sample-parent');
+  await expect(password).toHaveValue('Sample1234!');
+  await expect(password).toBeFocused();
+  await page.getByRole('button', { name: 'Создать аккаунт', exact: true }).click();
+  await expect(page.getByLabel('Ваше имя')).toHaveAccessibleDescription('Заполните это поле.');
+  await expect(page.getByLabel('Ваше имя')).toBeFocused();
 });
 
 
@@ -352,6 +386,27 @@ test('landing previews remain visible when switching languages with motion enabl
 
   const scene = page.locator('.sl-desktop-scene');
   const initialHeight = (await scene.boundingBox())?.height;
+  const desktop = await scene.evaluate((element) => {
+    const outer = element.getBoundingClientRect();
+    const inner = element.querySelector('.sl-desktop-window')!.getBoundingClientRect();
+    return {
+      viewport: window.innerWidth,
+      widthShare: inner.width / outer.width,
+      sceneRatio: outer.width / outer.height,
+      windowRatio: inner.width / inner.height,
+      marginDifference: Math.abs(inner.top - outer.top - (outer.bottom - inner.bottom)),
+    };
+  });
+  if (desktop.viewport >= 1024) {
+    expect(desktop.sceneRatio).toBeCloseTo(1.6);
+    expect(desktop.widthShare).toBeCloseTo(.82);
+    expect(desktop.windowRatio).toBeGreaterThanOrEqual(1.6);
+    expect(desktop.windowRatio).toBeLessThanOrEqual(16 / 9);
+    expect(desktop.marginDifference).toBeLessThan(2);
+  } else if (desktop.viewport <= 480) {
+    expect(desktop.windowRatio).toBeLessThan(1);
+    await expect(scene.locator('.sl-window-sidebar')).toBeVisible();
+  }
   const tabs = page.getByRole('tab');
   await expect(tabs).toHaveCount(4);
   for (const tab of await tabs.all()) {
@@ -359,5 +414,27 @@ test('landing previews remain visible when switching languages with motion enabl
     await expect(tab).toHaveAttribute('aria-selected', 'true');
     await expect(page.getByRole('tabpanel')).toHaveCount(1);
     expect((await scene.boundingBox())?.height).toBe(initialHeight);
+  }
+
+  const practice = page.locator('.sl-practice');
+  const practiceHeight = (await practice.boundingBox())?.height;
+  const sample = practice.locator('.sl-practice-sample');
+  const sampleHeight = (await sample.boundingBox())?.height;
+  const steps = [
+    ['Создайте профиль ребёнка', 'Профиль создан'],
+    ['Выберите практику', 'Понимание речи'],
+    ['Занимайтесь вместе', 'Где яблоко?'],
+    ['Вернитесь к истории', 'Занятие выполнено'],
+  ];
+  for (const [label, text] of steps) {
+    const step = practice.getByRole('button', { name: label, exact: true });
+    await step.focus();
+    await page.keyboard.press('Enter');
+    await expect(step).toHaveAttribute('aria-pressed', 'true');
+    await expect(step).toBeFocused();
+    const active = sample.locator('.sl-practice-fragment:not([hidden])');
+    await expect(active.getByText(text, { exact: true })).toBeVisible();
+    expect((await practice.boundingBox())?.height).toBe(practiceHeight);
+    expect((await sample.boundingBox())?.height).toBe(sampleHeight);
   }
 });

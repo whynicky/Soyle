@@ -1,3 +1,17 @@
+@font-face {
+  font-family: "Söyle Onest";
+  src: url("/fonts/onest-regular.ttf") format("truetype");
+  font-weight: 400;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Söyle Onest";
+  src: url("/fonts/onest-bold.ttf") format("truetype");
+  font-weight: 600 700;
+  font-display: swap;
+}
+
 :root {
   --font-body: "Avenir Next", "Segoe UI", system-ui, -apple-system, sans-serif;
   --font-display: ui-rounded, "SF Pro Rounded", "Avenir Next", "Segoe UI", system-ui, sans-serif;

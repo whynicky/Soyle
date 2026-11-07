@@ -12,14 +12,14 @@ test("authentication stays in HttpOnly cookies and unsafe requests send CSRF", a
 });
 
 test("production API requests stay on the site origin so mobile browsers keep auth cookies", async () => {
-  const [api, config, app] = await Promise.all([
+  const [api, config, auth] = await Promise.all([
     readProjectFile("lib/api.ts"),
     readProjectFile("next.config.ts"),
-    readProjectFile("components/SoyleApp.tsx"),
+    readProjectFile("components/AuthScreen.tsx"),
   ]);
   assert.match(api, /process\.env\.NODE_ENV === ["']production["'] \? ["']["']/);
   assert.match(config, /source: ["']\/api\/:path\*["'], destination: `\$\{apiOrigin\}\/api\/:path\*`/);
-  assert.match(app, /const currentUser = await api<User>\("\/api\/auth\/me"\);/);
+  assert.match(auth, /const currentUser = await api<User>\("\/api\/auth\/me"\);/);
 });
 
 test("successful empty API responses do not crash session recovery", async () => {

@@ -1,6 +1,8 @@
 "use client";
 import { TranslationEditor } from "./TranslationEditor";
 import { LanguagePicker } from "./LanguagePicker";
+import { AuthLoading, AuthScreen } from "./AuthScreen";
+import type { LandingTheme } from "@/lib/landingTheme";
 
 import { ExercisePetProvider, ExercisePet, useExercisePet } from "./pet/ExercisePet";
 import { usePetPreferences } from "./pet/usePetPreferences";
@@ -60,7 +62,6 @@ import {
   Drum,
   Ear,
   Eye,
-  EyeOff,
   Fish,
   Flame,
   Frown,
@@ -76,7 +77,6 @@ import {
   Home,
   House,
   ImageIcon,
-  KeyRound,
   LampDesk,
   Laugh,
   LayoutDashboard,
@@ -215,7 +215,7 @@ import { readWorkspacePage, workspaceHref, workspacePages, type WorkspacePage } 
 import { SpecialistInvitation } from "./SpecialistInvitation";
 import { AdminContentQueue } from "./AdminContentQueue";
 
-export function SoyleApp() {
+export function SoyleApp({ authTheme = "system" }: { authTheme?: LandingTheme }) {
   useLocale();
   const [user, setUser] = useState<User | null>(null);
   const [authLoading, setAuthLoading] = useState(true);
@@ -271,7 +271,7 @@ export function SoyleApp() {
     void navigator.serviceWorker.register("/sw.js", { updateViaCache: "none" }).catch(() => undefined);
   }, []);
 
-  if (authLoading) return <div className="auth-loading"><div className="brand-mark"><BrandIcon /></div><span>{t("screen.SoyleApp.ui1")}</span></div>;
+  if (authLoading) return <AuthLoading theme={authTheme} />;
   const logout = async () => {
     stopCurrentSpeech();
     setAuthActionError("");
@@ -284,7 +284,7 @@ export function SoyleApp() {
     }
   };
   const invitation = invitationToken ? <SpecialistInvitation token={invitationToken} user={user} onClose={() => { setInvitationToken(""); window.history.replaceState(null, "", window.location.pathname + window.location.search); }}/> : null;
-  if (!user) return <>{invitation}<AuthScreen onAuthenticated={setUser} /></>;
+  if (!user) return <>{invitation}<AuthScreen theme={authTheme} onAuthenticated={setUser} /></>;
   if (user.role === "specialist") return <>{invitation}<SpecialistWorkspace user={user} onLogout={logout}/>{authActionError && <p role="alert">{authActionError}</p>}</>;
   return <>{invitation}<AuthenticatedApp user={user} onLogout={logout} externalError={authActionError} onDismissExternalError={() => setAuthActionError("")} /></>;
 }
@@ -1010,59 +1010,6 @@ function ChildOnboarding({ user, onCreated, onLogout }: { user: User; onCreated:
 
 function roleLabel(role: Role) {
   return { admin: t("screen.roleLabel.ui1"), parent: t("screen.roleLabel.ui2"), student: t("screen.roleLabel.ui3"), specialist: t("screen.roleLabel.ui4") }[role];
-}
-
-function AuthScreen({ onAuthenticated }: { onAuthenticated: (user: User) => void }) {
-  useLocale();
-  const [mode, setMode] = useState<"login" | "register" | "student">("login");
-  const [username, setUsername] = useState("");
-  const [password, setPassword] = useState("");
-  const [name, setName] = useState("");
-  const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [showPassword, setShowPassword] = useState(false);
-
-  const submit = async (event: React.FormEvent) => {
-    event.preventDefault(); setError(""); setLoading(true);
-    try {
-      if (mode === "student") unlockSpeechAudio();
-      const endpoint = mode === "student" ? "student-login" : mode === "login" ? "login" : "register";
-      const payload = mode === "student" ? { username, pin: password } : mode === "login" ? { username, password } : { username, password, full_name: name };
-      await api<{ user: User }>(`/api/auth/${endpoint}`, {
-        method: "POST", body: JSON.stringify(payload),
-      });
-      const currentUser = await api<User>("/api/auth/me");
-      clearLegacyAuth(); onAuthenticated(currentUser);
-    } catch (cause) {
-      const message = cause instanceof Error ? cause.message : t("errors.auth");
-      setError(message === t("screen.AuthScreen.ui1")
-        ? t("screen.AuthScreen.ui2")
-        : message);
-    }
-    finally { setLoading(false); }
-  };
-
-  const heading = mode === "student" ? t("auth.child") : mode === "login" ? t("auth.login") : t("auth.register");
-  const switchMode = (next: "login" | "register" | "student") => { setMode(next); setUsername(""); setPassword(""); setError(""); setShowPassword(false); };
-  return <div className="auth-page">
-    <div className="auth-visual">
-      <div className="auth-brand"><BrandLogo variant="primary" width={270} priority /></div>
-      <div className="auth-copy"><span className="pill"><ShieldCheck size={15}/> {t("auth.calmPractice")}</span><h1>{t("auth.helpChild")}<br/><em>{t("auth.communicate")}</em></h1><p>{t("auth.description")}</p><div className="auth-benefits"><span><Check/> {t("auth.steps")}</span><span><Check/> {t("auth.history")}</span><span><Check/> {t("auth.separate")}</span></div></div>
-      <div className="auth-orbs"><i><Bot/></i><i><ModuleGlyph module="sensory"/></i><i><ModuleGlyph module="mixed"/></i></div>
-    </div>
-    <div className="auth-form-wrap"><LanguagePicker compact /><Link href="/" className="auth-back-home"><ArrowLeft size={17}/> {t("nav.homeLink")}</Link><form className="auth-card" autoComplete="off" onSubmit={submit}>
-      <div className="auth-card-brand"><BrandLogo variant="primary" width={230} priority /></div>
-      <div className="auth-role-tabs" aria-label={t("auth.type")}><button type="button" className={mode !== "student" ? "active" : ""} onClick={() => switchMode("login")}><UserRoundCheck size={18}/> {t("auth.adult")}</button><button type="button" className={mode === "student" ? "active" : ""} onClick={() => switchMode("student")}><Backpack size={18}/> {t("auth.kid")}</button></div>
-      <span className="kicker">{mode === "register" ? t("auth.new") : t("auth.welcome")}</span><h2>{heading}</h2><p>{mode === "student" ? t("auth.childHelp") : mode === "login" ? t("auth.loginHelp") : t("auth.registerHelp")}</p>
-      {mode === "register" && <label>{t("auth.yourName")}<input value={name} onChange={(e) => setName(e.target.value)} placeholder={t("auth.exampleName")} autoComplete="name" required minLength={2}/></label>}
-      <label>{mode === "student" ? t("auth.childLogin") : t("common.login")}<span className="auth-input"><UserRound size={17}/><input type="text" autoComplete="off" autoCapitalize="none" spellCheck={false} data-1p-ignore data-lpignore="true" value={username} onChange={(e) => setUsername(e.target.value.replace(/[^A-Za-z0-9_.-]/g, ""))} placeholder={mode === "student" ? t("auth.parentLogin") : t("auth.latin")} pattern={"[A-Za-z0-9_.\\-]+"} required minLength={3}/></span>{mode === "register" && <small>{t("auth.loginRequirements")}</small>}</label>
-      <label>{mode === "student" ? t("auth.pin") : t("auth.password")}<span className="auth-input"><KeyRound size={17}/><input type={showPassword ? "text" : "password"} autoComplete="new-password" data-1p-ignore data-lpignore="true" inputMode={mode === "student" ? "numeric" : undefined} value={password} onChange={(e) => setPassword(mode === "student" ? e.target.value.replace(/\D/g, "") : e.target.value)} placeholder={mode === "student" ? t("auth.pinLength") : t("auth.enterPassword")} required minLength={mode === "register" ? 8 : mode === "student" ? 4 : 1} maxLength={mode === "student" ? 12 : undefined}/><button type="button" onClick={() => setShowPassword((value) => !value)} aria-label={showPassword ? t("auth.hidePassword") : t("auth.showPassword")}>{showPassword ? <EyeOff size={17}/> : <Eye size={17}/>}</button></span>{mode === "register" && <small>{t("auth.passwordLength")}</small>}</label>
-      {error && <div className="auth-error" role="alert"><CircleHelp size={17}/><span>{error}</span></div>}
-      <button className="primary-button auth-submit" disabled={loading}>{loading ? t("common.wait") : mode === "register" ? t("auth.create") : mode === "student" ? t("auth.begin") : t("auth.signIn")}<ChevronRight size={18}/></button>
-      {mode !== "student" && <div className="auth-secondary">{mode === "login" ? t("auth.first") : t("auth.already")}<button type="button" onClick={() => switchMode(mode === "login" ? "register" : "login")}>{mode === "login" ? t("auth.createParent") : t("auth.signIn")}</button></div>}
-      {mode === "student" && <div className="student-help"><ShieldCheck size={17}/><span>{t("auth.pinHelp")}</span></div>}
-    </form></div>
-  </div>;
 }
 
 type ChildHomeProps = {

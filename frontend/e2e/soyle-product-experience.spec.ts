@@ -92,5 +92,5 @@ test("full child menu works on phone and desktop and can sign out", async ({ pag
   await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)).toBeLessThanOrEqual(1);
   await page.setViewportSize({ width: 1440, height: 900 });
   await menu.getByRole("button", { name: "Выйти из аккаунта" }).click();
-  await expect(page.locator(".auth-page")).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Вход в аккаунт", exact: true })).toBeVisible();
 });

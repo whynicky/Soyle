@@ -1,0 +1,58 @@
+.public-theme-toggle {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: 50%;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+}
+.public-theme-toggle:hover {
+  border-color: light-dark(#24242414, #fff2);
+  background: light-dark(#24242408, #ffffff14);
+}
+.public-theme-sun,
+.public-theme-toggle[data-theme="dark"] .public-theme-moon { display: none; }
+.public-theme-toggle[data-theme="dark"] .public-theme-sun { display: block; }
+@media (prefers-color-scheme: dark) {
+  .public-theme-toggle[data-theme="system"] .public-theme-moon { display: none; }
+  .public-theme-toggle[data-theme="system"] .public-theme-sun { display: block; }
+}
+
+html[data-public-theme-transition="circle"] :is(.sl-page, .sa-page),
+html[data-public-theme-transition="circle"] :is(.sl-page, .sa-page) * {
+  transition-duration: 0s !important;
+  transition-delay: 0s !important;
+}
+html[data-public-theme-transition="circle"]::view-transition { pointer-events: none; }
+html[data-public-theme-transition="circle"]::view-transition-group(root),
+html[data-public-theme-transition="circle"]::view-transition-old(root) { animation: none; }
+html[data-public-theme-transition="circle"]::view-transition-old(root),
+html[data-public-theme-transition="circle"]::view-transition-new(root) { mix-blend-mode: normal; }
+html[data-public-theme-transition="circle"]::view-transition-new(root) {
+  animation: public-theme-circle 620ms cubic-bezier(.32, .72, .18, 1) both;
+}
+@keyframes public-theme-circle {
+  from { clip-path: circle(0 at var(--public-theme-x) var(--public-theme-y)); }
+  to { clip-path: circle(var(--public-theme-radius) at var(--public-theme-x) var(--public-theme-y)); }
+}
+@media (prefers-reduced-motion: no-preference) {
+  html[data-public-theme-transition="fade"] :is(.sa-page, .sl-page),
+  html[data-public-theme-transition="fade"] :is(.sa-page, .sl-page) :is(p, h1, h2, h3, a, button, label, input, .sl-island, .sa-nav, .sl-window, .sl-desktop-body, .sl-family-panel, .sl-practice-sample) {
+    transition: background-color 190ms ease, border-color 190ms ease, color 190ms ease;
+  }
+  html[data-public-theme-transition="fade"] :is(.sl-scene-photo img, .sa-scene-art) {
+    animation: public-theme-fade 190ms ease both;
+  }
+}
+@keyframes public-theme-fade {
+  from { opacity: .7; }
+  to { opacity: 1; }
+}
+@media (prefers-reduced-motion: reduce) {
+  html[data-public-theme-transition="circle"]::view-transition-new(root) { animation: none; }
+}
