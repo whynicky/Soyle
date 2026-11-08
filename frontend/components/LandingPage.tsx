@@ -24,6 +24,8 @@ const scenery = {
 
 const heroSizes = "(max-width: 760px) 1040px, (max-width: 1200px) 1200px, 100vw";
 const mobileScenery = "(max-width: 480px)";
+const phonePhotoSrcSet = [480, 768, 1168, 1760, 2336, 3504]
+  .map(width => `/landing/soyle-in-hands-${width}.webp ${width}w`).join(", ");
 
 type Scene = keyof typeof scenery | "hero" | "foreground" | "end";
 type SceneTone = "day" | "night";
@@ -880,6 +882,24 @@ export function LandingPage({ initialTheme }: { initialTheme: LandingTheme }) {
         </section>
 
         <FamilyPractice theme={theme} locale={locale} onOpenDemo={openDemo} />
+        {/* eslint-disable-next-line @next/next/no-img-element -- The photograph has pre-encoded responsive WebP variants. */}
+        <img
+          className="sl-phone-photo sl-container"
+          data-reveal
+          src="/landing/soyle-in-hands-1168.webp"
+          srcSet={phonePhotoSrcSet}
+          sizes="(max-width: 760px) calc(100vw - 40px), (max-width: 1232px) calc(100vw - 64px), 1168px"
+          width={4096}
+          height={3203}
+          alt={t("landing.photo.phoneAlt")}
+          loading="lazy"
+          fetchPriority="low"
+          decoding="async"
+          onLoad={async ({ currentTarget }) => {
+            await currentTarget.decode().catch(() => {});
+            currentTarget.dataset.loaded = "";
+          }}
+        />
         <ProductRoles />
         <Materials />
         <HowToStart />

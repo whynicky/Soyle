@@ -741,7 +741,7 @@ html:has(> body > .sl-page[data-landing-theme="dark"]) { color-scheme: dark; }
 .sl-scenario-copy p { grid-area: 1 / 1; max-width: 72ch; margin-inline: auto; }
 .sl-page .sl-scenario-copy p[hidden] { display: block; visibility: hidden; }
 
-.sl-family { padding-block: clamp(44px, 6vw, 76px) 40px; }
+.sl-family { padding-block: clamp(44px, 6vw, 76px) 80px; }
 .sl-feature-list { display: grid; gap: 24px; }
 .sl-feature {
   display: grid;
@@ -826,7 +826,15 @@ html:has(> body > .sl-page[data-landing-theme="dark"]) { color-scheme: dark; }
 .sl-feature-content .sl-lesson-next { margin-top: 4px; }
 .sl-feature-content .sl-lesson-next svg { flex: none; }
 
-.sl-roles { padding-block: 28px 36px; }
+.sl-phone-photo {
+  display: block;
+  height: auto;
+  aspect-ratio: 4096 / 3203;
+  object-fit: contain;
+  border-radius: 16px;
+}
+
+.sl-roles { padding-block: 40px 36px; }
 .sl-roles .sl-heading-3, .sl-access-title .sl-heading-3 { font-size: 1.875rem; }
 .sl-explainer-list {
   display: grid;
@@ -1072,6 +1080,7 @@ html:has(> body > .sl-page[data-landing-theme="dark"]) { color-scheme: dark; }
   .sl-hero[data-depth-active] .sl-hero-foreground-extension img { will-change: scale; }
   .sl-hero-phrase p span { animation: sl-hero-phrase-reveal 200ms ease-out; }
   .sl-phrase span { animation: sl-replace 280ms var(--sl-ease) both; }
+  .sl-phone-photo.sl-visible[data-loaded] { animation: sl-phone-photo-reveal 720ms var(--sl-ease) backwards; }
   .sl-preview.sl-visible .sl-preview-panel {
     transition: opacity 200ms ease, translate 240ms var(--sl-ease), visibility 0s;
   }
@@ -1101,6 +1110,7 @@ html:has(> body > .sl-page[data-landing-theme="dark"]) { color-scheme: dark; }
 @keyframes sl-foreground-arrive { from { opacity: .25; transform: translateY(14px); } to { opacity: 1; transform: none; } }
 @keyframes sl-hero-phrase-reveal { from { opacity: .35; } to { opacity: 1; } }
 @keyframes sl-replace { from { opacity: .5; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+@keyframes sl-phone-photo-reveal { from { opacity: 0; transform: translateY(28px); } to { opacity: 1; transform: none; } }
 
 @media (max-width: 900px) {
   .sl-island { gap: 16px; }
