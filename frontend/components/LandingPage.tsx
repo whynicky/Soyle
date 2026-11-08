@@ -450,9 +450,10 @@ function PlanPreview() {
         title: t(title), meta: t(day), icon: <Icon size={16} aria-hidden="true" />,
         detail: <>
           <div className="sl-record-detail-head">
+            <p className="sl-record-date">{t(day)}</p>
             <h4>{t(title)}</h4>
-            <p>{t(instruction)}</p>
           </div>
+          <p>{t(instruction)}</p>
           <div className="sl-record-section">
             <p className="sl-demo-label"><BookOpen size={16} aria-hidden="true" />{t("landing.demo.adultTip")}</p>
             <p>{t(note)}</p>
@@ -564,7 +565,6 @@ function FamilyPractice({ theme, locale, onOpenDemo }: {
       <div className="sl-feature-list">
         <article className="sl-feature">
           <div className="sl-feature-copy">
-            <p className="sl-kicker">{t("landing.showcase.plan")}</p>
             <h3 className="sl-heading-3">{t("landing.feature.planTitle")}</h3>
             <p className="sl-body">{t("landing.feature.planDescription")}</p>
           </div>
@@ -591,7 +591,6 @@ function FamilyPractice({ theme, locale, onOpenDemo }: {
 
         <article className="sl-feature sl-feature-reverse">
           <div className="sl-feature-copy">
-            <p className="sl-kicker">{t("landing.mobile.tab.history")}</p>
             <h3 className="sl-heading-3">{t("landing.feature.historyTitle")}</h3>
             <p className="sl-body">{t("landing.feature.historyDescription")}</p>
           </div>
@@ -625,7 +624,7 @@ function Materials() {
     <section className="sl-materials sl-container" id="materials" aria-labelledby="sl-materials-title">
       <div>
         <p className="sl-kicker">{t("landing.materials.stage")}</p>
-        <h2 className="sl-heading-3" id="sl-materials-title">{t("landing.materials.heading")}</h2>
+        <h2 className="sl-heading-2" id="sl-materials-title">{t("landing.materials.heading")}</h2>
       </div>
       <div className="sl-materials-copy">
         <p className="sl-body">{t("landing.materials.available")}</p>

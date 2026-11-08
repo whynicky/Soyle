@@ -113,7 +113,7 @@ test('landing copy and AAC demonstration follow the selected language', async ({
   await page.locator('.sl-footer').getByRole('button',{name:'Русский',exact:true}).click();
   await expect(page.getByRole('heading',{name:'Больше способов сказать важное'})).toBeVisible();
   const family = page.locator('#family');
-  await expect(family.getByRole('heading', { name: 'Наблюдения, к которым можно вернуться' })).toBeVisible();
+  await expect(family.getByRole('heading', { name: 'Наблюдения остаются под рукой' })).toBeVisible();
   await expect(family.getByText('За обедом выбрала карточку «Вода».', { exact: true })).toBeVisible();
 });
 
