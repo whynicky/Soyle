@@ -47,7 +47,7 @@ html:has(> body > .sl-page[data-landing-theme="dark"]) { color-scheme: dark; }
 /* Keep rounded radii as the fallback for browsers without continuous corners. */
 .sl-page :is(
   .sl-window, .sl-desktop-scene, .sl-feature, .sl-feature-panel,
-  .sl-phone-photo, .sl-materials, .sl-faq details, .sl-faq summary,
+  .sl-phone-photo,
   .sl-hero-choice, .sl-hero-phrase, .sl-object-choice,
   .sl-records button, .sl-record-detail, .sl-feature-detail
 ) {
@@ -144,7 +144,6 @@ html:has(> body > .sl-page[data-landing-theme="dark"]) { color-scheme: dark; }
 .sl-login, .sl-text-link {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
   min-height: 44px;
   font-size: .875rem;
   font-weight: 600;
@@ -169,7 +168,6 @@ html:has(> body > .sl-page[data-landing-theme="dark"]) { color-scheme: dark; }
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 12px;
   min-height: 48px;
   padding: 8px 24px;
   border-radius: 9999px;
@@ -181,7 +179,6 @@ html:has(> body > .sl-page[data-landing-theme="dark"]) { color-scheme: dark; }
 }
 .sl-page .sl-start:hover { background: var(--sl-cta-hover); }
 .sl-start:active, .sl-speak:active, .sl-object-choice:active { transform: scale(.97); }
-.sl-text-link svg, .sl-start svg, .sl-login svg { flex: none; }
 
 .sl-hero {
   --sl-hero-landscape-width: max(100%, 1200px);
@@ -264,10 +261,7 @@ html:has(> body > .sl-page[data-landing-theme="dark"]) { color-scheme: dark; }
 .sl-hero-copy .sl-hero-description { max-width: 610px; margin: 28px auto 0; color: var(--sl-panel-muted); }
 .sl-hero-actions {
   display: flex;
-  flex-wrap: wrap;
   justify-content: center;
-  align-items: center;
-  gap: 8px 20px;
   margin-top: 30px;
 }
 
@@ -836,7 +830,6 @@ html:has(> body > .sl-page[data-landing-theme="dark"]) { color-scheme: dark; }
   line-height: 1.45;
 }
 .sl-feature-content .sl-lesson-next { margin-top: 4px; }
-.sl-feature-content .sl-lesson-next svg { flex: none; }
 
 .sl-phone-photo {
   display: block;
@@ -846,39 +839,74 @@ html:has(> body > .sl-page[data-landing-theme="dark"]) { color-scheme: dark; }
   border-radius: var(--sl-scene-radius);
 }
 
-.sl-roles { padding-block: 40px 36px; }
-.sl-roles .sl-heading-3, .sl-access-title .sl-heading-3 { font-size: 1.875rem; }
-.sl-explainer-list {
+.sl-roles {
+  padding-block: 40px 36px;
+  background: light-dark(#faf8f5, #101010);
+}
+.sl-roles .sl-heading-3 { font-size: 1.875rem; }
+.sl-role-cards {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 20px 24px;
-  margin: 24px 0 16px;
-  padding: 0;
-  list-style: none;
+  grid-auto-rows: 1fr;
+  align-items: stretch;
+  gap: 16px;
+  margin-block: 24px 16px;
 }
-.sl-explainer-list > * { display: grid; align-content: start; gap: 6px; padding-top: 12px; border-block-start: 1px solid var(--sl-line); }
-.sl-explainer-list dt, .sl-explainer-list strong { font-weight: 600; }
-.sl-explainer-list dd { margin: 0; color: var(--sl-panel-muted); font-size: 1rem; line-height: 1.55; }
-.sl-materials {
+.sl-role-card {
   display: grid;
-  grid-template-columns: minmax(0, .75fr) minmax(0, 1.25fr);
-  align-items: center;
-  gap: 24px;
-  margin-block: 8px 0;
-  padding: clamp(20px, 3vw, 36px);
-  border: 1px solid var(--sl-line);
-  border-radius: var(--sl-panel-radius);
-  background: var(--sl-stone);
+  grid-template-columns: minmax(0, 1fr);
+  align-content: center;
+  justify-items: center;
+  gap: 32px;
+  aspect-ratio: 1.08;
+  min-width: 0;
+  padding: clamp(16px, 2.2vw, 32px);
+  border-radius: var(--sl-scene-radius);
+  corner-shape: squircle;
+  background: light-dark(#fff, #000);
+  text-align: center;
+  overflow-wrap: anywhere;
 }
-.sl-materials .sl-kicker { margin-bottom: 12px; }
-.sl-materials .sl-body { max-width: 58ch; }
+.sl-role-symbol {
+  --sl-role-symbol-size: clamp(64px, 5.5vw, 80px);
+  display: block;
+  width: var(--sl-role-symbol-size);
+  height: var(--sl-role-symbol-size);
+}
+.sl-role-card[data-role="child"] .sl-role-symbol { color: light-dark(#a74c80, #ec8dc3); }
+.sl-role-card[data-role="parent"] .sl-role-symbol { color: light-dark(#29786b, #7dd3bf); }
+.sl-role-card[data-role="specialist"] .sl-role-symbol { color: light-dark(#a75825, #f4a363); }
+.sl-role-card[data-role="permission"] .sl-role-symbol { color: light-dark(#545ea0, #aab5f2); }
+.sl-role-card[data-role="camera"] .sl-role-symbol { color: light-dark(#98624a, #e6af93); }
+.sl-role-card[data-role="export"] .sl-role-symbol { color: light-dark(#51773f, #a4ce8f); }
+.sl-role-copy { display: grid; gap: 8px; }
+.sl-role-copy .sl-heading-4 { color: var(--sl-panel-muted); font-weight: 500; }
+.sl-role-copy .sl-heading-4 span { display: block; color: var(--sl-ink); }
+.sl-role-description {
+  justify-self: center;
+  max-inline-size: 28ch;
+  color: var(--sl-panel-muted);
+  font-size: .875rem;
+  line-height: 1.5;
+}
+.sl-roles-note {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 24px;
+}
+.sl-page .sl-roles-note .sl-text-link {
+  color: var(--sl-accent);
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
 
 .sl-how-start {
   display: grid;
   grid-template: "heading action" auto "steps steps" auto / minmax(0, 1fr) auto;
   align-items: center;
   gap: 24px;
-  padding-block: 56px;
+  padding-block: 56px 48px;
 }
 .sl-how-start h2 { grid-area: heading; }
 .sl-how-start .sl-start { grid-area: action; justify-self: end; }
@@ -902,54 +930,6 @@ html:has(> body > .sl-page[data-landing-theme="dark"]) { color-scheme: dark; }
 .sl-step-number { color: var(--sl-muted); font-size: .875rem; font-variant-numeric: tabular-nums; line-height: 1.75rem; }
 .sl-start-steps h3 { font-size: 1.125rem; font-weight: 600; line-height: 1.4; }
 .sl-start-steps .sl-body { margin-top: 6px; }
-
-.sl-access {
-  display: grid;
-  grid-template-columns: minmax(0, .8fr) minmax(0, 2fr);
-  gap: 32px;
-  align-items: start;
-  padding-block: 36px;
-  border-block: 1px solid var(--sl-line);
-}
-.sl-access-title { display: grid; justify-items: start; gap: 8px; }
-.sl-access-title .sl-body { max-width: 265px; }
-.sl-page .sl-access-title .sl-text-link { color: var(--sl-accent); }
-.sl-access-list {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 20px;
-  list-style: none;
-  padding: 0;
-}
-.sl-access-list li { display: grid; gap: 8px; align-content: start; }
-.sl-access-list svg { color: var(--sl-accent); }
-.sl-access-list strong { font-size: 1rem; }
-.sl-access-list p { margin-top: 4px; color: var(--sl-panel-muted); font-size: 1rem; line-height: 1.55; }
-
-.sl-faq { display: grid; grid-template-columns: minmax(0, .85fr) minmax(0, 1.15fr); gap: 48px; padding-block: 72px 84px; }
-.sl-faq h2 { margin-bottom: 16px; }
-.sl-faq > div:first-child > .sl-body { max-width: 320px; }
-.sl-faq-list { display: grid; gap: 8px; align-content: start; }
-.sl-faq details { border: 1px solid var(--sl-line); border-radius: 16px; background: var(--sl-stone); }
-.sl-faq details[open] { background: var(--sl-raised); }
-.sl-faq summary {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  min-height: 56px;
-  padding: 12px 16px;
-  border-radius: inherit;
-  cursor: pointer;
-  font-weight: 600;
-  list-style: none;
-}
-.sl-faq summary:hover { color: var(--sl-accent); }
-.sl-faq summary::-webkit-details-marker { display: none; }
-.sl-faq summary svg { flex: none; color: var(--sl-accent); transition: transform 300ms var(--sl-ease); }
-.sl-faq details[open]:not([data-closing]) summary svg { transform: rotate(180deg); }
-.sl-faq-answer { overflow: clip; }
-.sl-faq details p { padding: 0 16px 16px; color: var(--sl-panel-muted); }
 
 .sl-closing {
   --sl-end-fade-height: 200px;
@@ -982,7 +962,6 @@ html:has(> body > .sl-page[data-landing-theme="dark"]) { color-scheme: dark; }
   padding-block: 48px 64px;
 }
 .sl-end-copy { max-width: 430px; }
-.sl-end-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; }
 .sl-end-copy .sl-body { max-width: 340px; margin-block: 12px 20px; color: var(--sl-panel-muted); }
 
 .sl-footer {
@@ -1093,6 +1072,9 @@ html:has(> body > .sl-page[data-landing-theme="dark"]) { color-scheme: dark; }
   .sl-hero-phrase p span { animation: sl-hero-phrase-reveal 200ms ease-out; }
   .sl-phrase span { animation: sl-replace 280ms var(--sl-ease) both; }
   .sl-phone-photo.sl-visible[data-loaded] { animation: sl-phone-photo-reveal 720ms var(--sl-ease) backwards; }
+  .sl-role-card:nth-child(3n + 2) { --sl-role-delay: 90ms; }
+  .sl-role-card:nth-child(3n) { --sl-role-delay: 180ms; }
+  .sl-role-card.sl-visible { animation: sl-role-reveal 650ms var(--sl-role-delay, 0ms) var(--sl-ease) backwards; }
   .sl-preview.sl-visible .sl-preview-panel {
     transition: opacity 200ms ease, translate 240ms var(--sl-ease), visibility 0s;
   }
@@ -1103,19 +1085,6 @@ html:has(> body > .sl-page[data-landing-theme="dark"]) { color-scheme: dark; }
   .sl-record-detail:not([hidden]) {
     animation: sl-replace 400ms var(--sl-ease) both;
   }
-  .sl-page :is(.sl-start, .sl-login, .sl-lesson-next) svg { transition: transform 180ms var(--sl-ease); }
-  .sl-page :is(.sl-start, .sl-login, .sl-lesson-next):hover svg { transform: translateX(4px); }
-
-  @supports (interpolate-size: allow-keywords) and selector(details::details-content) {
-    .sl-faq details { interpolate-size: allow-keywords; }
-    .sl-faq details::details-content {
-      height: 0;
-      opacity: 0;
-      overflow: clip;
-      transition: height 240ms var(--sl-ease), opacity 180ms ease, content-visibility 240ms allow-discrete;
-    }
-    .sl-faq details[open]::details-content { height: auto; opacity: 1; }
-  }
 }
 @keyframes sl-appear { from { opacity: .65; } to { opacity: 1; } }
 @keyframes sl-hero-copy-rise { from { opacity: 0; transform: translateY(var(--sl-hero-copy-rise)); } to { opacity: 1; transform: none; } }
@@ -1123,7 +1092,13 @@ html:has(> body > .sl-page[data-landing-theme="dark"]) { color-scheme: dark; }
 @keyframes sl-hero-phrase-reveal { from { opacity: .35; } to { opacity: 1; } }
 @keyframes sl-replace { from { opacity: .5; transform: translateY(6px); } to { opacity: 1; transform: none; } }
 @keyframes sl-phone-photo-reveal { from { opacity: 0; transform: translateY(28px); } to { opacity: 1; transform: none; } }
+@keyframes sl-role-reveal { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: none; } }
 
+@media (max-width: 1023px) {
+  .sl-role-cards { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .sl-role-card { aspect-ratio: auto; padding: 32px 24px; }
+  .sl-role-copy .sl-heading-4 { font-size: 1.5rem; }
+}
 @media (max-width: 900px) {
   .sl-island { gap: 16px; }
   .sl-section-lead { gap: 24px; }
@@ -1181,8 +1156,8 @@ html:has(> body > .sl-page[data-landing-theme="dark"]) { color-scheme: dark; }
   .sl-hero-phrase-copy { gap: 2px; }
   .sl-page .sl-hero-phrase .sl-lesson-next { min-width: 0; gap: 5px; padding-inline: 8px; font-size: .8125rem; }
   .sl-window-bar { min-height: 44px; padding-inline: 16px; }
-  .sl-journey, .sl-family, .sl-access, .sl-faq { padding-block: 44px 48px; }
-  .sl-section-lead, .sl-faq, .sl-access { grid-template-columns: minmax(0, 1fr); gap: 16px; }
+  .sl-journey, .sl-family { padding-block: 44px 48px; }
+  .sl-section-lead { grid-template-columns: minmax(0, 1fr); gap: 16px; }
   .sl-section-lead { margin-bottom: 20px; }
   .sl-section-lead .sl-body { justify-self: start; }
   .sl-tabs { grid-template-columns: repeat(2, minmax(0, 1fr)); }
@@ -1200,8 +1175,7 @@ html:has(> body > .sl-page[data-landing-theme="dark"]) { color-scheme: dark; }
   .sl-desktop-body .sl-object-choice { min-height: clamp(116px, 30vw, 176px); }
   .sl-question-prompt { flex-wrap: wrap; }
   .sl-desktop-body .sl-demo-heading .sl-heading-4 { font-size: 1.125rem; }
-  .sl-record-grid, .sl-materials, .sl-explainer-list { grid-template-columns: minmax(0, 1fr); gap: 12px; }
-  .sl-record-grid { gap: 8px; }
+  .sl-record-grid { grid-template-columns: minmax(0, 1fr); gap: 8px; }
   .sl-record-list { gap: 4px; }
   .sl-page .sl-records { display: none; }
   .sl-record-select {
@@ -1227,20 +1201,16 @@ html:has(> body > .sl-page[data-landing-theme="dark"]) { color-scheme: dark; }
   .sl-feature-content { padding: 16px; }
   .sl-feature-content h4 { font-size: 1.375rem; }
   .sl-roles { padding-block: 28px 36px; }
-  .sl-explainer-list { margin-block: 16px; }
+  .sl-role-cards { margin-block: 16px; }
   .sl-how-start {
     grid-template: "heading" auto "steps" auto "action" auto / minmax(0, 1fr);
     gap: 20px;
-    padding-block: 40px;
+    padding-block: 40px 32px;
   }
   .sl-how-start .sl-start { justify-self: start; }
   .sl-start-steps { grid-template-columns: minmax(0, 1fr); }
   .sl-start-steps li { padding: 16px 0; }
   .sl-start-steps li + li { border-inline-start: 0; border-block-start: 1px solid var(--sl-line); }
-  .sl-access { padding-block: 32px; }
-  .sl-access-list { grid-template-columns: minmax(0, 1fr); gap: 0; }
-  .sl-access-list li { grid-template-columns: auto minmax(0, 1fr); gap: 10px; padding-block: 12px; }
-  .sl-access-list li + li { border-top: 1px solid var(--sl-line); }
   .sl-end-layout { align-items: start; min-height: 300px; padding-block: 56px; }
   .sl-closing { --sl-end-fade-height: 128px; }
   .sl-closing .sl-end-photo { --sl-scene-position: 48% center; }
@@ -1249,6 +1219,11 @@ html:has(> body > .sl-page[data-landing-theme="dark"]) { color-scheme: dark; }
   .sl-footer-brand { grid-column: 1 / -1; }
   .sl-footer-bottom { align-items: start; flex-direction: column-reverse; gap: 12px; }
   .sl-footer-settings { width: 100%; }
+}
+
+@media (max-width: 640px) {
+  .sl-role-cards { grid-template-columns: minmax(0, 1fr); }
+  .sl-role-card { padding-block: 40px; }
 }
 
 @media (max-width: 430px) {
@@ -1277,13 +1252,11 @@ html:has(> body > .sl-page[data-landing-theme="dark"]) { color-scheme: dark; }
   .sl-header .sl-wordmark { gap: 4px; font-size: 1.25rem; }
   .sl-header .sl-brand-mark { width: 24px; height: 24px; }
   .sl-header .sl-wordmark span { margin-inline-start: -4px; }
-  .sl-login svg { display: none; }
   .sl-header { max-width: calc(100% - 24px); }
   .sl-island { gap: 8px; padding-inline-start: 9px; }
   .sl-island-actions { gap: 2px; }
   .sl-header .locale-picker button { min-width: 34px; padding-inline: 4px; }
   .sl-hero-copy .sl-kicker { margin-bottom: 12px; }
-  .sl-hero-actions { gap: 4px 12px; }
   .sl-desktop-body .sl-object-choice svg { inset: 4px 4px auto auto; }
   .sl-phrase-bar { gap: 6px; }
   .sl-phrase-bar .sl-phrase { font-size: 1rem; }

@@ -4,8 +4,8 @@ import Image from "next/image";
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState, type KeyboardEvent, type ReactNode } from "react";
 import {
-  ArrowDown, ArrowRight, BookOpen, Check, ChevronDown, ChevronRight,
-  ClipboardList, Download, History, LayoutGrid, LockKeyhole, MessageSquare, ShieldCheck,
+  BookOpen, Camera, Check, ChevronRight, Clock3,
+  ClipboardList, Download, History, LayoutGrid, LockKeyhole, MessagesSquare, MessageSquare, Route,
   Volume2, X,
 } from "lucide-react";
 import { t, useLocale, type Locale } from "@/lib/i18n";
@@ -104,15 +104,6 @@ const previews = [
 ] as const;
 const defaultPreview = previews.findIndex(({ id }) => id === "lesson");
 
-const access = [
-  { id: "permission", icon: LockKeyhole },
-  { id: "camera", icon: ShieldCheck },
-  { id: "export", icon: Download },
-] as const;
-
-const questions = ["price", "account", "devices", "specialist", "adult", "camera", "history"] as const;
-
-
 function Wordmark() {
   return (
     <Link className="sl-wordmark" href="/" aria-label={t("landing.copy036")}>
@@ -130,7 +121,7 @@ function LandingHeader({ theme, onChange }: { theme: LandingTheme; onChange: (va
         <div className="sl-island-actions">
           <LanguagePicker compact />
           <PublicThemeToggle theme={theme} onChange={onChange} />
-          <Link className="sl-login" href="/app">{t("landing.copy044")} <ArrowRight size={14} aria-hidden="true" /></Link>
+          <Link className="sl-login" href="/app">{t("landing.copy044")}</Link>
         </div>
       </div>
     </header>
@@ -162,7 +153,7 @@ function ThemePicker({ theme, onChange }: { theme: LandingTheme; onChange: (valu
 function StartLink() {
   return (
     <Link className="sl-button sl-start" href="/app?mode=register">
-      {t("landing.showcase.start")} <ArrowRight size={16} aria-hidden="true" />
+      {t("landing.showcase.start")}
     </Link>
   );
 }
@@ -364,7 +355,7 @@ function LessonPreview({ locale, active }: { locale: Locale; active: boolean }) 
           setStep(complete ? 0 : step + 1);
           setAnswer(null);
         }}>
-          {t(complete ? "landing.desktop.restart" : "landing.desktop.nextQuestion")} <ArrowRight size={15} aria-hidden="true" />
+          {t(complete ? "landing.desktop.restart" : "landing.desktop.nextQuestion")}
         </button>
       </div>
     </div>
@@ -511,57 +502,43 @@ function PlatformCover({ speech }: { speech: ReturnType<typeof useLandingSpeech>
   );
 }
 
-function FaqItem({ id }: { id: (typeof questions)[number] }) {
-  const answer = useRef<HTMLDivElement>(null);
-  const animation = useRef<Animation | null>(null);
-  useEffect(() => () => animation.current?.cancel(), []);
-
-  return (
-    <details>
-      <summary onClick={(event) => {
-        const details = event.currentTarget.closest("details");
-        const panel = answer.current;
-        const nativeMotion = CSS.supports("interpolate-size: allow-keywords") && CSS.supports("selector(details::details-content)");
-        if (!details || !panel?.animate || nativeMotion || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
-
-        event.preventDefault();
-        const open = !details.open || details.hasAttribute("data-closing");
-        const height = details.open ? panel.getBoundingClientRect().height : 0;
-        animation.current?.cancel();
-        details.open = true;
-        details.toggleAttribute("data-closing", !open);
-        animation.current = panel.animate([
-          { height: `${height}px` },
-          { height: `${open ? panel.scrollHeight : 0}px` },
-        ], { duration: 260, easing: "cubic-bezier(.22, 1, .36, 1)" });
-        animation.current.onfinish = () => {
-          details.open = open;
-          details.removeAttribute("data-closing");
-          animation.current = null;
-        };
-      }}>
-        {t(`landing.showcase.faq.${id}.question`)}<ChevronDown size={18} aria-hidden="true" />
-      </summary>
-      <div className="sl-faq-answer" ref={answer}><p className="sl-body">{t(`landing.showcase.faq.${id}.answer`)}</p></div>
-    </details>
-  );
-}
-
 type PreviewId = (typeof previews)[number]["id"];
 const previewFragment = (id: PreviewId) => `#sl-tab-${id}`;
 
-const roles = ["child", "parent", "specialist"] as const;
+const roleCards = [
+  { id: "child", icon: MessagesSquare, caption: "landing.roles.child.title" },
+  { id: "parent", icon: Clock3, caption: "landing.roles.parent.title" },
+  { id: "specialist", icon: Route, caption: "landing.roles.specialist.title" },
+  { id: "permission", icon: LockKeyhole, description: "landing.roles.permission.description" },
+  { id: "camera", icon: Camera, description: "landing.roles.camera.description" },
+  { id: "export", icon: Download, description: "landing.roles.export.description" },
+] as const;
 
 function ProductRoles() {
   return (
-    <section className="sl-roles sl-container" aria-labelledby="sl-roles-title">
-      <h2 className="sl-heading-3" id="sl-roles-title">{t("landing.roles.heading")}</h2>
-      <dl className="sl-explainer-list">
-        {roles.map((id) => (
-          <div key={id}><dt>{t(`landing.roles.${id}.title`)}</dt><dd>{t(`landing.roles.${id}.text`)}</dd></div>
-        ))}
-      </dl>
-      <p className="sl-body">{t("landing.roles.scope")}</p>
+    <section className="sl-roles" aria-labelledby="sl-roles-title">
+      <div className="sl-container">
+        <h2 className="sl-heading-3" id="sl-roles-title">{t("landing.roles.heading")}</h2>
+        <div className="sl-role-cards">
+          {roleCards.map(({ id, icon: Icon, ...copy }) => (
+            <article className="sl-role-card" key={id} data-role={id} data-reveal>
+              <Icon className="sl-role-symbol" strokeWidth={1.2} aria-hidden="true" />
+              <div className="sl-role-copy">
+                {"caption" in copy && <p className="sl-kicker">{t(copy.caption)}</p>}
+                <h3 className="sl-heading-4">
+                  {t(`landing.roles.${id}.headingLead`)}{" "}
+                  <span>{t(`landing.roles.${id}.headingEmphasis`)}</span>
+                </h3>
+                {"description" in copy && <p className="sl-role-description">{t(copy.description)}</p>}
+              </div>
+            </article>
+          ))}
+        </div>
+        <div className="sl-roles-note">
+          <p className="sl-body">{t("landing.roles.scope")}</p>
+          <Link className="sl-text-link" href="/privacy">{t("landing.copy143")}</Link>
+        </div>
+      </div>
     </section>
   );
 }
@@ -601,7 +578,7 @@ function FamilyPractice({ theme, locale, onOpenDemo }: {
                   <p>{t("landing.handoff.instruction")}</p>
                 </div>
                 <a className="sl-lesson-next" href={previewFragment("plan")} onClick={() => onOpenDemo("plan")}>
-                  {t("landing.desktop.tab.plan")} <ArrowRight size={16} aria-hidden="true" />
+                  {t("landing.desktop.tab.plan")}
                 </a>
               </div>
             </div>
@@ -627,25 +604,13 @@ function FamilyPractice({ theme, locale, onOpenDemo }: {
                 </div>
                 <div className="sl-feature-detail"><p>{t(note)}</p></div>
                 <a className="sl-lesson-next" href={previewFragment("history")} onClick={() => onOpenDemo("history")}>
-                  {t("landing.desktop.tab.history")} <ArrowRight size={16} aria-hidden="true" />
+                  {t("landing.desktop.tab.history")}
                 </a>
               </div>
             </div>
           </div>
         </article>
       </div>
-    </section>
-  );
-}
-
-function Materials() {
-  return (
-    <section className="sl-materials sl-container" id="materials" aria-labelledby="sl-materials-title">
-      <div>
-        <p className="sl-kicker">{t("landing.materials.stage")}</p>
-        <h2 className="sl-heading-3" id="sl-materials-title">{t("landing.materials.heading")}</h2>
-      </div>
-      <p className="sl-body">{t("landing.materials.review")}</p>
     </section>
   );
 }
@@ -770,7 +735,6 @@ export function LandingPage({ initialTheme }: { initialTheme: LandingTheme }) {
   const links = [
     { href: "#journey", label: t("landing.showcase.navJourney") },
     { href: "#family", label: t("landing.showcase.navFamily") },
-    { href: "#questions", label: t("landing.copy042") },
   ];
 
   return (
@@ -794,7 +758,6 @@ export function LandingPage({ initialTheme }: { initialTheme: LandingTheme }) {
               <p className="sl-body sl-hero-description">{t("landing.showcase.description")}</p>
               <div className="sl-hero-actions">
                 <StartLink />
-                <a className="sl-text-link" href="#journey" onClick={() => openDemo("lesson")}>{t("landing.demo.openPreview")} <ArrowDown size={15} aria-hidden="true" /></a>
               </div>
             </div>
 
@@ -901,38 +864,7 @@ export function LandingPage({ initialTheme }: { initialTheme: LandingTheme }) {
           }}
         />
         <ProductRoles />
-        <Materials />
         <HowToStart />
-
-        <section className="sl-access sl-container" id="access" aria-labelledby="sl-access-title">
-          <div className="sl-access-title">
-            <h2 className="sl-heading-3" id="sl-access-title">{t("landing.showcase.accessTitle")}</h2>
-            <p className="sl-body">{t("landing.showcase.accessIntro")}</p>
-            <Link className="sl-text-link" href="/privacy">{t("landing.copy143")} <ArrowRight size={16} aria-hidden="true" /></Link>
-          </div>
-          <ul className="sl-access-list">
-            {access.map(({ id, icon: Icon }) => (
-              <li key={id}>
-                <Icon size={19} aria-hidden="true" />
-                <div>
-                  <strong>{t(`landing.showcase.${id}Title`)}</strong>
-                  <p>{t(`landing.showcase.${id}Description`)}</p>
-                </div>
-              </li>
-            ))}
-          </ul>
-        </section>
-
-        <section className="sl-faq sl-container" id="questions" aria-labelledby="sl-faq-title">
-          <div>
-            <h2 className="sl-heading-2" id="sl-faq-title">{t("landing.showcase.faqTitle")}</h2>
-            <p className="sl-body">{t("landing.showcase.faqIntro")}</p>
-          </div>
-          <div className="sl-faq-list">
-            {questions.map((id) => <FaqItem key={id} id={id} />)}
-          </div>
-        </section>
-
       </main>
 
       <footer className="sl-closing">
@@ -942,12 +874,7 @@ export function LandingPage({ initialTheme }: { initialTheme: LandingTheme }) {
             <div className="sl-end-copy">
               <h2 className="sl-heading-2" id="sl-end-title">{t("landing.showcase.endTitle")}</h2>
               <p className="sl-body">{t("landing.showcase.endDescription")}</p>
-              <div className="sl-end-actions">
-                <StartLink />
-                <a className="sl-text-link" href="#journey" onClick={() => openDemo("lesson")}>
-                  {t("landing.demo.openPreview")} <ArrowDown size={15} aria-hidden="true" />
-                </a>
-              </div>
+              <StartLink />
             </div>
           </div>
         </section>

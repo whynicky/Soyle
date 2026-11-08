@@ -137,7 +137,8 @@ test('landing island stays compact and reloading from the demo returns to the he
   await expect(header.getByRole('link', { name: 'Кіру' })).toHaveAttribute('href', '/app');
   await expect(header.locator('.public-theme-toggle')).toBeVisible();
   await expect(header.getByRole('navigation')).toHaveCount(0);
-  await page.locator('.sl-hero-actions').getByRole('link', { name: 'Демоны байқап көру' }).click();
+  await expect(page.locator('.sl-hero-actions').getByRole('link')).toHaveCount(1);
+  await page.locator('.sl-footer').getByRole('link', { name: 'Қалай жұмыс істейді' }).click();
   await expect(page).toHaveURL(/#journey$/);
   await expect.poll(async () => {
     const target = await page.locator('#journey').boundingBox();
@@ -384,15 +385,12 @@ test('landing previews remain visible when switching languages with motion enabl
     await expect(elements.nth(i)).toHaveClass(/sl-visible/);
   }
 
-  const question = page.locator('.sl-faq details').first();
-  await question.locator('summary').click();
   await page.locator('#sl-tab-history').click();
   for (const [language, locale] of [['Қазақша', 'kk-KZ'], ['Русский', 'ru-RU']] as const) {
     await page.locator('.sl-footer').getByRole('button', { name: language, exact: true }).click();
     await expect(page.locator('html')).toHaveAttribute('lang', locale);
     await expect(elements).toHaveCount(count);
     await expect(page.locator('[data-reveal]:not(.sl-visible)')).toHaveCount(0);
-    await expect(question).toHaveAttribute('open', '');
     await expect(page.getByRole('tab', { selected: true })).toHaveAttribute('id', 'sl-tab-history');
     await expect(page.getByRole('tabpanel')).toBeVisible();
   }
