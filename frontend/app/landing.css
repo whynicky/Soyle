@@ -916,12 +916,28 @@ html:has(> body > .sl-page[data-landing-theme="dark"]) { color-scheme: dark; }
 .sl-faq details p { padding: 0 16px 16px; color: var(--sl-panel-muted); }
 
 .sl-closing {
+  --sl-end-fade-height: 200px;
   position: relative;
   isolation: isolate;
   overflow: clip;
   background: var(--sl-scenery-base);
 }
 .sl-closing .sl-end-photo { z-index: -1; --sl-scene-position: center 32%; }
+.sl-closing::after {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  inset: 0 0 auto;
+  height: var(--sl-end-fade-height);
+  pointer-events: none;
+  background: linear-gradient(
+    to bottom,
+    var(--sl-paper) 2px,
+    color-mix(in srgb, var(--sl-paper) 22%, transparent) 32%,
+    color-mix(in srgb, var(--sl-paper) 3%, transparent) 62%,
+    transparent
+  );
+}
 .sl-end { position: relative; z-index: 1; }
 .sl-end-layout {
   display: flex;
@@ -1187,6 +1203,7 @@ html:has(> body > .sl-page[data-landing-theme="dark"]) { color-scheme: dark; }
   .sl-access-list li { grid-template-columns: auto minmax(0, 1fr); gap: 10px; padding-block: 12px; }
   .sl-access-list li + li { border-top: 1px solid var(--sl-line); }
   .sl-end-layout { align-items: start; min-height: 300px; padding-block: 56px; }
+  .sl-closing { --sl-end-fade-height: 128px; }
   .sl-closing .sl-end-photo { --sl-scene-position: 48% center; }
   .sl-footer { padding-top: 32px; }
   .sl-footer-main { grid-template-columns: repeat(2, minmax(0, 1fr)); }
@@ -1245,7 +1262,6 @@ html:has(> body > .sl-page[data-landing-theme="dark"]) { color-scheme: dark; }
     background: linear-gradient(to bottom, #07090a, #263238 130px, #263238);
     mask-image: none;
   }
-  .sl-closing .sl-end-photo { mask-image: linear-gradient(to bottom, transparent, #000 104px); }
 }
 
 @media (prefers-reduced-motion: reduce) {
