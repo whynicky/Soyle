@@ -4,7 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState, type KeyboardEvent, type ReactNode } from "react";
 import {
-  BookOpen, Camera, Check, ChevronRight, Clock3,
+  BookOpen, Camera, Check, ChevronRight,
   ClipboardList, Download, History, LayoutGrid, LockKeyhole, MessagesSquare, MessageSquare, Route,
   Volume2, X,
 } from "lucide-react";
@@ -507,7 +507,7 @@ const previewFragment = (id: PreviewId) => `#sl-tab-${id}`;
 
 const roleCards = [
   { id: "child", icon: MessagesSquare, caption: "landing.roles.child.title" },
-  { id: "parent", icon: Clock3, caption: "landing.roles.parent.title" },
+  { id: "parent", icon: null },
   { id: "specialist", icon: Route, caption: "landing.roles.specialist.title" },
   { id: "permission", icon: LockKeyhole, description: "landing.roles.permission.description" },
   { id: "camera", icon: Camera, description: "landing.roles.camera.description" },
@@ -522,7 +522,7 @@ function ProductRoles() {
         <div className="sl-role-cards">
           {roleCards.map(({ id, icon: Icon, ...copy }) => (
             <article className="sl-role-card" key={id} data-role={id} data-reveal>
-              <Icon className="sl-role-symbol" strokeWidth={1.2} aria-hidden="true" />
+              {Icon && <Icon className="sl-role-symbol" strokeWidth={1.2} aria-hidden="true" />}
               <div className="sl-role-copy">
                 {"caption" in copy && <p className="sl-kicker">{t(copy.caption)}</p>}
                 <h3 className="sl-heading-4">
@@ -531,6 +531,16 @@ function ProductRoles() {
                 </h3>
                 {"description" in copy && <p className="sl-role-description">{t(copy.description)}</p>}
               </div>
+              {id === "parent" && (
+                <Image
+                  className="sl-role-practice-photo"
+                  src="/landing/soyle-practice-together.webp"
+                  alt={t("landing.roles.parent.photoAlt")}
+                  width={1440}
+                  height={960}
+                  unoptimized
+                />
+              )}
             </article>
           ))}
         </div>

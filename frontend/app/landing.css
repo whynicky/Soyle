@@ -874,7 +874,6 @@ html:has(> body > .sl-page[data-landing-theme="dark"]) { color-scheme: dark; }
   height: var(--sl-role-symbol-size);
 }
 .sl-role-card[data-role="child"] .sl-role-symbol { color: light-dark(#a74c80, #ec8dc3); }
-.sl-role-card[data-role="parent"] .sl-role-symbol { color: light-dark(#29786b, #7dd3bf); }
 .sl-role-card[data-role="specialist"] .sl-role-symbol { color: light-dark(#a75825, #f4a363); }
 .sl-role-card[data-role="permission"] .sl-role-symbol { color: light-dark(#545ea0, #aab5f2); }
 .sl-role-card[data-role="camera"] .sl-role-symbol { color: light-dark(#98624a, #e6af93); }
@@ -882,6 +881,24 @@ html:has(> body > .sl-page[data-landing-theme="dark"]) { color-scheme: dark; }
 .sl-role-copy { display: grid; gap: 8px; }
 .sl-role-copy .sl-heading-4 { color: var(--sl-panel-muted); font-weight: 500; }
 .sl-role-copy .sl-heading-4 span { display: block; color: var(--sl-ink); }
+.sl-role-card[data-role="parent"] {
+  --sl-role-photo-height: 66.667%;
+  position: relative;
+  overflow: clip;
+}
+.sl-role-card[data-role="parent"] .sl-role-copy {
+  position: absolute;
+  inset: 0 16px var(--sl-role-photo-height);
+  place-content: center;
+}
+.sl-role-practice-photo {
+  position: absolute;
+  inset: auto 0 0;
+  width: 100%;
+  height: var(--sl-role-photo-height);
+  object-fit: cover;
+  object-position: center 60%;
+}
 .sl-role-description {
   justify-self: center;
   max-inline-size: 28ch;
