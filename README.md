@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="frontend/public/landing/soyle-in-hands-1168.webp" alt="Телефон с надписью Söyle на зелёном экране в руках" width="100%" />
+  <img src="docs/readme/phone-cover.webp" alt="Телефон с надписью Söyle на зелёном экране в руках" width="100%" />
 </p>
 
 <h1 align="center">Общаться. Играть. Быть услышанным.</h1>
