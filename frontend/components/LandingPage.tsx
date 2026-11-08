@@ -2,10 +2,10 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useCallback, useEffect, useRef, useState, type CSSProperties, type KeyboardEvent, type ReactNode } from "react";
+import { useCallback, useEffect, useRef, useState, type KeyboardEvent, type ReactNode } from "react";
 import {
-  ArrowDown, ArrowRight, BookOpen, Check, ChevronDown, Clock3,
-  ClipboardList, Download, History, LayoutGrid, LockKeyhole, MessageSquare, ShieldCheck, UserRound,
+  ArrowDown, ArrowRight, BookOpen, Check, ChevronDown, ChevronRight,
+  ClipboardList, Download, History, LayoutGrid, LockKeyhole, MessageSquare, ShieldCheck,
   Volume2, X,
 } from "lucide-react";
 import { t, useLocale, type Locale } from "@/lib/i18n";
@@ -17,8 +17,8 @@ import "@/app/landing.css";
 
 const scenery = {
   desktop: "soyle-sculpted-desktop",
-  history: "soyle-heather-closeup",
   plan: "soyle-sculpted-plan",
+  observation: "soyle-heather-closeup",
 } as const;
 
 const heroSizes = "(max-width: 760px) 1040px, (max-width: 1200px) 1200px, 100vw";
@@ -35,7 +35,8 @@ function sceneVariant(scene: Scene, tone: SceneTone, mobile = false) {
   const sizes = mobile
     ? (isHeroLayer(scene) ? "488px" : "max(100vw, 480px)")
     : isHeroLayer(scene) ? heroSizes : scene === "end" ? "100vw"
-      : `(max-width: 760px) calc(100vw - 40px), ${scene === "desktop" ? 1168 : 760}px`;
+      : scene === "desktop" ? "(max-width: 760px) calc(100vw - 40px), 1168px"
+        : "(max-width: 760px) calc(100vw - 40px), (max-width: 1232px) 55vw, 642px";
   if (scene === "hero" || scene === "foreground" || scene === "end") {
     const prefix = `/landing/scenery/${scene}-${tone}${mobile ? "-mobile" : ""}`;
     const widths = mobile ? [520, 1040, 1560] : [1280, 2400, 3840];
@@ -86,8 +87,8 @@ const choices = [
 ] as const;
 
 const previews = [
-  { id: "lesson", icon: BookOpen },
   { id: "communication", icon: MessageSquare },
+  { id: "lesson", icon: BookOpen },
   { id: "history", icon: History },
   { id: "plan", icon: ClipboardList },
 ] as const;
@@ -98,7 +99,7 @@ const access = [
   { id: "export", icon: Download },
 ] as const;
 
-const questions = ["audience", "adult", "cards", "specialist", "history", "therapy", "camera"] as const;
+const questions = ["price", "account", "devices", "specialist", "adult", "camera", "history"] as const;
 
 
 function Wordmark() {
@@ -116,6 +117,7 @@ function LandingHeader({ theme, onChange }: { theme: LandingTheme; onChange: (va
       <div className="sl-island">
         <Wordmark />
         <div className="sl-island-actions">
+          <LanguagePicker compact />
           <PublicThemeToggle theme={theme} onChange={onChange} />
           <Link className="sl-login" href="/app">{t("landing.copy044")} <ArrowRight size={14} aria-hidden="true" /></Link>
         </div>
@@ -148,7 +150,7 @@ function ThemePicker({ theme, onChange }: { theme: LandingTheme; onChange: (valu
 
 function StartLink() {
   return (
-    <Link className="sl-button sl-start" href="/app">
+    <Link className="sl-button sl-start" href="/app?mode=register">
       {t("landing.showcase.start")} <ArrowRight size={16} aria-hidden="true" />
     </Link>
   );
@@ -236,37 +238,33 @@ function CommunicationBoard({ board }: { board: ReturnType<typeof useCommunicati
   return (
     <div className="sl-example-sheet sl-aac" id="communication">
       <DemoHeading title={t("landing.showcase.board")} description={t("landing.showcase.boardHint")} />
-      <div className="sl-tool-grid sl-aac-grid">
-        <div className="sl-work-card">
-          <h4>{t("landing.demo.cardLibrary")}</h4>
-          <div className="sl-object-options">
-            {choices.map(({ id, label }) => (
-              <button key={id} type="button" className="sl-object-choice" aria-pressed={selected === id} onClick={() => select(id)}>
-                <DemoObject id={id} />
-                {t(label)}
-                {selected === id && <Check size={15} aria-hidden="true" />}
-              </button>
-            ))}
-          </div>
-        </div>
-        <div className="sl-work-card sl-phrase-card">
-          <h4>{t("landing.demo.composedPhrase")}</h4>
-          <p className="sl-phrase"><span key={selected}>{t(`landing.aac.${selected}`)}</span></p>
-          <button type="button" className="sl-speak" onClick={speak}>
-            {speaking ? <X size={16} aria-hidden="true" /> : <Volume2 size={16} aria-hidden="true" />}
-            <span>{speaking ? t("landing.copy124") : t("landing.copy125")}</span>
+      <div className="sl-object-options" role="group" aria-label={t("landing.demo.cardLibrary")}>
+        {choices.map(({ id, label }) => (
+          <button key={id} type="button" className="sl-object-choice" aria-pressed={selected === id} onClick={() => select(id)}>
+            <DemoObject id={id} />
+            {t(label)}
+            {selected === id && <Check size={17} aria-hidden="true" />}
           </button>
-          <small className="sl-audio-error">{audioError && t("landing.copy126")}</small>
+        ))}
+      </div>
+      <div className="sl-phrase-bar">
+        <div>
+          <p className="sl-demo-label">{t("landing.demo.composedPhrase")}</p>
+          <p className="sl-phrase"><span key={selected}>{t(`landing.aac.${selected}`)}</span></p>
         </div>
+        <button type="button" className="sl-lesson-next" onClick={speak}>
+          {speaking ? <X size={16} aria-hidden="true" /> : <Volume2 size={16} aria-hidden="true" />}
+          {t(speaking ? "landing.copy124" : "landing.heroBoard.speak")}
+        </button>
+        {audioError && <small className="sl-audio-error" role="status">{t("landing.copy126")}</small>}
       </div>
     </div>
   );
 }
 
-function WorkspaceWindow({ children, sidebar, className = "", cover = false, caption }: {
+function WorkspaceWindow({ children, sidebar, className = "", cover = false }: {
   children: ReactNode;
   sidebar?: ReactNode;
-  caption?: string;
   className?: string;
   cover?: boolean;
 }) {
@@ -277,7 +275,7 @@ function WorkspaceWindow({ children, sidebar, className = "", cover = false, cap
           <BrandMark size={21} />
           Söyle
         </div>
-        <span className="sl-window-caption">{caption ?? t("landing.copy116")}</span>
+        <span className="sl-window-caption">{t("landing.demo.sampleData")}</span>
       </div>}
       <div className="sl-window-layout">
         {sidebar && <div className="sl-window-sidebar">{sidebar}</div>}
@@ -373,126 +371,126 @@ const observations = [
   { day: 19, title: "landing.desktop.playtime", note: "landing.desktop.playtimeNote" },
 ] as const;
 
-function SelectedCopy({ items, selected }: {
-  items: ReadonlyArray<{ note: Parameters<typeof t>[0] }>;
-  selected: number;
-}) {
-  return (
-    <div className="sl-selected-copy" aria-live="polite">
-      {items.map(({ note }, index) => <p key={note} hidden={selected !== index}>{t(note)}</p>)}
-    </div>
-  );
-}
+type DemoRecord = { title: string; meta: string; dateTime?: string; icon: ReactNode; detail: ReactNode };
 
-function ObservationContent({ locale }: { locale: Locale }) {
+function RecordPicker({ id, label, entries }: { id: string; label: string; entries: DemoRecord[] }) {
   const [selected, setSelected] = useState(0);
-  const date = new Intl.DateTimeFormat(locale, { month: "short", day: "numeric", timeZone: "UTC" });
-  const current = observations[selected];
 
   return (
-    <>
-      <div className="sl-work-card">
-        <h4>{t("landing.demo.recent")}</h4>
+    <div className="sl-record-grid">
+      <div className="sl-record-list">
+        <h4 id={`${id}-list-label`}>{label}</h4>
         <ul className="sl-records">
-          {observations.map(({ day, title }, index) => (
-            <li key={day}>
-              <button type="button" aria-pressed={selected === index} onClick={() => setSelected(index)}>
-                <span>{t(title)}</span>
-                <time className="sl-record-date" dateTime={`2026-10-${day}`}>{date.format(Date.UTC(2026, 9, day))}</time>
-                <ChevronDown size={15} aria-hidden="true" />
+          {entries.map(({ title, meta, dateTime, icon }, index) => (
+            <li key={title}>
+              <button type="button" aria-pressed={selected === index} aria-controls={`${id}-detail-${index}`} onClick={() => setSelected(index)}>
+                <span className="sl-record-icon">{icon}</span>
+                <span className="sl-record-name">
+                  <strong>{title}</strong>
+                  {dateTime ? <time className="sl-record-date" dateTime={dateTime}>{meta}</time> : <span className="sl-record-date">{meta}</span>}
+                </span>
+                <ChevronRight size={15} aria-hidden="true" />
               </button>
             </li>
           ))}
         </ul>
+        <select className="sl-record-select" aria-labelledby={`${id}-list-label`} value={selected} onChange={(event) => setSelected(Number(event.currentTarget.value))}>
+          {entries.map(({ title, meta }, index) => <option key={title} value={index}>{title} · {meta}</option>)}
+        </select>
       </div>
-      <div className="sl-work-card sl-observation-note">
-        <span className="sl-demo-label"><MessageSquare size={16} aria-hidden="true" />{t("landing.showcase.noteLabel")}</span>
-        <div className="sl-observation-title">
-          {observations.map(({ title }, index) => <h4 key={title} hidden={selected !== index}>{t(title)}</h4>)}
-        </div>
-        <SelectedCopy items={observations} selected={selected} />
-        <time className="sl-record-date" dateTime={`2026-10-${current.day}`}>{date.format(Date.UTC(2026, 9, current.day))}</time>
+      <div className="sl-record-details" aria-live="polite">
+        {entries.map(({ title, detail }, index) => (
+          <article className="sl-record-detail" id={`${id}-detail-${index}`} key={title} hidden={selected !== index} aria-hidden={selected !== index || undefined}>
+            {detail}
+          </article>
+        ))}
       </div>
-    </>
+    </div>
   );
 }
 
-function HistoryPreview({ locale, compact = false }: { locale: Locale; compact?: boolean }) {
+function HistoryPreview({ locale }: { locale: Locale }) {
+  const date = new Intl.DateTimeFormat(locale, { month: "long", day: "numeric", timeZone: "UTC" });
+
   return (
     <div className="sl-example-sheet sl-history-sheet">
-      {compact
-        ? <p className="sl-sheet-meta"><span><History size={16} aria-hidden="true" />{t("landing.desktop.observations")}</span><span>{t("landing.copy116")}</span></p>
-        : <DemoHeading title={t("landing.desktop.observations")} description={t("landing.demo.historyIntro")} />}
-      <div className="sl-tool-grid sl-record-grid"><ObservationContent locale={locale} /></div>
+      <DemoHeading title={t("landing.desktop.observations")} description={t("landing.demo.historyIntro")} />
+      <RecordPicker id="sl-history" label={t("landing.demo.recent")} entries={observations.map(({ day, title, note }) => {
+        const dateTime = `2026-10-${day}`;
+        const meta = date.format(Date.UTC(2026, 9, day));
+        return {
+          title: t(title), meta, dateTime, icon: <History size={16} aria-hidden="true" />,
+          detail: <>
+            <div className="sl-record-detail-head">
+              <time className="sl-record-date" dateTime={dateTime}>{meta}</time>
+              <h4>{t(title)}</h4>
+            </div>
+            <div className="sl-record-section">
+              <p className="sl-demo-label"><MessageSquare size={16} aria-hidden="true" />{t("landing.showcase.noteLabel")}</p>
+              <p>{t(note)}</p>
+            </div>
+          </>,
+        };
+      })} />
     </div>
   );
 }
 
 const tasks = [
-  { title: "landing.showcase.planTask", day: "landing.desktop.monday", note: "landing.showcase.planTip", icon: MessageSquare },
-  { title: "landing.desktop.listenTask", day: "landing.desktop.wednesday", note: "landing.desktop.listenTip", icon: BookOpen },
-  { title: "landing.desktop.phraseTask", day: "landing.desktop.friday", note: "landing.desktop.phraseTip", icon: ClipboardList },
+  { title: "landing.showcase.planTask", day: "landing.desktop.monday", note: "landing.showcase.planTip", instruction: "landing.demo.drinkAction", icon: MessageSquare },
+  { title: "landing.desktop.listenTask", day: "landing.desktop.wednesday", note: "landing.desktop.listenTip", instruction: "landing.demo.listenAction", icon: BookOpen },
+  { title: "landing.desktop.phraseTask", day: "landing.desktop.friday", note: "landing.desktop.phraseTip", instruction: "landing.demo.phraseAction", icon: ClipboardList },
 ] as const;
 
-function TaskContent({ daily = false }: { daily?: boolean }) {
-  const [selected, setSelected] = useState(0);
-
-  return (
-    <>
-      <div className="sl-work-card">
-        <h4>{t(daily ? "landing.demo.todayPlan" : "landing.demo.planList")}</h4>
-        <ul className="sl-records sl-task-list">
-          {tasks.map(({ title, day, icon: Icon }, index) => (
-            <li key={title}>
-              <button type="button" aria-pressed={selected === index} onClick={() => setSelected(index)}>
-                <Icon size={16} aria-hidden="true" />
-                <span>{t(title)}</span>
-                {!daily && <span className="sl-record-date">{t(day)}</span>}
-                <ChevronDown size={15} aria-hidden="true" />
-              </button>
-            </li>
-          ))}
-        </ul>
-      </div>
-      <div className="sl-work-card sl-task-note">
-        <span className="sl-demo-label"><BookOpen size={16} aria-hidden="true" />{t("landing.demo.taskDetail")}</span>
-        <div className="sl-observation-title">
-          {tasks.map(({ title }, index) => <h4 key={title} hidden={selected !== index}>{t(title)}</h4>)}
-        </div>
-        <SelectedCopy items={tasks} selected={selected} />
-      </div>
-    </>
-  );
-}
-
-function PlanPreview({ compact = false }: { compact?: boolean }) {
+function PlanPreview() {
   return (
     <div className="sl-example-sheet sl-plan-sheet">
-      {compact
-        ? <p className="sl-sheet-meta"><span><ClipboardList size={16} aria-hidden="true" />{t("landing.showcase.plan")}</span><span>{t("landing.copy116")}</span></p>
-        : <DemoHeading title={t("landing.desktop.weekPlan")} description={t("landing.demo.planIntro")} />}
-      <div className="sl-tool-grid sl-record-grid"><TaskContent /></div>
+      <DemoHeading title={t("landing.desktop.weekPlan")} description={t("landing.demo.planIntro")} />
+      <RecordPicker id="sl-plan" label={t("landing.demo.planList")} entries={tasks.map(({ title, day, note, instruction, icon: Icon }) => ({
+        title: t(title), meta: t(day), icon: <Icon size={16} aria-hidden="true" />,
+        detail: <>
+          <div className="sl-record-detail-head">
+            <h4>{t(title)}</h4>
+            <p>{t(instruction)}</p>
+          </div>
+          <div className="sl-record-section">
+            <p className="sl-demo-label"><BookOpen size={16} aria-hidden="true" />{t("landing.demo.adultTip")}</p>
+            <p>{t(note)}</p>
+          </div>
+        </>,
+      }))} />
     </div>
   );
 }
 
-function PlatformCover({ onOpenLesson }: { onOpenLesson: () => void }) {
+function PlatformCover({ board }: { board: ReturnType<typeof useCommunicationBoard> }) {
   return (
     <div className="sl-platform-cover">
       <div className="sl-platform-art" aria-hidden="true" />
       <div className="sl-platform-copy">
-        <span className="sl-platform-mark"><BrandMark size={32} />Söyle</span>
-        <h2>{t("landing.cover.title")}</h2>
-        <p>{t("landing.cover.description")}</p>
-        <a className="sl-lesson-next" href="#journey" onClick={onOpenLesson}>
-          {t("landing.cover.action")}<ArrowRight size={16} aria-hidden="true" />
-        </a>
+        <div className="sl-hero-board">
+          <p className="sl-demo-label">{t("landing.copy116")} · {t("landing.story.communication.title")}</p>
+          <h2>{t("landing.heroBoard.pick")}</h2>
+          <div className="sl-hero-choices" role="group" aria-label={t("landing.heroBoard.pick")}>
+            {choices.map(({ id, label }) => (
+              <button key={id} className="sl-hero-choice" type="button" aria-pressed={board.selected === id} onClick={() => board.select(id)}>
+                <DemoObject id={id} />{t(label)}
+              </button>
+            ))}
+          </div>
+          <div className="sl-hero-phrase">
+            <p key={board.selected}>{t(`landing.aac.${board.selected}`)}</p>
+            <button type="button" className="sl-lesson-next" onClick={board.speak}>
+              {board.speaking ? <X size={16} aria-hidden="true" /> : <Volume2 size={16} aria-hidden="true" />}
+              {t(board.speaking ? "landing.copy124" : "landing.heroBoard.speak")}
+            </button>
+          </div>
+          {board.audioError && <small role="status">{t("landing.copy126")}</small>}
+        </div>
       </div>
     </div>
   );
 }
-
-const introduction = ["opening", "roles", "daily"] as const;
 
 function FaqItem({ id }: { id: (typeof questions)[number] }) {
   const answer = useRef<HTMLDivElement>(null);
@@ -530,181 +528,108 @@ function FaqItem({ id }: { id: (typeof questions)[number] }) {
   );
 }
 
-function ProductIntro() {
-  const locale = useLocale();
-  const copy = useRef<HTMLDivElement>(null);
-  const paragraphs = introduction.map((id) => t(`landing.story.${id}`).match(/\S+(?: +\S+){0,2}/g) ?? []);
-  const phraseCount = paragraphs.reduce((total, phrases) => total + phrases.length, 0);
+type PreviewId = (typeof previews)[number]["id"];
 
-  useEffect(() => {
-    const element = copy.current;
-    if (!element) return;
+const roles = ["child", "parent", "specialist"] as const;
 
-    const motion = window.matchMedia("(prefers-reduced-motion: reduce)");
-    let frame = 0;
-    let previous = -1;
-
-    const update = () => {
-      frame = 0;
-      if (motion.matches) {
-        element.removeAttribute("data-progressive");
-        element.style.removeProperty("--sl-intro-progress");
-        previous = -1;
-        return;
-      }
-
-      const bounds = element.getBoundingClientRect();
-      const start = window.innerHeight * 0.82;
-      const distance = bounds.height + window.innerHeight * 0.14;
-      const progress = Math.max(0, Math.min(1, (start - bounds.top) / distance));
-      if (progress === previous) return;
-      previous = progress;
-      element.style.setProperty("--sl-intro-progress", progress.toFixed(4));
-      element.setAttribute("data-progressive", "");
-    };
-
-    function schedule() {
-      if (!frame) frame = window.requestAnimationFrame(update);
-    }
-
-    update();
-    window.addEventListener("scroll", schedule, { passive: true });
-    window.addEventListener("resize", schedule);
-    motion.addEventListener("change", schedule);
-    return () => {
-      if (frame) window.cancelAnimationFrame(frame);
-      window.removeEventListener("scroll", schedule);
-      window.removeEventListener("resize", schedule);
-      motion.removeEventListener("change", schedule);
-    };
-  }, [locale]);
-
-  let index = 0;
+function ProductRoles() {
   return (
-    <section className="sl-intro" aria-labelledby="sl-intro-title">
-      <h2 className="sr-only" id="sl-intro-title">{t("landing.story.heading")}</h2>
-      <div className="sl-intro-copy" ref={copy}>
-        {paragraphs.map((phrases, paragraph) => (
-          <p key={introduction[paragraph]}>
-            {phrases.map((phrase, position) => {
-              const delay = index++ * 250 / Math.max(1, phraseCount - 1);
-              return (
-                <span key={position} style={{ "--sl-phrase-delay": `${delay}%` } as CSSProperties}>
-                  {phrase}{position < phrases.length - 1 ? " " : ""}
-                </span>
-              );
-            })}
-          </p>
+    <section className="sl-roles sl-container" aria-labelledby="sl-roles-title">
+      <h2 className="sl-heading-3" id="sl-roles-title">{t("landing.roles.heading")}</h2>
+      <dl className="sl-explainer-list">
+        {roles.map((id) => (
+          <div key={id}><dt>{t(`landing.roles.${id}.title`)}</dt><dd>{t(`landing.roles.${id}.text`)}</dd></div>
         ))}
+      </dl>
+      <p className="sl-caption">{t("landing.roles.scope")}</p>
+    </section>
+  );
+}
+
+function FamilyPractice({ theme, locale, onOpenDemo }: {
+  theme: LandingTheme;
+  locale: Locale;
+  onOpenDemo: (id: PreviewId) => void;
+}) {
+  const { day, title, note } = observations[0];
+  const date = new Intl.DateTimeFormat(locale, { month: "long", day: "numeric", timeZone: "UTC" });
+  const demoProfile = `${t("landing.copy116")} · ${t("landing.demo.profileName")}`;
+
+  return (
+    <section className="sl-family sl-container" id="family" aria-labelledby="sl-family-title">
+      <div className="sl-section-lead">
+        <h2 className="sl-heading-2" id="sl-family-title">{t("landing.showcase.familyTitle")}</h2>
+        <p className="sl-body">{t("landing.showcase.familyIntro")}</p>
+      </div>
+      <div className="sl-feature-list">
+        <article className="sl-feature">
+          <div className="sl-feature-copy">
+            <p className="sl-kicker">{t("landing.showcase.plan")}</p>
+            <h3 className="sl-heading-3">{t("landing.feature.planTitle")}</h3>
+            <p className="sl-body">{t("landing.feature.planDescription")}</p>
+          </div>
+          <div className="sl-feature-scene sl-feature-plan">
+            <ScenePhoto scene="plan" theme={theme} />
+            <div className="sl-feature-panel">
+              <div className="sl-feature-bar">
+                <span><ClipboardList size={17} aria-hidden="true" />{t("landing.handoff.assign.label")}</span>
+                <span>{demoProfile}</span>
+              </div>
+              <div className="sl-feature-content">
+                <h4>{t("landing.handoff.task")}</h4>
+                <div className="sl-feature-detail">
+                  <p className="sl-feature-meta">{t("landing.demo.adultTip")}</p>
+                  <p>{t("landing.handoff.instruction")}</p>
+                </div>
+                <a className="sl-lesson-next" href="#journey" onClick={() => onOpenDemo("plan")}>
+                  {t("landing.desktop.tab.plan")} <ArrowRight size={16} aria-hidden="true" />
+                </a>
+              </div>
+            </div>
+          </div>
+        </article>
+
+        <article className="sl-feature sl-feature-reverse">
+          <div className="sl-feature-copy">
+            <p className="sl-kicker">{t("landing.mobile.tab.history")}</p>
+            <h3 className="sl-heading-3">{t("landing.feature.historyTitle")}</h3>
+            <p className="sl-body">{t("landing.feature.historyDescription")}</p>
+          </div>
+          <div className="sl-feature-scene sl-feature-history">
+            <ScenePhoto scene="observation" theme={theme} />
+            <div className="sl-feature-panel">
+              <div className="sl-feature-bar">
+                <span><MessageSquare size={17} aria-hidden="true" />{t("landing.showcase.noteLabel")}</span>
+                <span>{demoProfile}</span>
+              </div>
+              <div className="sl-feature-content">
+                <div className="sl-feature-entry">
+                  <time className="sl-feature-meta" dateTime={`2026-10-${day}`}>{date.format(Date.UTC(2026, 9, day))}</time>
+                  <h4>{t(title)}</h4>
+                </div>
+                <div className="sl-feature-detail"><p>{t(note)}</p></div>
+                <a className="sl-lesson-next" href="#journey" onClick={() => onOpenDemo("history")}>
+                  {t("landing.desktop.tab.history")} <ArrowRight size={16} aria-hidden="true" />
+                </a>
+              </div>
+            </div>
+          </div>
+        </article>
       </div>
     </section>
   );
 }
 
-const practiceSteps = ["profile", "choose", "together", "review"] as const;
-
-const practiceDirections = [
-  { title: "screen.skillLabel.ui3", icon: BookOpen },
-  { title: "screen.skillLabel.ui6", icon: MessageSquare },
-  { title: "screen.skillLabel.ui5", icon: ClipboardList },
-] as const;
-
-function PracticeStart({ locale, onOpenLesson }: { locale: Locale; onOpenLesson: () => void }) {
-  const [selected, setSelected] = useState<(typeof practiceSteps)[number]>("profile");
-  const session = observations[1];
-  const date = new Intl.DateTimeFormat(locale, { month: "short", day: "numeric", timeZone: "UTC" });
-  const question = exercise[0];
-
+function Materials() {
   return (
-    <section className="sl-practice sl-container" aria-labelledby="sl-practice-title" data-reveal>
-      <h2 className="sl-heading-2" id="sl-practice-title">{t("landing.practice.heading")}</h2>
-      <div className="sl-practice-layout">
-        <ol className="sl-practice-steps" role="list">
-          {practiceSteps.map((id, index) => (
-            <li key={id} data-active={selected === id}>
-              <button type="button" aria-pressed={selected === id} aria-controls="sl-practice-panels" onClick={() => setSelected(id)}>
-                <span className="sl-step-number" aria-hidden="true">{String(index + 1).padStart(2, "0")}</span>
-                <strong>{t(`landing.practice.${id}.title`)}</strong>
-              </button>
-              {selected === id && <p className="sl-step-description">{t(`landing.practice.${id}.description`)}</p>}
-            </li>
-          ))}
-        </ol>
-        <div className="sl-practice-mobile-summary">
-          {practiceSteps.map((id) => <p key={id} hidden={selected !== id}>{t(`landing.practice.${id}.description`)}</p>)}
-        </div>
-        <WorkspaceWindow className="sl-practice-sample" caption={t("landing.practice.demoData")}>
-          <div className="sl-practice-fragments" id="sl-practice-panels">
-            {practiceSteps.map((id) => {
-              const inactive = selected !== id;
-              return (
-                <div key={id} className="sl-practice-fragment" data-stage={id} hidden={inactive} inert={inactive} aria-hidden={inactive || undefined}>
-                  <h3>{t(`landing.practice.${id}.sample`)}</h3>
-                  {id === "profile" && (
-                    <div className="sl-practice-profile" data-practice-action="appear">
-                      <span className="sl-practice-avatar" aria-hidden="true"><UserRound size={26} /></span>
-                      <div>
-                        <strong>{t("landing.demo.profileName")}</strong>
-                        <p className="sl-practice-status"><Check size={15} aria-hidden="true" />{t("landing.practice.profileCreated")}</p>
-                      </div>
-                    </div>
-                  )}
-                  {id === "choose" && (
-                    <>
-                      <ul className="sl-practice-directions" aria-label={t("screen.ChildOnboarding.ui9")}>
-                        {practiceDirections.map(({ title, icon: Icon }, index) => (
-                          <li key={title} aria-current={index === 0 || undefined} data-practice-action={index === 0 ? "select" : undefined}>
-                            <Icon size={17} aria-hidden="true" />
-                            <span>{t(title)}</span>
-                            {index === 0 && <Check size={16} aria-hidden="true" />}
-                          </li>
-                        ))}
-                      </ul>
-                      <div className="sl-practice-next">
-                        <span className="sl-caption">{t("landing.demo.nextActivity")}</span>
-                        <strong>{t("landing.desktop.listening")}</strong>
-                      </div>
-                    </>
-                  )}
-                  {id === "together" && (
-                    <>
-                      <h4 className="sl-practice-question">{t(question.prompt)}</h4>
-                      <ul className="sl-object-options sl-practice-answers" aria-label={t("landing.desktop.chooseAnswer")}>
-                        {choices.map(({ id: choice, label }) => (
-                          <li key={choice} className="sl-object-choice" aria-current={choice === question.answer || undefined}
-                            data-practice-action={choice === question.answer ? "select" : undefined}>
-                            <DemoObject id={choice} />
-                            {t(choice === "play" ? "landing.desktop.ball" : label)}
-                            {choice === question.answer && <Check size={15} aria-hidden="true" />}
-                          </li>
-                        ))}
-                      </ul>
-                      <div className="sl-lesson-footer">
-                        <p className="sl-lesson-feedback" data-practice-action="appear">{t("landing.desktop.correct")}</p>
-                        <a className="sl-lesson-next" href="#journey" onClick={onOpenLesson}>
-                          {t("landing.demo.openLesson")} <ArrowRight size={16} aria-hidden="true" />
-                        </a>
-                      </div>
-                    </>
-                  )}
-                  {id === "review" && (
-                    <>
-                      <div className="sl-practice-session" data-practice-action="appear">
-                        <span className="sl-practice-status"><Check size={15} aria-hidden="true" />{t("landing.practice.lessonDone")}</span>
-                        <time className="sl-record-date" dateTime={`2026-10-${session.day}`}>{date.format(Date.UTC(2026, 9, session.day))}</time>
-                        <strong>{t(session.title)}</strong>
-                      </div>
-                      <div className="sl-practice-observation">
-                        <h4><MessageSquare size={16} aria-hidden="true" />{t("landing.showcase.noteLabel")}</h4>
-                        <p>{t(session.note)}</p>
-                      </div>
-                    </>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-        </WorkspaceWindow>
+    <section className="sl-materials sl-container" id="materials" aria-labelledby="sl-materials-title">
+      <div>
+        <p className="sl-kicker">{t("landing.materials.stage")}</p>
+        <h2 className="sl-heading-3" id="sl-materials-title">{t("landing.materials.heading")}</h2>
+      </div>
+      <div className="sl-materials-copy">
+        <p className="sl-body">{t("landing.materials.available")}</p>
+        <p className="sl-body">{t("landing.materials.review")}</p>
       </div>
     </section>
   );
@@ -822,6 +747,10 @@ export function LandingPage({ initialTheme }: { initialTheme: LandingTheme }) {
     root.current?.querySelector<HTMLButtonElement>(`#sl-tab-${previews[next].id}`)?.focus();
   }
 
+  function openDemo(id: PreviewId) {
+    setPreview(previews.findIndex((item) => item.id === id));
+  }
+
   const current = previews[preview];
   const links = [
     { href: "#journey", label: t("landing.showcase.navJourney") },
@@ -850,7 +779,7 @@ export function LandingPage({ initialTheme }: { initialTheme: LandingTheme }) {
               <p className="sl-body sl-hero-description">{t("landing.showcase.description")}</p>
               <div className="sl-hero-actions">
                 <StartLink />
-                <a className="sl-text-link" href="#journey">{t("landing.demo.openPreview")} <ArrowDown size={15} aria-hidden="true" /></a>
+                <a className="sl-text-link" href="#journey" onClick={() => openDemo("communication")}>{t("landing.demo.openPreview")} <ArrowDown size={15} aria-hidden="true" /></a>
               </div>
             </div>
 
@@ -859,21 +788,18 @@ export function LandingPage({ initialTheme }: { initialTheme: LandingTheme }) {
               cover
               sidebar={(
                 <div className="sl-window-links" aria-hidden="true">
-                  <p className="sl-sidebar-label">{t("landing.desktop.tab.history")}</p>
-                  <span className="sl-window-current"><LayoutGrid size={17} /><span className="sl-rail-label">{t("landing.demo.overview")}</span></span>
-                  <span><ClipboardList size={17} /><span className="sl-rail-label">{t("landing.showcase.plan")}</span></span>
-                  <span><History size={17} /><span className="sl-rail-label">{t("landing.cover.history")}</span></span>
-                  <span><MessageSquare size={17} /><span className="sl-rail-label">{t("nav.observations")}</span></span>
+                  <p className="sl-sidebar-label">{t("landing.roles.child.title")}</p>
+                  <span><LayoutGrid size={17} /><span className="sl-rail-label">{t("nav.home")}</span></span>
+                  <span className="sl-window-current"><MessageSquare size={17} /><span className="sl-rail-label">{t("nav.words")}</span></span>
+                  <span><BookOpen size={17} /><span className="sl-rail-label">{t("nav.lessons")}</span></span>
                 </div>
               )}
             >
-              <PlatformCover onOpenLesson={() => setPreview(0)} />
+              <PlatformCover board={board} />
             </WorkspaceWindow>
           </div>
           <ScenePhoto scene="foreground" theme={theme} className="sl-hero-foreground" />
         </section>
-
-        <ProductIntro />
 
         <section className="sl-journey sl-container" id="journey" aria-labelledby="sl-journey-title">
           <div className="sl-section-lead">
@@ -890,9 +816,13 @@ export function LandingPage({ initialTheme }: { initialTheme: LandingTheme }) {
                   onClick={() => setPreview(index)} onKeyDown={onTabKey}
                 >
                   <Icon size={16} aria-hidden="true" />
-                  <span className="sl-desktop-copy">{t(`landing.desktop.tab.${id}`)}</span>
-                  <span className="sl-mobile-copy">{t(`landing.mobile.tab.${id}`)}</span>
+                  <span>{t(`landing.desktop.tab.${id}`)}</span>
                 </button>
+              ))}
+            </div>
+            <div className="sl-scenario-copy" aria-live="polite">
+              {previews.map(({ id }) => (
+                <p key={id} className="sl-caption" hidden={current.id !== id}>{t(`landing.story.${id}.text`)}</p>
               ))}
             </div>
             <div className="sl-desktop-scene">
@@ -902,7 +832,7 @@ export function LandingPage({ initialTheme }: { initialTheme: LandingTheme }) {
                 sidebar={(
                   <div className="sl-window-links" role="group" aria-label={t("landing.desktop.sections")}>
                     {previews.map(({ id, icon: Icon }, index) => (
-                      <button key={id} type="button" aria-pressed={preview === index} aria-label={t(`landing.desktop.tab.${id}`)} onClick={() => setPreview(index)}>
+                      <button key={id} type="button" aria-pressed={preview === index} aria-label={t(`landing.mobile.tab.${id}`)} onClick={() => setPreview(index)}>
                         <Icon size={17} aria-hidden="true" /><span className="sl-rail-label">{t(`landing.mobile.tab.${id}`)}</span>
                       </button>
                     ))}
@@ -926,42 +856,12 @@ export function LandingPage({ initialTheme }: { initialTheme: LandingTheme }) {
                 </div>
               </WorkspaceWindow>
             </div>
-            <p className="sl-caption sl-preview-caption" aria-live="polite">{t(`landing.desktop.caption.${current.id}`)}</p>
           </div>
         </section>
 
-        <PracticeStart locale={locale} onOpenLesson={() => setPreview(0)} />
-
-        <section className="sl-family sl-container" id="family" aria-labelledby="sl-family-title">
-          <div className="sl-section-lead">
-            <h2 className="sl-heading-2" id="sl-family-title">{t("landing.showcase.familyTitle")}</h2>
-            <p className="sl-body">{t("landing.showcase.familyIntro")}</p>
-          </div>
-          <div className="sl-family-grid">
-            <article className="sl-family-card" data-reveal>
-              <div className="sl-family-copy">
-                <p className="sl-kicker">{t("landing.showcase.parent")}</p>
-                <h3 className="sl-heading-5">{t("landing.showcase.parentTitle")}</h3>
-                <p className="sl-body">{t("landing.showcase.parentDescription")}</p>
-              </div>
-              <div className="sl-family-visual">
-                <ScenePhoto scene="history" theme={theme} />
-                <div className="sl-family-panel sl-glass"><HistoryPreview locale={locale} compact /></div>
-              </div>
-            </article>
-            <article className="sl-family-card sl-family-card-reverse" data-reveal>
-              <div className="sl-family-copy">
-                <p className="sl-kicker">{t("landing.showcase.specialist")}</p>
-                <h3 className="sl-heading-5">{t("landing.showcase.specialistTitle")}</h3>
-                <p className="sl-body">{t("landing.showcase.specialistDescription")}</p>
-              </div>
-              <div className="sl-family-visual sl-family-visual-plan">
-                <ScenePhoto scene="plan" theme={theme} />
-                <div className="sl-family-panel sl-glass"><PlanPreview compact /></div>
-              </div>
-            </article>
-          </div>
-        </section>
+        <FamilyPractice theme={theme} locale={locale} onOpenDemo={openDemo} />
+        <ProductRoles />
+        <Materials />
 
         <section className="sl-access sl-container" id="access" aria-labelledby="sl-access-title">
           <div className="sl-access-title">
@@ -1001,7 +901,12 @@ export function LandingPage({ initialTheme }: { initialTheme: LandingTheme }) {
             <div className="sl-end-copy">
               <h2 className="sl-heading-2" id="sl-end-title">{t("landing.showcase.endTitle")}</h2>
               <p className="sl-body">{t("landing.showcase.endDescription")}</p>
-              <StartLink />
+              <div className="sl-end-actions">
+                <StartLink />
+                <a className="sl-text-link" href="#journey" onClick={() => openDemo("communication")}>
+                  {t("landing.demo.openPreview")} <ArrowDown size={15} aria-hidden="true" />
+                </a>
+              </div>
             </div>
           </div>
         </section>

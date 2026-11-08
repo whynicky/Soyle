@@ -27,12 +27,18 @@ function prepareAuthTheme(scheme: "light" | "dark") {
   return preloadThemeImage(`/landing/scenery/end-${scheme === "dark" ? "night" : "day"}-mobile-${width}.webp`);
 }
 
-export function AuthScreen({ onAuthenticated, theme: initialTheme }: { onAuthenticated: (user: User) => void; theme: LandingTheme }) {
+export type AuthEntryMode = "login" | "register";
+
+export function AuthScreen({ onAuthenticated, theme: initialTheme, initialMode }: {
+  onAuthenticated: (user: User) => void;
+  theme: LandingTheme;
+  initialMode: AuthEntryMode;
+}) {
   const { theme, changeTheme } = usePublicTheme(initialTheme, prepareAuthTheme);
   useLocale();
   const headingRef = useRef<HTMLHeadingElement>(null);
   const formRef = useRef<HTMLFormElement>(null);
-  const [mode, setMode] = useState<"login" | "register" | "student">("login");
+  const [mode, setMode] = useState<AuthEntryMode | "student">(initialMode);
   const [errors, setErrors] = useState<AuthErrors>({});
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);

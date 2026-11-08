@@ -1,7 +1,7 @@
 "use client";
 import { TranslationEditor } from "./TranslationEditor";
 import { LanguagePicker } from "./LanguagePicker";
-import { AuthLoading, AuthScreen } from "./AuthScreen";
+import { AuthLoading, AuthScreen, type AuthEntryMode } from "./AuthScreen";
 import type { LandingTheme } from "@/lib/landingTheme";
 
 import { ExercisePetProvider, ExercisePet, useExercisePet } from "./pet/ExercisePet";
@@ -215,7 +215,7 @@ import { readWorkspacePage, workspaceHref, workspacePages, type WorkspacePage } 
 import { SpecialistInvitation } from "./SpecialistInvitation";
 import { AdminContentQueue } from "./AdminContentQueue";
 
-export function SoyleApp({ authTheme = "system" }: { authTheme?: LandingTheme }) {
+export function SoyleApp({ authTheme = "system", authMode = "login" }: { authTheme?: LandingTheme; authMode?: AuthEntryMode }) {
   useLocale();
   const [user, setUser] = useState<User | null>(null);
   const [authLoading, setAuthLoading] = useState(true);
@@ -284,7 +284,7 @@ export function SoyleApp({ authTheme = "system" }: { authTheme?: LandingTheme })
     }
   };
   const invitation = invitationToken ? <SpecialistInvitation token={invitationToken} user={user} onClose={() => { setInvitationToken(""); window.history.replaceState(null, "", window.location.pathname + window.location.search); }}/> : null;
-  if (!user) return <>{invitation}<AuthScreen theme={authTheme} onAuthenticated={setUser} /></>;
+  if (!user) return <>{invitation}<AuthScreen key={authMode} initialMode={authMode} theme={authTheme} onAuthenticated={setUser} /></>;
   if (user.role === "specialist") return <>{invitation}<SpecialistWorkspace user={user} onLogout={logout}/>{authActionError && <p role="alert">{authActionError}</p>}</>;
   return <>{invitation}<AuthenticatedApp user={user} onLogout={logout} externalError={authActionError} onDismissExternalError={() => setAuthActionError("")} /></>;
 }

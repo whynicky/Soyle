@@ -5,7 +5,7 @@ import { landingThemeCookie, parseLandingTheme } from "@/lib/landingTheme";
 // Run before the anchor targets are parsed so a reload starts at the hero.
 const resetLandingScroll = `(() => {
   if (performance.getEntriesByType('navigation')[0]?.type !== 'reload') return;
-  const fragments = ['#main-content', '#about', '#journey', '#communication', '#family', '#access', '#questions'];
+  const fragments = ['#main-content', '#about', '#journey', '#communication', '#situations', '#family', '#start', '#materials', '#access', '#questions'];
   if (location.hash && !fragments.includes(location.hash)) return;
   const restoration = history.scrollRestoration;
   history.scrollRestoration = 'manual';

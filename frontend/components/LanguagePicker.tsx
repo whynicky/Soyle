@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { useLocale, setLocale, t, type Locale } from "@/lib/i18n";
 
 function chooseLocale(locale: Locale) { setLocale(locale); window.dispatchEvent(new Event("soyle-language-selected")); }
@@ -12,18 +12,11 @@ export function LanguagePicker({ value, onChange, compact = false }: { value?: L
 }
 
 export function LocaleBootstrap() {
-  const [first, setFirst] = useState(false);
   useEffect(() => {
-    let saved: string | null = null;
-    try { saved = localStorage.getItem("soyle-language"); } catch { /* Keep the picker usable without storage. */ }
-    if (saved) setLocale(saved, false);
-    const timer = saved ? undefined : window.setTimeout(() => setFirst(true), 0);
-    const close = () => setFirst(false);
-    window.addEventListener("soyle-profile-locale", close);
-    return () => { window.clearTimeout(timer); window.removeEventListener("soyle-profile-locale", close); };
+    try {
+      const saved = localStorage.getItem("soyle-language");
+      if (saved) setLocale(saved, false);
+    } catch { /* Keep the picker usable without storage. */ }
   }, []);
-  if (!first) return null;
-  return <dialog ref={node => { if (node && !node.open) node.showModal(); }} onCancel={event => event.preventDefault()} className="locale-welcome" aria-labelledby="locale-welcome-title">
-    <div><h2 id="locale-welcome-title">Выберите язык / Тілді таңдаңыз</h2><LanguagePicker onChange={locale => { chooseLocale(locale); setFirst(false); }}/></div>
-  </dialog>;
+  return null;
 }

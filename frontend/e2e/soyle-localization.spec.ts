@@ -6,8 +6,8 @@ test.use({storageState:{cookies:[],origins:[]}});
 test('first use, Kazakh authentication, switching and reload preserve locale', async ({ page }) => {
   await page.goto('/app');
   const dialog = page.getByRole('dialog', {name:'Выберите язык / Тілді таңдаңыз'});
-  await expect(dialog).toBeVisible();
-  await dialog.getByRole('button', {name:'Қазақша',exact:true}).click();
+  await expect(dialog).toHaveCount(0);
+  await page.locator(".sa-nav").getByRole("button", {name:"Қазақша",exact:true}).click();
   await expect(page.getByRole('heading',{name:'Аккаунтқа кіру',exact:true})).toBeVisible();
   await expect(page.locator('html')).toHaveAttribute('lang','kk-KZ');
   await page.reload();
@@ -22,7 +22,7 @@ test('first use, Kazakh authentication, switching and reload preserve locale', a
 
 test('parent preference is saved without changing other settings', async ({ page }) => {
   await page.goto('/app');
-  await page.getByRole('dialog').getByRole('button',{name:'Қазақша',exact:true}).click();
+  await page.locator(".sa-nav, .sl-header").getByRole("button", { name: "Қазақша", exact: true }).click();
   await page.getByLabel('Логин',{exact:true}).fill('parent');
   await page.getByLabel('Құпиясөз',{exact:true}).fill('Parent123!');
   await page.getByRole('button',{name:'Кіру',exact:true}).click();
@@ -47,7 +47,6 @@ test('parent preference is saved without changing other settings', async ({ page
 
 test('child settings switch both ways and keep saved progress', async ({ page }) => {
   await page.goto('/app');
-  await page.getByRole('dialog').getByRole('button',{name:'Русский',exact:true}).click();
   await page.getByRole('button',{name:'Ребёнок',exact:true}).click();
   await page.getByLabel('Логин ребёнка',{exact:true}).fill('alikhan');
   await page.getByLabel('PIN-код',{exact:true}).fill('1234');
@@ -80,11 +79,22 @@ test('child settings switch both ways and keep saved progress', async ({ page })
 
 test('landing copy and AAC demonstration follow the selected language', async ({page}) => {
   await page.goto('/');
-  await page.getByRole('dialog').getByRole('button',{name:'Қазақша',exact:true}).click();
+  await page.locator(".sa-nav, .sl-header").getByRole("button", { name: "Қазақша", exact: true }).click();
   await expect(page.getByRole('heading',{name:'Бала ойын жеткізудің түрлі жолын табады'})).toBeVisible();
   const overview = page.locator('.sl-hero-window');
-  await expect(overview.getByRole('heading', { name: 'Қарым-қатынас кеңістігі', exact: true })).toBeVisible();
-  await overview.getByRole('link', { name: 'Жаттығуларды көру', exact: true }).click();
+  await expect(page.getByRole('dialog')).toHaveCount(0);
+  await expect(overview.getByRole('heading', { name: 'Карточканы таңдаңыз', exact: true })).toBeVisible();
+  await expect(overview.locator('.sl-hero-phrase p')).toHaveText('Су ішкім келеді.');
+  await overview.getByRole('button', { name: 'Алма', exact: true }).click();
+  await expect(overview.locator('.sl-hero-phrase p')).toHaveText('Алма жегім келеді.');
+  await overview.getByRole('button', { name: 'Су', exact: true }).click();
+  expect(await page.locator('.sl-page audio').evaluateAll(players => players.every(player => (player as HTMLAudioElement).paused))).toBe(true);
+  const phraseRequest = page.waitForRequest(request => request.url().endsWith('/api/public/speech/kk/water'));
+  await overview.getByRole('button', { name: 'Дыбыстау', exact: true }).click();
+  await phraseRequest;
+
+  await page.locator('#sl-tab-lesson').click();
+  await expect(page.locator('.sl-scenario-copy p:not([hidden])')).toContainText('Ересек тапсырманы ашады');
   await expect(page.getByRole('tab', { selected: true })).toHaveAttribute('id', 'sl-tab-lesson');
   const lesson = page.getByRole('tabpanel');
   await expect(lesson.getByRole('heading', { name: 'Алма қайда?' })).toBeVisible();
@@ -102,15 +112,15 @@ test('landing copy and AAC demonstration follow the selected language', async ({
   await expect(board.locator('.sl-phrase')).toHaveText('Алма жегім келеді.');
   await page.locator('.sl-footer').getByRole('button',{name:'Русский',exact:true}).click();
   await expect(page.getByRole('heading',{name:'Больше способов сказать важное'})).toBeVisible();
-  const practice = page.locator('.sl-practice');
-  await practice.getByRole('button', { name: /Вернитесь к истории/ }).click();
-  await expect(practice.getByRole('heading', { name: 'Наблюдение родителя' })).toBeVisible();
+  const family = page.locator('#family');
+  await expect(family.getByRole('heading', { name: 'Наблюдения, к которым можно вернуться' })).toBeVisible();
+  await expect(family.getByText('За обедом выбрала карточку «Вода».', { exact: true })).toBeVisible();
 });
 
 
 test('landing island stays compact and reloading from the demo returns to the hero', async ({ page }) => {
   await page.goto('/');
-  await page.getByRole('dialog').getByRole('button', { name: 'Қазақша', exact: true }).click();
+  await page.locator('.sl-header').getByRole('button', { name: 'Қазақша', exact: true }).click();
   const header = page.locator('.sl-header');
   const width = await page.evaluate(() => innerWidth);
   const bounds = await header.boundingBox();
@@ -123,7 +133,7 @@ test('landing island stays compact and reloading from the demo returns to the he
   await expect(header.getByRole('link', { name: 'Кіру' })).toHaveAttribute('href', '/app');
   await expect(header.locator('.public-theme-toggle')).toBeVisible();
   await expect(header.getByRole('navigation')).toHaveCount(0);
-  await page.getByRole('link', { name: 'Интерфейсті көру' }).click();
+  await page.locator('.sl-hero-actions').getByRole('link', { name: 'Демоны байқап көру' }).click();
   await expect(page).toHaveURL(/#journey$/);
   await expect.poll(async () => {
     const target = await page.locator('#journey').boundingBox();
@@ -142,7 +152,6 @@ test('landing island stays compact and reloading from the demo returns to the he
 test('landing follows the system theme and serves a saved theme without JavaScript', async ({ page, browser, baseURL }) => {
   await page.emulateMedia({ colorScheme: 'dark' });
   await page.goto('/');
-  await page.getByRole('dialog').getByRole('button', { name: 'Русский', exact: true }).click();
   const landing = page.locator('.sl-page');
   const heroPhoto = page.locator('.sl-hero-photo img');
   const demoTitle = page.locator('#sl-journey-title');
@@ -170,9 +179,8 @@ test('landing follows the system theme and serves a saved theme without JavaScri
     await serverPage.goto('/');
     await expect(serverPage.locator('.sl-page')).toHaveAttribute('data-landing-theme', 'light');
     await expect(serverPage.locator('.sl-page')).toHaveCSS('background-color', 'rgb(250, 248, 245)');
-    const intro = serverPage.locator('.sl-intro-copy');
-    await expect(intro.locator('p')).toHaveCount(3);
-    await expect(intro.locator('span').last()).toHaveCSS('color', 'rgb(41, 41, 41)');
+    await expect(serverPage.getByRole('heading', { name: 'Попросить. Выбрать. Быть услышанным.' })).toBeVisible();
+    await expect(serverPage.locator('.sl-hero-actions').getByRole('link', { name: 'Создать аккаунт' })).toHaveAttribute('href', '/app?mode=register');
   } finally {
     await withoutJavaScript.close();
   }
@@ -199,9 +207,11 @@ test('landing theme reveal keeps the active demo and scroll and follows through 
   await expect(page.locator('#sl-tab-history')).toHaveAttribute('aria-selected', 'true');
   expect(await page.evaluate(() => scrollY)).toBe(position);
 
-  await page.locator('.sl-island .sl-login').click();
+  await page.locator('.sl-hero-actions').getByRole('link', { name: 'Создать аккаунт' }).click();
+  await expect(page).toHaveURL(/\/app\?mode=register$/);
   await expect(page.locator('.sa-page')).toHaveAttribute('data-entry-theme', 'dark');
-  await page.getByRole('button', { name: 'Создать аккаунт родителя' }).click();
+  await expect(page.getByRole('heading', { name: 'Регистрация родителя' })).toBeVisible();
+  await expect(page.getByRole('dialog')).toHaveCount(0);
   const login = page.getByLabel('Логин', { exact: true });
   const password = page.getByLabel('Пароль', { exact: true });
   await expect(password).toHaveAttribute('autocomplete', 'new-password');
@@ -351,7 +361,7 @@ test('specialist reviews an AAC translation through the explicit approval contro
 
 test('installation metadata follows locale without reloading',async({page})=>{
   await page.goto('/app');
-  await page.getByRole('dialog').getByRole('button',{name:'Қазақша',exact:true}).click();
+  await page.locator(".sa-nav, .sl-header").getByRole("button", { name: "Қазақша", exact: true }).click();
   await expect(page.locator('link[rel="manifest"]')).toHaveAttribute('href','/localized-manifest?lang=kk-KZ');
   const manifest = await (await page.request.get('/localized-manifest?lang=kk-KZ')).json();
   expect(manifest.lang).toBe('kk-KZ');
@@ -362,7 +372,6 @@ test('installation metadata follows locale without reloading',async({page})=>{
 test('landing previews remain visible when switching languages with motion enabled', async ({ page }) => {
   await page.emulateMedia({ reducedMotion: 'no-preference' });
   await page.goto('/');
-  await page.getByRole('dialog').getByRole('button', { name: 'Русский', exact: true }).click();
   // Reveal each animated section before switching languages.
   const elements = page.locator('[data-reveal]');
   const count = await elements.count();
@@ -416,25 +425,27 @@ test('landing previews remain visible when switching languages with motion enabl
     expect((await scene.boundingBox())?.height).toBe(initialHeight);
   }
 
-  const practice = page.locator('.sl-practice');
-  const practiceHeight = (await practice.boundingBox())?.height;
-  const sample = practice.locator('.sl-practice-sample');
-  const sampleHeight = (await sample.boundingBox())?.height;
-  const steps = [
-    ['Создайте профиль ребёнка', 'Профиль создан'],
-    ['Выберите практику', 'Понимание речи'],
-    ['Занимайтесь вместе', 'Где яблоко?'],
-    ['Вернитесь к истории', 'Занятие выполнено'],
-  ];
-  for (const [label, text] of steps) {
-    const step = practice.getByRole('button', { name: label, exact: true });
-    await step.focus();
-    await page.keyboard.press('Enter');
-    await expect(step).toHaveAttribute('aria-pressed', 'true');
-    await expect(step).toBeFocused();
-    const active = sample.locator('.sl-practice-fragment:not([hidden])');
-    await expect(active.getByText(text, { exact: true })).toBeVisible();
-    expect((await practice.boundingBox())?.height).toBe(practiceHeight);
-    expect((await sample.boundingBox())?.height).toBe(sampleHeight);
-  }
+  await scene.locator('.sl-window-sidebar').getByRole('button', { name: 'История', exact: true }).click();
+  await expect(page.getByRole('tab', { name: 'Посмотреть историю' })).toHaveAttribute('aria-selected', 'true');
+  const history = page.getByRole('tabpanel');
+  if (desktop.viewport <= 760) await history.getByRole('combobox').selectOption({ index: 1 });
+  else await history.getByRole('button', { name: /Слушай и находи/ }).click();
+  await expect(history.locator('.sl-record-detail:not([hidden])')).toContainText('Нашёл яблоко');
+  await page.getByRole('tab', { name: 'Открыть план' }).click();
+  const plan = page.getByRole('tabpanel');
+  if (desktop.viewport <= 760) await plan.getByRole('combobox').selectOption({ index: 2 });
+  else await plan.getByRole('button', { name: /Собрать просьбу из карточек/ }).click();
+  await expect(plan.locator('.sl-record-detail:not([hidden])')).toContainText('Подсказка взрослому');
+  await expect(plan.locator('.sl-record-detail:not([hidden])')).toContainText('Попробуйте вместе собрать просьбу из карточек.');
+
+  const family = page.locator('#family');
+  await expect(family.locator('.sl-feature-panel')).toHaveCount(2);
+  const planLink = family.getByRole('link', { name: 'Открыть план' });
+  await planLink.focus();
+  await page.keyboard.press('Enter');
+  await expect(page.getByRole('tab', { name: 'Открыть план' })).toHaveAttribute('aria-selected', 'true');
+  const historyLink = family.getByRole('link', { name: 'Посмотреть историю' });
+  await historyLink.focus();
+  await page.keyboard.press('Enter');
+  await expect(page.getByRole('tab', { name: 'Посмотреть историю' })).toHaveAttribute('aria-selected', 'true');
 });
