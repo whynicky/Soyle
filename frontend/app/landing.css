@@ -35,11 +35,23 @@ html:has(> body > .sl-page[data-landing-theme="light"]) { color-scheme: light; }
 html:has(> body > .sl-page[data-landing-theme="dark"]) { color-scheme: dark; }
 
 .sl-page {
+  --sl-scene-radius: 32px;
+  --sl-panel-radius: 24px;
   container-name: soyle-landing;
   display: flow-root;
   background: var(--sl-paper);
   color: var(--sl-ink);
   font: 400 1rem/1.5 "Söyle Onest", system-ui, sans-serif;
+}
+
+/* Keep rounded radii as the fallback for browsers without continuous corners. */
+.sl-page :is(
+  .sl-window, .sl-desktop-scene, .sl-feature, .sl-feature-panel,
+  .sl-phone-photo, .sl-materials, .sl-faq details, .sl-faq summary,
+  .sl-hero-choice, .sl-hero-phrase, .sl-object-choice,
+  .sl-records button, .sl-record-detail, .sl-feature-detail
+) {
+  corner-shape: squircle;
 }
 
 .sl-page h1, .sl-page h2, .sl-page h3, .sl-page p, .sl-page ul { margin: 0; }
@@ -297,7 +309,7 @@ html:has(> body > .sl-page[data-landing-theme="dark"]) { color-scheme: dark; }
   position: relative;
   display: grid;
   grid-template-rows: auto minmax(0, 1fr);
-  border-radius: 16px;
+  border-radius: var(--sl-panel-radius);
   overflow: clip;
 }
 .sl-hero-platform { width: 84%; margin: 72px auto 0; }
@@ -456,7 +468,7 @@ html:has(> body > .sl-page[data-landing-theme="dark"]) { color-scheme: dark; }
   min-height: clamp(130px, 14vw, 204px);
   padding: 8px 4px;
   border: 1px solid var(--sl-line);
-  border-radius: 7px;
+  border-radius: 12px;
   background: var(--sl-paper);
   color: var(--sl-ink);
   font-size: clamp(.875rem, 1.1vw, 1rem);
@@ -550,7 +562,7 @@ html:has(> body > .sl-page[data-landing-theme="dark"]) { color-scheme: dark; }
   aspect-ratio: 16 / 10;
   padding: clamp(24px, 3.5vw, 48px) 9%;
   border: 1px solid var(--sl-line);
-  border-radius: 16px;
+  border-radius: var(--sl-scene-radius);
   background: var(--sl-scenery-earth);
   overflow: clip;
 }
@@ -694,7 +706,7 @@ html:has(> body > .sl-page[data-landing-theme="dark"]) { color-scheme: dark; }
   min-height: 54px;
   padding: 8px;
   border: 1px solid transparent;
-  border-radius: 8px;
+  border-radius: 12px;
   background: transparent;
   text-align: start;
   line-height: 1.3;
@@ -748,7 +760,7 @@ html:has(> body > .sl-page[data-landing-theme="dark"]) { color-scheme: dark; }
   grid-template-columns: minmax(0, .9fr) minmax(0, 1.1fr);
   overflow: clip;
   border: 1px solid var(--sl-line);
-  border-radius: 16px;
+  border-radius: var(--sl-scene-radius);
   background: var(--sl-stone);
 }
 .sl-feature-reverse { grid-template-columns: minmax(0, 1.1fr) minmax(0, .9fr); }
@@ -784,7 +796,7 @@ html:has(> body > .sl-page[data-landing-theme="dark"]) { color-scheme: dark; }
   width: min(100%, 488px);
   min-width: 0;
   border: 1px solid light-dark(rgb(255 255 255 / 80%), rgb(255 255 255 / 23%));
-  border-radius: 16px;
+  border-radius: var(--sl-panel-radius);
   background: light-dark(#f2eeeb, #262626);
   box-shadow: 0 20px 48px light-dark(#211b1c52, #0008);
   color: var(--sl-feature-ink);
@@ -818,7 +830,7 @@ html:has(> body > .sl-page[data-landing-theme="dark"]) { color-scheme: dark; }
   gap: 4px;
   width: 100%;
   padding: 12px;
-  border-radius: 8px;
+  border-radius: 12px;
   background: light-dark(rgb(255 254 252 / 56%), rgb(15 15 15 / 48%));
   font-size: .9375rem;
   line-height: 1.45;
@@ -831,7 +843,7 @@ html:has(> body > .sl-page[data-landing-theme="dark"]) { color-scheme: dark; }
   height: auto;
   aspect-ratio: 4096 / 3203;
   object-fit: contain;
-  border-radius: 16px;
+  border-radius: var(--sl-scene-radius);
 }
 
 .sl-roles { padding-block: 40px 36px; }
@@ -855,7 +867,7 @@ html:has(> body > .sl-page[data-landing-theme="dark"]) { color-scheme: dark; }
   margin-block: 8px 0;
   padding: clamp(20px, 3vw, 36px);
   border: 1px solid var(--sl-line);
-  border-radius: 16px;
+  border-radius: var(--sl-panel-radius);
   background: var(--sl-stone);
 }
 .sl-materials .sl-kicker { margin-bottom: 12px; }
@@ -918,7 +930,7 @@ html:has(> body > .sl-page[data-landing-theme="dark"]) { color-scheme: dark; }
 .sl-faq h2 { margin-bottom: 16px; }
 .sl-faq > div:first-child > .sl-body { max-width: 320px; }
 .sl-faq-list { display: grid; gap: 8px; align-content: start; }
-.sl-faq details { border: 1px solid var(--sl-line); border-radius: 8px; background: var(--sl-stone); }
+.sl-faq details { border: 1px solid var(--sl-line); border-radius: 16px; background: var(--sl-stone); }
 .sl-faq details[open] { background: var(--sl-raised); }
 .sl-faq summary {
   display: flex;
@@ -1129,6 +1141,7 @@ html:has(> body > .sl-page[data-landing-theme="dark"]) { color-scheme: dark; }
   .sl-page .sl-records button { min-height: 52px; padding-block: 4px; }
 }
 @media (max-width: 760px) {
+  .sl-page { --sl-scene-radius: 24px; --sl-panel-radius: 16px; }
   .sl-container { width: calc(100% - 40px); }
   .sl-island { gap: 14px; padding-inline-start: 12px; }
   .sl-heading-1 { font-size: 3rem; }
@@ -1160,10 +1173,10 @@ html:has(> body > .sl-page[data-landing-theme="dark"]) { color-scheme: dark; }
   .sl-hero-board-heading h2 { font-size: 1.3125rem; }
   .sl-hero-board-heading p { font-size: .8125rem; text-wrap: wrap; text-shadow: 0 1px 4px #111918; }
   .sl-hero-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; }
-  .sl-page .sl-hero-choice { min-height: 65px; padding: 3px 2px; border-radius: 9px; font-size: .8125rem; }
+  .sl-page .sl-hero-choice { min-height: 65px; padding: 3px 2px; font-size: .8125rem; }
   .sl-hero-choice .sl-object { --sl-object-size: 42px; }
   .sl-hero-check { inset: 5px 5px auto auto; }
-  .sl-hero-phrase { gap: 6px; width: 100%; padding: 5px 5px 5px 8px; border-radius: 9px; }
+  .sl-hero-phrase { gap: 6px; width: 100%; padding: 5px 5px 5px 8px; }
   .sl-hero-phrase p { font-size: .9375rem; text-wrap: wrap; }
   .sl-hero-phrase-copy { gap: 2px; }
   .sl-page .sl-hero-phrase .sl-lesson-next { min-width: 0; gap: 5px; padding-inline: 8px; font-size: .8125rem; }
