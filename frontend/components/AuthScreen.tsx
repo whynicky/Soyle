@@ -94,7 +94,6 @@ export function AuthScreen({ onAuthenticated, theme: initialTheme, initialMode }
   function updateField(event: React.ChangeEvent<HTMLInputElement>) {
     const input = event.currentTarget;
     const field = input.name as AuthField;
-    if (field === "username") input.value = input.value.replace(/[^A-Za-z0-9_.-]/g, "");
     if (field === "password" && mode === "student") input.value = input.value.replace(/\D/g, "");
     if (errors[field] || errors.form) setErrors((current) => ({ ...current, [field]: undefined, form: undefined }));
   }
@@ -105,7 +104,7 @@ export function AuthScreen({ onAuthenticated, theme: initialTheme, initialMode }
     event.preventDefault();
     const field = input.name as AuthField;
     const message = input.validity.valueMissing ? t("auth.requiredField")
-      : field === "username" ? t("auth.loginRequirements")
+      : field === "username" ? t(mode === "login" && input.value.includes("@") ? "auth.useAccountLogin" : "auth.loginRequirements")
         : field === "name" ? t("auth.nameLength")
           : mode === "student" ? t("auth.pinLength") : t("auth.passwordLength");
     setErrors((current) => ({ ...current, [field]: message }));
@@ -144,16 +143,16 @@ export function AuthScreen({ onAuthenticated, theme: initialTheme, initialMode }
         </aside>
         <section className="sa-form-area" aria-labelledby="sa-heading">
           <form className="sa-form" ref={formRef} onSubmit={submit} onInvalid={reportInvalid} aria-busy={loading}>
+            <div className="sa-form-heading">
+              <h1 id="sa-heading" ref={headingRef} tabIndex={-1}>{heading}</h1>
+              <p>{mode === "student" ? t("auth.childHelp") : mode === "login" ? t("auth.loginHelp") : t("auth.registerHelp")}</p>
+            </div>
             {mode !== "register" && (
               <div className="sa-roles" role="group" aria-label={t("auth.type")}>
                 <button type="button" aria-pressed={mode === "login"} disabled={loading} onClick={() => switchMode("login")}><UserRoundCheck size={17} aria-hidden="true" />{t("auth.adult")}</button>
                 <button type="button" aria-pressed={mode === "student"} disabled={loading} onClick={() => switchMode("student")}><Backpack size={17} aria-hidden="true" />{t("auth.kid")}</button>
               </div>
             )}
-            <div className="sa-form-heading">
-              <h1 id="sa-heading" ref={headingRef} tabIndex={-1}>{heading}</h1>
-              <p>{mode === "student" ? t("auth.childHelp") : mode === "login" ? t("auth.loginHelp") : t("auth.registerHelp")}</p>
-            </div>
             <div className="sa-fields">
               {mode === "register" && (
                 <div className="sa-field">
@@ -168,7 +167,8 @@ export function AuthScreen({ onAuthenticated, theme: initialTheme, initialMode }
                 <input
                   id="sa-username" name="username" type="text" autoComplete={mode === "student" ? "off" : "username"} autoCapitalize="none" spellCheck={false}
                   onChange={updateField}
-                  placeholder={mode === "student" ? t("auth.parentLogin") : t("auth.latin")} pattern="[A-Za-z0-9_.\-]+"
+                  placeholder={t(mode === "student" ? "auth.parentLogin" : mode === "login" ? "auth.accountLogin" : "auth.latin")}
+                  pattern="[A-Za-z0-9_.\-]+"
                   required minLength={3} maxLength={40} aria-invalid={!!errors.username}
                   aria-describedby={errors.username || mode === "register" ? "sa-username-feedback" : undefined}
                 />

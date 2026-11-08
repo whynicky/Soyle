@@ -184,12 +184,28 @@ html:has(> body > .sl-page[data-landing-theme="dark"]) { color-scheme: dark; }
   isolation: isolate;
 }
 .sl-hero-scene {
+  --sl-hero-sky-height: max(46%, calc(100% - .7 * max(0px, 100vw - 1680px)));
   position: absolute;
-  inset: 0;
+  inset: -88px 0 0;
   z-index: -1;
   overflow: clip;
   pointer-events: none;
-  background: #f0e5df;
+  /* Keep the sky on the same painted surface when the theme changes. */
+  background:
+    radial-gradient(ellipse 62% 15% at 8% 34%, light-dark(#eed3c5, transparent), transparent),
+    linear-gradient(to bottom,
+      light-dark(#dcdde6, transparent) 5%,
+      light-dark(#e6dce2, transparent) 22%,
+      light-dark(#d7bdcb, transparent) 36%,
+      light-dark(var(--sl-paper), transparent) 51%),
+    linear-gradient(to bottom, light-dark(transparent, #07090a), light-dark(transparent, #263238) 130px);
+  background-size: 100% var(--sl-hero-sky-height), 100% var(--sl-hero-sky-height), 100% 100%;
+  background-repeat: no-repeat;
+}
+.sl-hero-landscape {
+  position: absolute;
+  inset: 88px 0 0;
+  background: light-dark(#f0e5df, transparent);
   mask-image: linear-gradient(to bottom, transparent 10%, #000 55%);
 }
 .sl-hero .sl-scene-photo { overflow: clip; }
@@ -1257,9 +1273,8 @@ html:has(> body > .sl-page[data-landing-theme="dark"]) { color-scheme: dark; }
   .sl-desktop-body .sl-object-choice { padding-inline: 3px; }
 }
 @container soyle-landing style(--sl-layout-tone: dark) {
-  .sl-hero-scene {
-    inset-block-start: -88px;
-    background: linear-gradient(to bottom, #07090a, #263238 130px, #263238);
+  .sl-hero-landscape {
+    inset-block-start: 0;
     mask-image: none;
   }
 }

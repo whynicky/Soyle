@@ -86,8 +86,9 @@
   inset: 0;
   background: linear-gradient(0deg, #111711e6, #151a1461 37%, transparent 70%), var(--sa-scene) 52% 91% / cover no-repeat;
 }
-@media (min-width: 761px) {
+@media (min-width: 861px) {
   .sa-scene-art { transform: scale(1.16); transform-origin: center bottom; }
+  .sa-roles { order: -1; }
 }
 .sa-scene-copy { display: grid; gap: 12px; padding: clamp(24px, 4vw, 52px); color: #f6f3ee; }
 .sa-scene-copy p:first-of-type {
@@ -129,9 +130,10 @@
   min-width: 0;
   min-height: 48px;
   padding: 10px 12px;
-  border: 1px solid var(--sa-line);
+  border: 1px solid light-dark(#dedad4, #3b3b3b);
   border-radius: 8px;
-  background: var(--sa-input);
+  /* Keep the browser's autofill color inside the field border. */
+  background: var(--sa-input) padding-box;
   color: var(--sa-text);
   font: 400 1rem/1.35 "Söyle Onest", system-ui, sans-serif;
   box-shadow: none;
@@ -175,15 +177,59 @@
 .sa-error { color: light-dark(#852c22, #ffc2b7); background: light-dark(#fff0ec, #341d1a); }
 .sa-student-help { display: flex; gap: 8px; align-items: flex-start; background: var(--sa-input); color: var(--sa-muted); }
 
-@media (max-width: 760px) {
-  .sa-page { gap: 16px; }
-  .sa-layout { grid-template-columns: minmax(0, 1fr); align-content: start; gap: 28px; }
-  .sa-scene { grid-row: 2; align-self: end; min-height: 144px; width: min(100%, 420px); justify-self: center; }
-  .sa-scene-art { background-position: 52% 90%; }
-  .sa-scene-copy { gap: 8px; padding: 20px; }
-  .sa-scene-copy p:first-of-type { max-width: 20ch; font-size: 1.25rem; }
-  .sa-scene-copy p:last-child { display: none; }
-  .sa-form-area { align-items: start; padding-block: 0; }
-  .sa-form { gap: 18px; }
+@media (max-width: 860px) {
+  .sa-page {
+    grid-template: auto minmax(min-content, 1fr) / minmax(0, 1fr);
+    gap: 0;
+    padding: max(14px, env(safe-area-inset-top)) 0 0;
+  }
+  .sa-nav {
+    max-width: calc(100% - max(18px, env(safe-area-inset-left)) - max(18px, env(safe-area-inset-right)));
+    gap: clamp(8px, 3vw, 18px);
+    padding: 4px 5px 4px 11px;
+    background: light-dark(#fffdfaec, #171717ed);
+  }
+  .sa-nav-actions { gap: 2px; }
+  .sa-home { gap: 5px; font-size: 1.125rem; white-space: nowrap; }
+  .sa-home > svg:first-child { margin-inline-end: 0; }
+  .sa-home .sl-brand-mark { width: 22px; height: 22px; }
+  .sa-nav .locale-picker button { min-height: 44px; padding-inline: 5px; }
+  .sa-layout {
+    grid-template: "form" minmax(min-content, 1fr) "scenery" auto / minmax(0, 1fr);
+    gap: 0;
+  }
+  .sa-scene {
+    grid-area: scenery;
+    height: clamp(0px, calc(100svh - 668px), 220px);
+    min-height: 0;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    pointer-events: none;
+  }
+  .sa-scene-art {
+    background: linear-gradient(to bottom, var(--sa-paper), transparent 72%), var(--sa-scene) center 83% / cover no-repeat;
+  }
+  .sa-scene-copy { display: none; }
+  .sa-form-area {
+    grid-area: form;
+    padding: 22px max(18px, env(safe-area-inset-right)) max(20px, env(safe-area-inset-bottom)) max(18px, env(safe-area-inset-left));
+  }
+  .sa-form { gap: 16px; max-width: 400px; }
+  .sa-form-heading { gap: 6px; }
+  .sa-form-heading h1 { font-size: clamp(1.75rem, 7vw, 2rem); }
+  .sa-form-heading p { text-wrap: pretty; }
+  .sa-fields { gap: 12px; }
+  .sa-field { gap: 5px; }
+  .sa-fields small { line-height: 1.4; }
+  .sa-fields input, .sa-form .sa-submit { min-height: 52px; }
+  .sa-secondary { border-block-start: 1px solid var(--sa-line); padding-block-start: 6px; }
+}
+@media (max-width: 360px) {
+  .sa-form-area { padding-block-start: 12px; }
+  .sa-form { gap: 12px; }
+  .sa-form-heading h1 { letter-spacing: -.04em; }
+  .sa-fields { gap: 10px; }
+  .sa-field { gap: 4px; }
 }
 @media (prefers-reduced-motion: reduce) { .sa-form .sa-submit { transition: none; } }

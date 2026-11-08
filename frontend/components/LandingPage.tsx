@@ -780,8 +780,10 @@ export function LandingPage({ initialTheme }: { initialTheme: LandingTheme }) {
       <main id="main-content" tabIndex={-1}>
         <section className="sl-hero" id="about">
           <div className="sl-hero-scene">
-            <ScenePhoto scene="hero" theme={theme} className="sl-hero-photo" />
-            <ScenePhoto scene="hero" theme={theme} className="sl-hero-hills" />
+            <div className="sl-hero-landscape">
+              <ScenePhoto scene="hero" theme={theme} className="sl-hero-photo" />
+              <ScenePhoto scene="hero" theme={theme} className="sl-hero-hills" />
+            </div>
           </div>
           <div className="sl-container sl-hero-content">
             <div className="sl-hero-copy">
