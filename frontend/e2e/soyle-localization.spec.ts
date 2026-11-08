@@ -83,13 +83,17 @@ test('landing copy and AAC demonstration follow the selected language', async ({
   await expect(page.getByRole('heading',{name:'Бала ойын жеткізудің түрлі жолын табады'})).toBeVisible();
   const overview = page.locator('.sl-hero-window');
   await expect(page.getByRole('dialog')).toHaveCount(0);
-  await expect(overview.getByRole('heading', { name: 'Карточканы таңдаңыз', exact: true })).toBeVisible();
+  await expect(overview.getByRole('heading', { name: 'Не қалайсың?', exact: true })).toBeVisible();
+  await expect(page.getByRole('tab', { selected: true })).toHaveAttribute('id', 'sl-tab-lesson');
+  await expect(overview.locator('.sl-hero-choice')).toHaveCount(6);
   await expect(overview.locator('.sl-hero-phrase p')).toHaveText('Су ішкім келеді.');
-  await overview.getByRole('button', { name: 'Алма', exact: true }).click();
-  await expect(overview.locator('.sl-hero-phrase p')).toHaveText('Алма жегім келеді.');
-  await overview.getByRole('button', { name: 'Су', exact: true }).click();
+  const help = overview.getByRole('button', { name: 'Көмек', exact: true });
+  await help.click();
+  await expect(help).toHaveAttribute('aria-pressed', 'true');
+  await expect(overview.locator('button[aria-pressed="true"]')).toHaveCount(1);
+  await expect(overview.locator('.sl-hero-phrase p')).toHaveText('Маған көмектесші.');
   expect(await page.locator('.sl-page audio').evaluateAll(players => players.every(player => (player as HTMLAudioElement).paused))).toBe(true);
-  const phraseRequest = page.waitForRequest(request => request.url().endsWith('/api/public/speech/kk/water'));
+  const phraseRequest = page.waitForRequest(request => request.url().endsWith('/api/public/speech/kk/help'));
   await overview.getByRole('button', { name: 'Дыбыстау', exact: true }).click();
   await phraseRequest;
 
@@ -207,7 +211,7 @@ test('landing theme reveal keeps the active demo and scroll and follows through 
   await expect(page.locator('#sl-tab-history')).toHaveAttribute('aria-selected', 'true');
   expect(await page.evaluate(() => scrollY)).toBe(position);
 
-  await page.locator('.sl-hero-actions').getByRole('link', { name: 'Создать аккаунт' }).click();
+  await page.locator('#start').getByRole('link', { name: 'Создать аккаунт' }).click();
   await expect(page).toHaveURL(/\/app\?mode=register$/);
   await expect(page.locator('.sa-page')).toHaveAttribute('data-entry-theme', 'dark');
   await expect(page.getByRole('heading', { name: 'Регистрация родителя' })).toBeVisible();
@@ -445,7 +449,10 @@ test('landing previews remain visible when switching languages with motion enabl
   await page.keyboard.press('Enter');
   await expect(page.getByRole('tab', { name: 'Открыть план' })).toHaveAttribute('aria-selected', 'true');
   const historyLink = family.getByRole('link', { name: 'Посмотреть историю' });
+  await expect(historyLink).toHaveAttribute('href', '#sl-tab-history');
   await historyLink.focus();
   await page.keyboard.press('Enter');
   await expect(page.getByRole('tab', { name: 'Посмотреть историю' })).toHaveAttribute('aria-selected', 'true');
+  await page.goto('/#sl-tab-plan');
+  await expect(page.getByRole('tab', { selected: true })).toHaveAttribute('id', 'sl-tab-plan');
 });

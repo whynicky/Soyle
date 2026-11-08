@@ -9,6 +9,7 @@ import {
   Volume2, X,
 } from "lucide-react";
 import { t, useLocale, type Locale } from "@/lib/i18n";
+import { observeHeroDepth } from "@/lib/landingDepth";
 import { landingThemes, type LandingTheme } from "@/lib/landingTheme";
 import { LanguagePicker } from "./LanguagePicker";
 import { BrandMark } from "./PublicBrandMark";
@@ -86,12 +87,20 @@ const choices = [
   { id: "play", label: "landing.showcase.play" },
 ] as const;
 
+const heroChoices = [
+  ...choices,
+  { id: "rest", label: "landing.heroBoard.rest" },
+  { id: "help", label: "landing.heroBoard.help" },
+  { id: "more", label: "landing.heroBoard.more" },
+] as const;
+
 const previews = [
   { id: "communication", icon: MessageSquare },
   { id: "lesson", icon: BookOpen },
   { id: "history", icon: History },
   { id: "plan", icon: ClipboardList },
 ] as const;
+const defaultPreview = previews.findIndex(({ id }) => id === "lesson");
 
 const access = [
   { id: "permission", icon: LockKeyhole },
@@ -156,91 +165,89 @@ function StartLink() {
   );
 }
 
-function useCommunicationBoard(locale: Locale) {
-  const [selected, setSelected] = useState<(typeof choices)[number]["id"]>("water");
-  const [speaking, setSpeaking] = useState(false);
-  const [audioError, setAudioError] = useState(false);
+type SpeechSource = "hero" | "preview";
+type ChoiceId = (typeof choices)[number]["id"];
+type HeroChoiceId = (typeof heroChoices)[number]["id"];
+
+function useLandingSpeech(locale: Locale) {
+  const [speakingFrom, setSpeakingFrom] = useState<SpeechSource | null>(null);
+  const [errorFrom, setErrorFrom] = useState<SpeechSource | null>(null);
   const audio = useRef<HTMLAudioElement>(null);
   const playRequest = useRef(0);
 
+  const stop = useCallback(() => {
+    playRequest.current++;
+    audio.current?.pause();
+    setSpeakingFrom(null);
+    setErrorFrom(null);
+  }, []);
+
   useEffect(() => {
     const player = audio.current;
-    const stop = () => {
-      playRequest.current++;
-      player?.pause();
-      setSpeaking(false);
-      setAudioError(false);
-    };
     window.addEventListener("soyle-locale-changing", stop);
     return () => {
       window.removeEventListener("soyle-locale-changing", stop);
       player?.pause();
     };
-  }, []);
+  }, [stop]);
 
-  function select(id: typeof selected) {
-    playRequest.current++;
-    audio.current?.pause();
-    setSelected(id);
-    setSpeaking(false);
-    setAudioError(false);
-  }
-
-  async function speak() {
+  async function speak(id: HeroChoiceId, from: SpeechSource) {
     const player = audio.current;
     if (!player) return;
-    const request = ++playRequest.current;
-    if (speaking) {
-      player.pause();
-      setSpeaking(false);
+    if (speakingFrom === from) {
+      stop();
       return;
     }
 
-    player.src = `/api/public/speech/${locale === "kk-KZ" ? "kk" : "ru"}/${selected}`;
-    setAudioError(false);
-    setSpeaking(true);
+    const request = ++playRequest.current;
+    player.src = `/api/public/speech/${locale === "kk-KZ" ? "kk" : "ru"}/${id}`;
+    setErrorFrom(null);
+    setSpeakingFrom(from);
     try {
       await player.play();
     } catch {
       if (player === audio.current && request === playRequest.current) {
-        setSpeaking(false);
-        setAudioError(true);
+        setSpeakingFrom(null);
+        setErrorFrom(from);
       }
     }
   }
 
   const player = (
-    <audio ref={audio} preload="none" onEnded={() => setSpeaking(false)} onError={() => {
-        if (speaking) {
-          setSpeaking(false);
-          setAudioError(true);
+    <audio ref={audio} preload="none" onEnded={() => setSpeakingFrom(null)} onError={() => {
+      if (speakingFrom) {
+        setErrorFrom(speakingFrom);
+        setSpeakingFrom(null);
         }
       }} />
   );
-  return { selected, speaking, audioError, select, speak, player };
+  return { speakingFrom, errorFrom, stop, speak, player };
 }
 
-function DemoObject({ id }: { id: (typeof choices)[number]["id"] }) {
-  return <Image className="sl-object" src={`/landing/soyle-object-${id}.webp`} width={72} height={72} alt="" unoptimized />;
+function DemoObject({ id }: { id: HeroChoiceId }) {
+  return <Image className="sl-object" src={`/landing/soyle-object-${id}.webp`} width={144} height={144} alt="" unoptimized />;
 }
 
-function DemoHeading({ title, description }: { title: string; description?: string }) {
+function DemoHeading({ title }: { title: string }) {
   return (
     <div className="sl-demo-heading">
       <h3 className="sl-heading-4">{title}</h3>
-      {description && <p className="sl-caption">{description}</p>}
     </div>
   );
 }
 
-function CommunicationBoard({ board }: { board: ReturnType<typeof useCommunicationBoard> }) {
-  const { selected, speaking, audioError, select, speak } = board;
+function CommunicationBoard({ speech }: { speech: ReturnType<typeof useLandingSpeech> }) {
+  const [selected, setSelected] = useState<ChoiceId>("water");
+  const speaking = speech.speakingFrom === "preview";
   return (
     <div className="sl-example-sheet sl-aac" id="communication">
-      <DemoHeading title={t("landing.showcase.board")} description={t("landing.showcase.boardHint")} />
+      <DemoHeading title={t("landing.showcase.board")} />
       <div className="sl-object-options" role="group" aria-label={t("landing.demo.cardLibrary")}>
         {choices.map(({ id, label }) => (
-          <button key={id} type="button" className="sl-object-choice" aria-pressed={selected === id} onClick={() => select(id)}>
+          <button key={id} type="button" className="sl-object-choice" aria-pressed={selected === id} onClick={() => {
+            speech.stop();
+            setSelected(id);
+          }}>
             <DemoObject id={id} />
             {t(label)}
             {selected === id && <Check size={17} aria-hidden="true" />}
@@ -248,15 +255,12 @@ function CommunicationBoard({ board }: { board: ReturnType<typeof useCommunicati
         ))}
       </div>
       <div className="sl-phrase-bar">
-        <div>
-          <p className="sl-demo-label">{t("landing.demo.composedPhrase")}</p>
-          <p className="sl-phrase"><span key={selected}>{t(`landing.aac.${selected}`)}</span></p>
-        </div>
-        <button type="button" className="sl-lesson-next" onClick={speak}>
+        <p className="sl-phrase" aria-live="polite"><span key={selected}>{t(`landing.aac.${selected}`)}</span></p>
+        <button type="button" className="sl-lesson-next" onClick={() => speech.speak(selected, "preview")}>
           {speaking ? <X size={16} aria-hidden="true" /> : <Volume2 size={16} aria-hidden="true" />}
           {t(speaking ? "landing.copy124" : "landing.heroBoard.speak")}
         </button>
-        {audioError && <small className="sl-audio-error" role="status">{t("landing.copy126")}</small>}
+        {speech.errorFrom === "preview" && <small className="sl-audio-error" role="status">{t("landing.copy126")}</small>}
       </div>
     </div>
   );
@@ -414,7 +418,7 @@ function HistoryPreview({ locale }: { locale: Locale }) {
 
   return (
     <div className="sl-example-sheet sl-history-sheet">
-      <DemoHeading title={t("landing.desktop.observations")} description={t("landing.demo.historyIntro")} />
+      <DemoHeading title={t("landing.desktop.observations")} />
       <RecordPicker id="sl-history" label={t("landing.demo.recent")} entries={observations.map(({ day, title, note }) => {
         const dateTime = `2026-10-${day}`;
         const meta = date.format(Date.UTC(2026, 9, day));
@@ -445,7 +449,7 @@ const tasks = [
 function PlanPreview() {
   return (
     <div className="sl-example-sheet sl-plan-sheet">
-      <DemoHeading title={t("landing.desktop.weekPlan")} description={t("landing.demo.planIntro")} />
+      <DemoHeading title={t("landing.desktop.weekPlan")} />
       <RecordPicker id="sl-plan" label={t("landing.demo.planList")} entries={tasks.map(({ title, day, note, instruction, icon: Icon }) => ({
         title: t(title), meta: t(day), icon: <Icon size={16} aria-hidden="true" />,
         detail: <>
@@ -464,29 +468,41 @@ function PlanPreview() {
   );
 }
 
-function PlatformCover({ board }: { board: ReturnType<typeof useCommunicationBoard> }) {
+function PlatformCover({ speech }: { speech: ReturnType<typeof useLandingSpeech> }) {
+  const [selected, setSelected] = useState<HeroChoiceId>("water");
+  const speaking = speech.speakingFrom === "hero";
   return (
     <div className="sl-platform-cover">
       <div className="sl-platform-art" aria-hidden="true" />
       <div className="sl-platform-copy">
         <div className="sl-hero-board">
-          <p className="sl-demo-label">{t("landing.copy116")} · {t("landing.story.communication.title")}</p>
-          <h2>{t("landing.heroBoard.pick")}</h2>
-          <div className="sl-hero-choices" role="group" aria-label={t("landing.heroBoard.pick")}>
-            {choices.map(({ id, label }) => (
-              <button key={id} className="sl-hero-choice" type="button" aria-pressed={board.selected === id} onClick={() => board.select(id)}>
-                <DemoObject id={id} />{t(label)}
+          <div className="sl-hero-board-heading">
+            <h2 id="sl-hero-board-title">{t("landing.heroBoard.pick")}</h2>
+            <p role="status">{t(speech.errorFrom === "hero" ? "landing.copy126" : "landing.heroBoard.hint")}</p>
+          </div>
+          <div className="sl-hero-grid" role="group" aria-labelledby="sl-hero-board-title">
+            {heroChoices.map(({ id, label }) => (
+              <button className="sl-hero-choice" key={id} type="button" aria-pressed={selected === id} onClick={() => {
+                if (selected === id) return;
+                speech.stop();
+                setSelected(id);
+              }}>
+                <DemoObject id={id} />
+                {t(label)}
+                <Check className="sl-hero-check" size={14} aria-hidden="true" />
               </button>
             ))}
           </div>
           <div className="sl-hero-phrase">
-            <p key={board.selected}>{t(`landing.aac.${board.selected}`)}</p>
-            <button type="button" className="sl-lesson-next" onClick={board.speak}>
-              {board.speaking ? <X size={16} aria-hidden="true" /> : <Volume2 size={16} aria-hidden="true" />}
-              {t(board.speaking ? "landing.copy124" : "landing.heroBoard.speak")}
+            <div className="sl-hero-phrase-copy">
+              <span>{t("landing.heroBoard.phrase")}</span>
+              <p aria-live="polite" aria-atomic="true"><span key={selected}>{t(`landing.aac.${selected}`)}</span></p>
+            </div>
+            <button type="button" className="sl-lesson-next" onClick={() => speech.speak(selected, "hero")}>
+              {speaking ? <X size={16} aria-hidden="true" /> : <Volume2 size={16} aria-hidden="true" />}
+              {t(speaking ? "landing.copy124" : "landing.heroBoard.speak")}
             </button>
           </div>
-          {board.audioError && <small role="status">{t("landing.copy126")}</small>}
         </div>
       </div>
     </div>
@@ -530,6 +546,7 @@ function FaqItem({ id }: { id: (typeof questions)[number] }) {
 }
 
 type PreviewId = (typeof previews)[number]["id"];
+const previewFragment = (id: PreviewId) => `#sl-tab-${id}`;
 
 const roles = ["child", "parent", "specialist"] as const;
 
@@ -542,7 +559,7 @@ function ProductRoles() {
           <div key={id}><dt>{t(`landing.roles.${id}.title`)}</dt><dd>{t(`landing.roles.${id}.text`)}</dd></div>
         ))}
       </dl>
-      <p className="sl-caption">{t("landing.roles.scope")}</p>
+      <p className="sl-body">{t("landing.roles.scope")}</p>
     </section>
   );
 }
@@ -581,7 +598,7 @@ function FamilyPractice({ theme, locale, onOpenDemo }: {
                   <p className="sl-feature-meta">{t("landing.demo.adultTip")}</p>
                   <p>{t("landing.handoff.instruction")}</p>
                 </div>
-                <a className="sl-lesson-next" href="#journey" onClick={() => onOpenDemo("plan")}>
+                <a className="sl-lesson-next" href={previewFragment("plan")} onClick={() => onOpenDemo("plan")}>
                   {t("landing.desktop.tab.plan")} <ArrowRight size={16} aria-hidden="true" />
                 </a>
               </div>
@@ -607,7 +624,7 @@ function FamilyPractice({ theme, locale, onOpenDemo }: {
                   <h4>{t(title)}</h4>
                 </div>
                 <div className="sl-feature-detail"><p>{t(note)}</p></div>
-                <a className="sl-lesson-next" href="#journey" onClick={() => onOpenDemo("history")}>
+                <a className="sl-lesson-next" href={previewFragment("history")} onClick={() => onOpenDemo("history")}>
                   {t("landing.desktop.tab.history")} <ArrowRight size={16} aria-hidden="true" />
                 </a>
               </div>
@@ -624,20 +641,40 @@ function Materials() {
     <section className="sl-materials sl-container" id="materials" aria-labelledby="sl-materials-title">
       <div>
         <p className="sl-kicker">{t("landing.materials.stage")}</p>
-        <h2 className="sl-heading-2" id="sl-materials-title">{t("landing.materials.heading")}</h2>
+        <h2 className="sl-heading-3" id="sl-materials-title">{t("landing.materials.heading")}</h2>
       </div>
-      <div className="sl-materials-copy">
-        <p className="sl-body">{t("landing.materials.available")}</p>
-        <p className="sl-body">{t("landing.materials.review")}</p>
-      </div>
+      <p className="sl-body">{t("landing.materials.review")}</p>
+    </section>
+  );
+}
+
+const startSteps = ["profile", "practice", "together"] as const;
+
+function HowToStart() {
+  return (
+    <section className="sl-how-start sl-container" id="start" aria-labelledby="sl-how-start-title">
+      <h2 className="sl-heading-3" id="sl-how-start-title">{t("landing.start.heading")}</h2>
+      <ol className="sl-start-steps" role="list">
+        {startSteps.map((step, index) => (
+          <li key={step}>
+            <span className="sl-step-number" aria-hidden="true">{index + 1}</span>
+            <div>
+              <h3>{t(`landing.start.${step}.title`)}</h3>
+              <p className="sl-body">{t(`landing.start.${step}.text`)}</p>
+            </div>
+          </li>
+        ))}
+      </ol>
+      <StartLink />
     </section>
   );
 }
 
 export function LandingPage({ initialTheme }: { initialTheme: LandingTheme }) {
   const locale = useLocale();
-  const board = useCommunicationBoard(locale);
-  const [preview, setPreview] = useState(0);
+  const speech = useLandingSpeech(locale);
+  const { stop: stopSpeech } = speech;
+  const [preview, setPreview] = useState(defaultPreview);
   const root = useRef<HTMLDivElement>(null);
   const prepareTheme = useCallback((scheme: "light" | "dark") => {
     const mobile = window.matchMedia(mobileScenery).matches;
@@ -647,13 +684,34 @@ export function LandingPage({ initialTheme }: { initialTheme: LandingTheme }) {
         const rect = picture.getBoundingClientRect();
         return rect.bottom > -120 && rect.top < window.innerHeight + 120;
       });
-    return Promise.all(visibleScenes.map((picture) => {
-      const scene = picture.dataset.scene as Scene;
+    const scenes = new Set(visibleScenes.map((picture) => picture.dataset.scene as Scene));
+    return Promise.all([...scenes].map((scene) => {
       const { src, srcSet, sizes } = sceneVariant(scene, tone, mobile && (isHeroLayer(scene) || scene === "end"));
       return preloadThemeImage(src, srcSet, sizes);
     }));
   }, []);
   const { theme, changeTheme } = usePublicTheme(initialTheme, prepareTheme);
+
+  const switchPreview = useCallback((index: number) => {
+    stopSpeech();
+    setPreview(index);
+  }, [stopSpeech]);
+
+  useEffect(() => {
+    const selectFromHash = () => {
+      const { hash } = window.location;
+      const index = previews.findIndex(({ id }) => previewFragment(id) === hash);
+      if (index >= 0) switchPreview(index);
+      else if (hash === "#communication") switchPreview(0);
+      else if (hash === "#journey") switchPreview(defaultPreview);
+    };
+    const frame = requestAnimationFrame(selectFromHash);
+    window.addEventListener("hashchange", selectFromHash);
+    return () => {
+      cancelAnimationFrame(frame);
+      window.removeEventListener("hashchange", selectFromHash);
+    };
+  }, [switchPreview]);
 
   useEffect(() => {
     const page = root.current;
@@ -669,34 +727,7 @@ export function LandingPage({ initialTheme }: { initialTheme: LandingTheme }) {
 
   useEffect(() => {
     const hero = root.current?.querySelector<HTMLElement>(".sl-hero");
-    if (!hero) return;
-    const motion = window.matchMedia("(prefers-reduced-motion: reduce)");
-    let frame = 0;
-    let depth = -1;
-    let intro = true;
-    const timer = setTimeout(() => { intro = false; }, 1450);
-    const draw = () => {
-      frame = 0;
-      if (intro && window.scrollY > 12) {
-        intro = false;
-        hero.setAttribute("data-entry-skipped", "");
-      }
-      const next = motion.matches ? 0 : Math.max(0, Math.min(window.scrollY / 760, 1));
-      if (next !== depth) {
-        hero.style.setProperty("--sl-depth", String(next));
-        depth = next;
-      }
-    };
-    const update = () => { if (!frame) frame = requestAnimationFrame(draw); };
-    draw();
-    window.addEventListener("scroll", update, { passive: true });
-    motion.addEventListener("change", update);
-    return () => {
-      clearTimeout(timer);
-      cancelAnimationFrame(frame);
-      window.removeEventListener("scroll", update);
-      motion.removeEventListener("change", update);
-    };
+    if (hero) return observeHeroDepth(hero);
   }, []);
 
   useEffect(() => {
@@ -715,23 +746,6 @@ export function LandingPage({ initialTheme }: { initialTheme: LandingTheme }) {
     return () => observer.disconnect();
   }, []);
 
-  useEffect(() => {
-    const cover = root.current?.querySelector(".sl-platform-cover");
-    if (!cover || !("IntersectionObserver" in window)) return;
-    let inView = false;
-    const update = () => cover.toggleAttribute("data-light-playing", inView && !document.hidden);
-    const observer = new IntersectionObserver(([entry]) => {
-      inView = entry.isIntersecting;
-      update();
-    });
-    observer.observe(cover);
-    document.addEventListener("visibilitychange", update);
-    return () => {
-      observer.disconnect();
-      document.removeEventListener("visibilitychange", update);
-    };
-  }, []);
-
   function onTabKey(event: KeyboardEvent<HTMLButtonElement>) {
     const last = previews.length - 1;
     const next = {
@@ -742,12 +756,12 @@ export function LandingPage({ initialTheme }: { initialTheme: LandingTheme }) {
     }[event.key];
     if (next === undefined) return;
     event.preventDefault();
-    setPreview(next);
+    switchPreview(next);
     root.current?.querySelector<HTMLButtonElement>(`#sl-tab-${previews[next].id}`)?.focus();
   }
 
   function openDemo(id: PreviewId) {
-    setPreview(previews.findIndex((item) => item.id === id));
+    switchPreview(previews.findIndex((item) => item.id === id));
   }
 
   const current = previews[preview];
@@ -759,10 +773,7 @@ export function LandingPage({ initialTheme }: { initialTheme: LandingTheme }) {
 
   return (
     <div className="sl-page" data-landing-theme={theme} ref={root}>
-      {board.player}
-      <div className="sr-only" role="status">
-        {t(board.audioError ? "landing.copy126" : `landing.aac.${board.selected}`)}
-      </div>
+      {speech.player}
       <a className="sl-skip" href="#main-content">{t("landing.copy035")}</a>
       <LandingHeader theme={theme} onChange={changeTheme} />
 
@@ -770,6 +781,7 @@ export function LandingPage({ initialTheme }: { initialTheme: LandingTheme }) {
         <section className="sl-hero" id="about">
           <div className="sl-hero-scene">
             <ScenePhoto scene="hero" theme={theme} className="sl-hero-photo" />
+            <ScenePhoto scene="hero" theme={theme} className="sl-hero-hills" />
           </div>
           <div className="sl-container sl-hero-content">
             <div className="sl-hero-copy">
@@ -778,26 +790,33 @@ export function LandingPage({ initialTheme }: { initialTheme: LandingTheme }) {
               <p className="sl-body sl-hero-description">{t("landing.showcase.description")}</p>
               <div className="sl-hero-actions">
                 <StartLink />
-                <a className="sl-text-link" href="#journey" onClick={() => openDemo("communication")}>{t("landing.demo.openPreview")} <ArrowDown size={15} aria-hidden="true" /></a>
+                <a className="sl-text-link" href="#journey" onClick={() => openDemo("lesson")}>{t("landing.demo.openPreview")} <ArrowDown size={15} aria-hidden="true" /></a>
               </div>
             </div>
 
-            <WorkspaceWindow
-              className="sl-hero-window"
-              cover
-              sidebar={(
-                <div className="sl-window-links" aria-hidden="true">
-                  <p className="sl-sidebar-label">{t("landing.roles.child.title")}</p>
-                  <span><LayoutGrid size={17} /><span className="sl-rail-label">{t("nav.home")}</span></span>
-                  <span className="sl-window-current"><MessageSquare size={17} /><span className="sl-rail-label">{t("nav.words")}</span></span>
-                  <span><BookOpen size={17} /><span className="sl-rail-label">{t("nav.lessons")}</span></span>
-                </div>
-              )}
-            >
-              <PlatformCover board={board} />
-            </WorkspaceWindow>
+            <div className="sl-hero-platform">
+              <WorkspaceWindow
+                className="sl-hero-window"
+                cover
+                sidebar={(
+                  <div className="sl-window-links" aria-hidden="true">
+                    <p className="sl-sidebar-label">{t("landing.roles.child.title")}</p>
+                    <span><LayoutGrid size={17} /><span className="sl-rail-label">{t("nav.home")}</span></span>
+                    <span className="sl-window-current"><MessageSquare size={17} /><span className="sl-rail-label">{t("nav.words")}</span></span>
+                    <span><BookOpen size={17} /><span className="sl-rail-label">{t("nav.lessons")}</span></span>
+                  </div>
+                )}
+              >
+                <PlatformCover speech={speech} />
+              </WorkspaceWindow>
+            </div>
           </div>
-          <ScenePhoto scene="foreground" theme={theme} className="sl-hero-foreground" />
+          <div className="sl-hero-foreground" aria-hidden="true">
+            <div className="sl-hero-foreground-track">
+              <ScenePhoto scene="foreground" theme={theme} className="sl-hero-plants" />
+              <ScenePhoto scene="foreground" theme={theme} className="sl-hero-foreground-extension" />
+            </div>
+          </div>
         </section>
 
         <section className="sl-journey sl-container" id="journey" aria-labelledby="sl-journey-title">
@@ -812,7 +831,7 @@ export function LandingPage({ initialTheme }: { initialTheme: LandingTheme }) {
                   key={id} id={`sl-tab-${id}`} type="button" role="tab"
                   aria-selected={preview === index} aria-controls={`sl-panel-${id}`}
                   tabIndex={preview === index ? 0 : -1}
-                  onClick={() => setPreview(index)} onKeyDown={onTabKey}
+                  onClick={() => switchPreview(index)} onKeyDown={onTabKey}
                 >
                   <Icon size={16} aria-hidden="true" />
                   <span>{t(`landing.desktop.tab.${id}`)}</span>
@@ -821,7 +840,7 @@ export function LandingPage({ initialTheme }: { initialTheme: LandingTheme }) {
             </div>
             <div className="sl-scenario-copy" aria-live="polite">
               {previews.map(({ id }) => (
-                <p key={id} className="sl-caption" hidden={current.id !== id}>{t(`landing.story.${id}.text`)}</p>
+                <p key={id} className="sl-body" hidden={current.id !== id}>{t(`landing.story.${id}.text`)}</p>
               ))}
             </div>
             <div className="sl-desktop-scene">
@@ -831,7 +850,7 @@ export function LandingPage({ initialTheme }: { initialTheme: LandingTheme }) {
                 sidebar={(
                   <div className="sl-window-links" role="group" aria-label={t("landing.desktop.sections")}>
                     {previews.map(({ id, icon: Icon }, index) => (
-                      <button key={id} type="button" aria-pressed={preview === index} aria-label={t(`landing.mobile.tab.${id}`)} onClick={() => setPreview(index)}>
+                      <button key={id} type="button" aria-pressed={preview === index} aria-label={t(`landing.mobile.tab.${id}`)} onClick={() => switchPreview(index)}>
                         <Icon size={17} aria-hidden="true" /><span className="sl-rail-label">{t(`landing.mobile.tab.${id}`)}</span>
                       </button>
                     ))}
@@ -847,7 +866,7 @@ export function LandingPage({ initialTheme }: { initialTheme: LandingTheme }) {
                       hidden={current.id !== id} inert={current.id !== id} aria-hidden={current.id !== id || undefined}
                     >
                       {id === "lesson" && <LessonPreview locale={locale} active={current.id === id} />}
-                      {id === "communication" && <CommunicationBoard board={board} />}
+                      {id === "communication" && <CommunicationBoard speech={speech} />}
                       {id === "history" && <HistoryPreview locale={locale} />}
                       {id === "plan" && <PlanPreview />}
                     </div>
@@ -861,6 +880,7 @@ export function LandingPage({ initialTheme }: { initialTheme: LandingTheme }) {
         <FamilyPractice theme={theme} locale={locale} onOpenDemo={openDemo} />
         <ProductRoles />
         <Materials />
+        <HowToStart />
 
         <section className="sl-access sl-container" id="access" aria-labelledby="sl-access-title">
           <div className="sl-access-title">
@@ -902,7 +922,7 @@ export function LandingPage({ initialTheme }: { initialTheme: LandingTheme }) {
               <p className="sl-body">{t("landing.showcase.endDescription")}</p>
               <div className="sl-end-actions">
                 <StartLink />
-                <a className="sl-text-link" href="#journey" onClick={() => openDemo("communication")}>
+                <a className="sl-text-link" href="#journey" onClick={() => openDemo("lesson")}>
                   {t("landing.demo.openPreview")} <ArrowDown size={15} aria-hidden="true" />
                 </a>
               </div>

@@ -252,13 +252,22 @@ def test_same_text_has_separate_pet_and_exercise_cache(azure, client, parent_hea
     assert client.post("/api/tts", headers=parent_headers, json={"text": "Мяч", "profile": "pet"}).status_code == 422
 
 
-def test_public_kazakh_demo_uses_azure_without_auth_or_arbitrary_text(azure, client):
-    response = client.get('/api/public/speech/kk/water')
+@pytest.mark.parametrize("language,key,phrase", [
+    ("kk", "water", "Су ішкім келеді."),
+    ("kk", "rest", "Демалғым келеді."),
+    ("kk", "help", "Маған көмектесші."),
+    ("kk", "more", "Тағы алғым келеді."),
+    ("ru", "rest", "Я хочу отдохнуть."),
+    ("ru", "help", "Помоги мне."),
+    ("ru", "more", "Я хочу ещё."),
+])
+def test_public_demo_uses_azure_without_auth_or_arbitrary_text(azure, client, language, key, phrase):
+    response = client.get(f'/api/public/speech/{language}/{key}')
     assert response.status_code == 200
-    assert response.headers['content-language'] == 'kk-KZ'
+    assert response.headers['content-language'] == ('kk-KZ' if language == 'kk' else 'ru-RU')
     assert response.headers['x-soyle-tts'] == 'azure'
     ssml = azure[-1][1]['content'].decode()
-    assert 'Су ішкім келеді.' in ssml and 'kk-KZ-AigulNeural' in ssml
-    assert 'ru-RU' not in ssml
+    assert phrase in ssml and tts.VOICES[language] in ssml
+    assert tts.VOICES['ru' if language == 'kk' else 'kk'] not in ssml
     assert client.get('/api/public/speech/kk/private-user-text').status_code == 422
     assert len(azure) == 1

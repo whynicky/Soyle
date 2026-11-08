@@ -23,8 +23,14 @@ from .tts_library import known_russian_tts_texts, normalize_tts_text
 
 VOICES = {"ru": "ru-RU-SvetlanaNeural", "kk": "kk-KZ-AigulNeural"}
 PUBLIC_DEMO_PHRASES = {
-    "ru": {"water": "Я хочу воду.", "apple": "Я хочу яблоко.", "play": "Я хочу играть."},
-    "kk": {"water": "Су ішкім келеді.", "apple": "Алма жегім келеді.", "play": "Ойнағым келеді."},
+    "ru": {
+        "water": "Я хочу воду.", "apple": "Я хочу яблоко.", "play": "Я хочу играть.",
+        "rest": "Я хочу отдохнуть.", "help": "Помоги мне.", "more": "Я хочу ещё.",
+    },
+    "kk": {
+        "water": "Су ішкім келеді.", "apple": "Алма жегім келеді.", "play": "Ойнағым келеді.",
+        "rest": "Демалғым келеді.", "help": "Маған көмектесші.", "more": "Тағы алғым келеді.",
+    },
 }
 FORMAT = "audio-24khz-48kbitrate-mono-mp3"
 

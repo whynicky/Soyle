@@ -2914,8 +2914,8 @@ async def localized_validation_error(request: Request, exc: RequestValidationErr
 
 
 @app.get("/api/public/speech/{language}/{phrase_key}")
-def public_demo_speech(language: Literal["ru", "kk"], phrase_key: Literal["water", "apple", "play"]):
-    """Six fixed editorial phrases; no user text, profile or arbitrary voice selection."""
+def public_demo_speech(language: Literal["ru", "kk"], phrase_key: Literal["water", "apple", "play", "rest", "help", "more"]):
+    """Fixed editorial phrases; no user text, profile or arbitrary voice selection."""
     from .azure_tts import PUBLIC_DEMO_PHRASES, TTSUnavailable, limit_user, synthesize
     limit_user(-1)
     try:
