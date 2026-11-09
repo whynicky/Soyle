@@ -2,7 +2,7 @@ import type { MetadataRoute } from "next";
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "Söyle — общение и практика",
+    name: "Söyle - общение и практика",
     short_name: "Söyle",
     description: "Игровые занятия и домашняя практика для поддержки общения",
     lang: "ru",

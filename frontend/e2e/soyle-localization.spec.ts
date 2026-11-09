@@ -138,7 +138,11 @@ test('landing island stays compact and reloading from the demo returns to the he
   await page.locator('.sa-home').click();
   await expect(page.locator('.sl-page')).toBeVisible();
   expect(scriptErrors).toEqual([]);
+  const heroCopy = page.locator('.sl-hero-copy');
+  await expect(heroCopy.locator('> p')).toHaveText(['Для детей с алалией и взрослых рядом']);
+  await expect(page.locator('.sl-page')).not.toContainText(/[\u2013\u2014]/);
   await page.locator('.sl-header').getByRole('button', { name: 'Қазақша', exact: true }).click();
+  await expect(heroCopy.locator('> p')).toHaveText(['Алалиясы бар балаларға және жанындағы ересектерге']);
   const header = page.locator('.sl-header');
   const width = await page.evaluate(() => innerWidth);
   const bounds = await header.boundingBox();
@@ -496,9 +500,9 @@ test('landing previews remain visible when switching languages with motion enabl
     expect(desktop.windowRatio).toBeGreaterThanOrEqual(1.6);
     expect(desktop.windowRatio).toBeLessThanOrEqual(16 / 9);
     expect(desktop.marginDifference).toBeLessThan(2);
-  } else if (desktop.viewport <= 480) {
-    expect(desktop.windowRatio).toBeLessThan(1);
-    await expect(scene.locator('.sl-window-sidebar')).toBeVisible();
+  } else if (desktop.viewport <= 760) {
+    expect(desktop.widthShare).toBeGreaterThan(.95);
+    await expect(scene.locator('.sl-window-sidebar')).toBeHidden();
   }
   const tabs = page.getByRole('tab');
   await expect(tabs).toHaveCount(3);
@@ -509,7 +513,12 @@ test('landing previews remain visible when switching languages with motion enabl
     if (desktop.viewport > 760) expect((await scene.boundingBox())?.height).toBe(initialHeight);
   }
 
-  await scene.locator('.sl-window-sidebar').getByRole('button', { name: 'Наблюдения', exact: true }).click();
+  if (desktop.viewport <= 760) {
+    await page.getByRole('tab', { name: 'План занятий' }).click();
+    await page.keyboard.press('ArrowRight');
+  } else {
+    await scene.locator('.sl-window-sidebar').getByRole('button', { name: 'Наблюдения', exact: true }).click();
+  }
   await expect(page.getByRole('tab', { name: 'Наблюдения' })).toHaveAttribute('aria-selected', 'true');
   const history = page.getByRole('tabpanel');
   if (desktop.viewport <= 760) await history.getByRole('combobox').selectOption({ index: 1 });

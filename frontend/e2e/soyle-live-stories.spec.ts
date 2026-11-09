@@ -13,9 +13,10 @@ async function enter(page:Page,key:string){
   const me=await(await page.request.get('http://localhost:8011/api/auth/me')).json();
   const books=await(await page.request.get(`http://localhost:8011/api/stories/${me.child_id}`)).json();expect(books).toHaveLength(4);
   const book=books.find((item:{key:string})=>item.key===key);
-  await page.locator('.room-doors').getByRole('button',{name:'Истории',exact:true}).click();
+  const displayTitle=book.title.replace(/[\u2013\u2014]/g,'-');
+  await page.locator('.child-room-home').getByRole('button',{name:/^Истории(?:\s|$)/u}).click();
   const hero=page.locator('.v2-story-hero');
-  if(await hero.getByRole('heading',{name:book.title,exact:true}).count())await hero.getByRole('button').click();else await page.locator('.v2-story-card').filter({hasText:book.title}).click();
+  if(await hero.getByRole('heading',{name:displayTitle,exact:true}).count())await hero.getByRole('button').click();else await page.locator('.v2-story-card').filter({hasText:displayTitle}).click();
   return me.child_id as number;
 }
 test('six live scenes open for a child, move objects, pause and save completion',async({page},info)=>{
@@ -31,7 +32,7 @@ test('six live scenes open for a child, move objects, pause and save completion'
   expect((await new AxeBuilder({page}).include('.sb-player').analyze()).violations).toEqual([]);
   await page.screenshot({path:info.outputPath('living-toy-complete.png'),fullPage:true});
   const saved=await(await page.request.get(`http://localhost:8011/api/storybooks/${child}/toy`)).json();expect(saved.state.completed).toBe(true);expect(saved.preview).toBe(false);
-  await page.getByRole('button',{name:'Закрыть книгу',exact:true}).click();await expect(page.locator('.v2-story-hero,.v2-story-card').filter({hasText:'Любимая игрушка — живая история'})).toContainText(/История прочитана|Пройдено/);
+  await page.getByRole('button',{name:'Закрыть книгу',exact:true}).click();await expect(page.locator('.v2-story-hero,.v2-story-card').filter({hasText:'Любимая игрушка - живая история'})).toContainText(/История прочитана|Прочитана|Пройдено/);
 });
 test('continuous animation saves a child request, hug and immediate exit',async({page},info)=>{
   const child=await enter(page,'misha-help');await expect(page.locator('.cinema-player')).not.toContainText('DRAFT');

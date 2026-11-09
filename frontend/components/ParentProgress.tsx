@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import Image from "next/image";
 import { ArrowRight, RefreshCw } from "lucide-react";
 import { api, type Child, type Dashboard } from "@/lib/api";
-import { t, useLocale, formatDate } from "@/lib/i18n";
+import { shortDashes, t, useLocale, formatDate } from "@/lib/i18n";
 import { RecordHistory } from "./RecordHistory";
 import { P1ResultsSummary } from "./FamilyPractice";
 
@@ -44,7 +44,7 @@ export function ParentProgress({ childId, onObservations }: { childId?: number; 
         <RecordHistory key={`${childId}-${locale}-${days}-${period.recent.map(row => row.id).join("-")}`}
           initial={period.recent} hasMore={period.record_count > period.recent.length}
           endpoint={`/api/children/${childId}/session-history?oldest=${period.oldest_id}`} wrap={(rows, count) => <><p>{t("journey.historyHint", {shown: count, total: period.record_count})}</p><ol>{rows}</ol></>}>
-          {row => <li><div><strong>{row.exercise_title || moduleNames[row.module]}</strong><time dateTime={row.created_at}>{formatDate(row.created_at,{dateStyle:'medium',timeStyle:'short'})}</time></div>
+          {row => <li><div><strong>{shortDashes(row.exercise_title || moduleNames[row.module])}</strong><time dateTime={row.created_at}>{formatDate(row.created_at,{dateStyle:'medium',timeStyle:'short'})}</time></div>
             <span>{statuses[row.attempt_status || 'completed']}</span><span>{row.attempt_status === 'completed' && (row.attempts_count || 0) > 0 && row.correct_answers != null ? t("journey.answerCount", {correct:row.correct_answers,total:row.attempts_count!}) : '-'}</span></li>}
         </RecordHistory></section>}
     </>}

@@ -823,7 +823,6 @@ export function LandingPage({ initialTheme }: { initialTheme: LandingTheme }) {
             <div className="sl-hero-copy">
               <p className="sl-kicker">{t("landing.showcase.audience")}</p>
               <h1 className="sl-heading-1"><span>{t("landing.showcase.titleFirst")}</span>{" "}<span>{t("landing.showcase.titleSecond")}</span></h1>
-              <p className="sl-body sl-hero-description">{t("landing.showcase.description")}</p>
               <div className="sl-hero-actions">
                 <StartLink />
               </div>

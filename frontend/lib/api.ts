@@ -1,4 +1,4 @@
-import { getLocale, t } from "./locale.ts";
+import { getLocale, shortDashes, t } from "./locale.ts";
 import type { ExplorationContent } from "./explorationRuntime";
 import type { ObservationContent } from "./observationRuntime";
 import type { VariedContent, VariedMechanic } from "./variedRuntime";
@@ -502,7 +502,7 @@ export async function api<T>(path: string, options: RequestInit = {}): Promise<T
     return undefined as T;
   }
   const data = await response.json().catch(() => ({}));
-  if (!response.ok) throw new ApiError((typeof data.detail === "string" ? data.detail : t("errors.request")) || t("errors.request"), response.status);
+  if (!response.ok) throw new ApiError(shortDashes(typeof data.detail === "string" && data.detail ? data.detail : t("errors.request")), response.status);
   if (data && typeof data === "object" && "csrf_token" in data && typeof data.csrf_token === "string" && data.csrf_token) {
     csrfTokenMemory = data.csrf_token;
   }

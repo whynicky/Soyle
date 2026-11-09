@@ -1,5 +1,5 @@
 "use client";
-import { t, useLocale } from "@/lib/i18n";
+import { shortDashes, t, useLocale } from "@/lib/i18n";
 
 
 import { ArrowLeft, ArrowRight, CircleHelp, Pause, Play, RotateCcw, Volume2, X } from "lucide-react";
@@ -98,18 +98,18 @@ export function StorybookExperience({ childId, onExit, onSpeak, onStopSpeech, ca
 
   if (!started) return <Container className="sb-welcome">
     <button className="sb-back" onClick={exit}><ArrowLeft/> {backLabel}</button>
-    <div className="sb-welcome-copy"><span className="sb-eyebrow">{t("livingBook.copy006")}</span><h1>{definition.title}</h1><p>{definition.subtitle}</p></div>
+    <div className="sb-welcome-copy"><span className="sb-eyebrow">{t("livingBook.copy006")}</span><h1>{shortDashes(definition.title)}</h1><p>{shortDashes(definition.subtitle)}</p></div>
     <div className="sb-cover"><StoryScene definition={definition} state={{ ...state, scene_index: 0, ready: false, paused: true }} revision={0} motion={false} hints={false} busy onAction={() => {}}/></div>
     <div className="sb-welcome-bottom"><div className="sb-draft-note"><strong>{snapshot.preview ? t("cinema.copy054") : t("cinema.copy021")}</strong><p>{snapshot.preview ? t("book.copy035") : t("livingBook.copy007")}</p><details><summary>{t("livingBook.copy008")}</summary><p>{definition.age_note}</p><p>{t("livingBook.copy009")}</p></details></div><button className="sb-primary" disabled={busy} onClick={() => void (async () => { if (state.completed && !await dispatch("restart")) return; setStarted(true); setAutomaticVoice(true); })()}><Play/> {state.completed ? t("book.copy045") : snapshot.revision ? t("storyList.copy022") : t("book.copy024")}</button></div>
   </Container>;
 
   return <Container className={`sb-player ${motionEnabled ? "" : "sb-no-motion"}`}>
-    <header className="sb-header"><button className="sb-back" aria-label={t("livingBook.copy010")} onClick={exit}><ArrowLeft/><span>{t("common.close")}</span></button><div><span className="sb-eyebrow">{snapshot.preview ? t("livingBook.copy011") : t("livingBook.copy012")}</span><h1>{definition.title}</h1></div><span className="sb-page-number" aria-label={t("livingBook.scene", {scene:state.scene_index+1,total:definition.scenes.length})}>{state.scene_index + 1}<span> / {definition.scenes.length}</span></span></header>
+    <header className="sb-header"><button className="sb-back" aria-label={t("livingBook.copy010")} onClick={exit}><ArrowLeft/><span>{t("common.close")}</span></button><div><span className="sb-eyebrow">{snapshot.preview ? t("livingBook.copy011") : t("livingBook.copy012")}</span><h1>{shortDashes(definition.title)}</h1></div><span className="sb-page-number" aria-label={t("livingBook.scene", {scene:state.scene_index+1,total:definition.scenes.length})}>{state.scene_index + 1}<span> / {definition.scenes.length}</span></span></header>
     <div className="sb-reading-progress" role="group" aria-label={t("livingBook.copy015")}>{definition.scenes.map((item, index) => <span key={item.id} aria-current={index === state.scene_index ? "step" : undefined} className={index <= state.scene_index ? "filled" : ""}/>)}</div>
     <section className="sb-page" aria-labelledby="sb-scene-title">
-      <div className="sb-scene-heading"><span className="sb-eyebrow">{t("book.copy028")}{state.scene_index + 1}</span><h2 id="sb-scene-title">{scene.title}</h2><p>{state.completed ? t("livingBook.copy016") : scene.instruction}</p></div>
+      <div className="sb-scene-heading"><span className="sb-eyebrow">{t("book.copy028")}{state.scene_index + 1}</span><h2 id="sb-scene-title">{shortDashes(scene.title)}</h2><p>{shortDashes(state.completed ? t("livingBook.copy016") : scene.instruction)}</p></div>
       <StoryScene definition={definition} state={state} revision={snapshot.revision} motion={motionEnabled} hints={hints} busy={busy} onAction={(action) => void act(action)}/>
-      <div className="sb-live-reaction" role="status" aria-live="polite">{state.feedback || (scene.kind === "watch" ? t("livingBook.copy017") : t("livingBook.copy018"))}</div>
+      <div className="sb-live-reaction" role="status" aria-live="polite">{shortDashes(state.feedback || (scene.kind === "watch" ? t("livingBook.copy017") : t("livingBook.copy018")))}</div>
       {!state.completed && actions.length > 0 && <details className={`sb-alternative ${scene.kind === "aac_request" ? "sb-aac-inline" : ""}`} open={scene.kind === "aac_request"}><summary>{scene.kind === "aac_request" ? t("livingBook.copy019") : t("livingBook.copy020")}</summary><div className={`sb-action-tray ${scene.kind === "aac_request" ? "sb-aac-tray" : ""}`} role="group" aria-label={scene.kind === "aac_request" ? t("livingBook.copy021") : t("livingBook.copy022")}>
         {actions.map((action) => {
           const object = action.object === "chosen" ? (state.chosen_toy === "teddy" ? "ball" : state.chosen_toy) : action.object;

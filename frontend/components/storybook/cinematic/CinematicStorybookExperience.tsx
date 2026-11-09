@@ -1,5 +1,5 @@
 'use client';
-import { t, useLocale } from '@/lib/i18n';
+import { shortDashes, t, useLocale } from '@/lib/i18n';
 import { stopCurrentSpeech } from '@/lib/speech';
 import { ArrowLeft, Pause, Play, Volume2, VolumeX, RotateCcw, CircleHelp, Heart, ArrowRight } from 'lucide-react';
 import NextImage from 'next/image';
@@ -108,7 +108,7 @@ export function CinematicStorybookExperience({childId,onExit,calmMode=false,embe
       {!started&&<div className="cinema-cover"><span>{t("cinema.copy029")}</span><h2>{t("cinema.copy030")}<br/>{t("cinema.copy031")}</h2><p>{t("cinema.copy032")}</p><button className="cinema-primary" disabled={!ready||!!error} onClick={begin}><Play/>{snapshot?.state.completed?t("cinema.copy033"):snapshot?.revision?t("cinema.copy034"):t("cinema.copy035")}</button></div>}
       <dialog ref={pauseDialog} className="cinema-pause" aria-label={t("cinema.copy036")} onCancel={e=>{e.preventDefault();resume();}}><div><span>{t("cinema.copy037")}</span><h2>{t("cinema.copy038")}</h2><p>{t("cinema.copy039")}</p><button className="cinema-primary" onClick={resume} disabled={busy}><Play/>{t("cinema.copy040")}</button><button onClick={()=>void exit()}>{backLabel}</button></div></dialog>
     </section>
-    {started&&<section className="cinema-context"><p className="cinema-caption" aria-live="polite">{narrationText(snapshot,captions[phase])}</p>
+    {started&&<section className="cinema-context"><p className="cinema-caption" aria-live="polite">{shortDashes(narrationText(snapshot,captions[phase]))}</p>
       {phase==='AWAIT_REQUEST'&&!paused&&<div className="cinema-choices" aria-label={t("cinema.copy041")}>{snapshot?.definition.communication_options.map((option,index)=><button key={option.action} aria-label={option.label} disabled={busy||snapshot.state.phase!=='AWAIT_REQUEST'||!!error} onClick={()=>request(option.action,option.speech)}><span className="cinema-choice-art"><NextImage src={index===0?"/app-illustrations/aac-help.webp":index===1?"/app-illustrations/aac-teddy.webp":"/app-illustrations/aac-teddy.webp"} width={76} height={76} alt=""/>{index===2&&<ArrowRight className="cinema-point-arrow"/>}</span><strong>{option.label}</strong><small>{option.speech}</small></button>)}<button className="cinema-refuse" disabled={busy} onClick={()=>pause('refuse')}>{t("cinema.copy042")}</button></div>}
       {phase==='HUG'&&!paused&&<button className="cinema-primary cinema-hug" disabled={busy||!!error} onClick={teddy}><Heart/>{t("cinema.copy043")}</button>}
       {phase==='COMPLETE'&&!snapshot?.state.completed&&<p role="status">{t("cinema.copy044")}</p>}{phase==='COMPLETE'&&snapshot?.state.completed&&<div className="cinema-end"><p>{t("cinema.copy045")}</p><button className="cinema-primary" onClick={()=>void exit()}>{backLabel}<ArrowRight/></button></div>}

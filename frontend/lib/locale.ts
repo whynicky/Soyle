@@ -32,6 +32,7 @@ export function translate(locale: Locale, key: MessageKey, values: Record<string
   return message.replace(/\{(\w+)\}/g, (_, name: string) => String(values[name] ?? `{${name}}`));
 }
 export const t = (key: MessageKey, values?: Record<string, string | number>) => translate(currentLocale, key, values);
+export const shortDashes = (text: string) => text.replace(/[\u2013\u2014]/g, "-");
 export const formatDate = (value: string | Date, options: Intl.DateTimeFormatOptions = {}, locale = currentLocale) => new Intl.DateTimeFormat(locale, options).format(new Date(value));
 export function plural(count: number, forms: Partial<Record<Intl.LDMLPluralRule, string>> & { other: string }, locale = currentLocale) {
   return (forms[new Intl.PluralRules(locale).select(count)] ?? forms.other).replace(/\{count\}/g, new Intl.NumberFormat(locale).format(count));

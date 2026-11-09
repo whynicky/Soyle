@@ -1,6 +1,6 @@
 "use client";
 
-import { t, useLocale } from "@/lib/i18n";
+import { shortDashes, t, useLocale } from "@/lib/i18n";
 import Image from "next/image";
 import { ArrowRight, Play } from "lucide-react";
 import { useEffect } from "react";
@@ -21,7 +21,7 @@ export function ChildRoomHome({ child, currentSession, busy, error, canSave, onS
   return <div className="child-room-home focused-child-home scenic-child-home">
     <section className="home-next-step" aria-labelledby="home-next-title">
       <div className="home-next-copy"><span className="home-greeting">{t("scenic.greeting",{name:child?.name || t("scenic.friend")})}</span><h1 id="home-next-title">{t(currentSession ? "scenic.continueTitle" : "scenic.lets")}<br/><span>{t(currentSession ? "scenic.continueAccent" : "scenic.play")}</span></h1>
-        <div className="home-session-detail">{nextExercise ? <><span className="home-next-label">{t("scenic.nextLabel")}</span><strong>{nextExercise.title}</strong></> : <p>{t("ux.homeHint")}</p>}
+        <div className="home-session-detail">{nextExercise ? <><span className="home-next-label">{t("scenic.nextLabel")}</span><strong>{shortDashes(nextExercise.title)}</strong></> : <p>{t("ux.homeHint")}</p>}
         {currentSession && <div className="home-session-meter"><progress max={currentSession.exercises.length || 1} value={currentSession.current_index} aria-label={t("ux.sessionProgress",{done:currentSession.current_index,total:currentSession.exercises.length})}/><span>{t("ux.sessionProgress", {done:currentSession.current_index,total:currentSession.exercises.length})}</span></div>}</div>
         <button type="button" className="primary-button home-start-action" disabled={busy} onClick={start}><Play fill="currentColor" size={22}/>{busy ? t("child.wait") : actionLabel}<ArrowRight size={22}/></button>
         <span className="home-reassurance">{t("ux.pauseAnytime")}</span>

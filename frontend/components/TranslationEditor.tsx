@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { api } from "@/lib/api";
-import { t, useLocale } from "@/lib/i18n";
+import { shortDashes, t, useLocale } from "@/lib/i18n";
 type Detail = { source_version_id?: number; source_card_id?: number; source: object; revision: number; status: string; payload: object | null; review_comment: string | null };
 export function TranslationEditor({ specialist = false, resource = "exercises" }: { specialist?: boolean; resource?: "exercises" | "aac" }) {
   useLocale();
@@ -33,7 +33,7 @@ export function TranslationEditor({ specialist = false, resource = "exercises" }
   return <section className="settings-section"><h2>{t(resource === 'aac' ? 'aac.translations' : 'content.translations')}</h2>
     {error && <p role="alert">{error}</p>}
     <select aria-label={t('content.source')} disabled={busy} value={detail ? sourceId(detail) : ''} onChange={event => void open(Number(event.target.value))}>
-      <option value="" disabled>{t('content.source')}</option>{rows.map(row => <option key={sourceId(row)} value={sourceId(row)}>{row.title} · {sourceId(row)} · {statusLabel(row.status)}</option>)}
+      <option value="" disabled>{t('content.source')}</option>{rows.map(row => <option key={sourceId(row)} value={sourceId(row)}>{shortDashes(row.title)} · {sourceId(row)} · {statusLabel(row.status)}</option>)}
     </select>
     {detail && <><p role="status">{statusLabel(detail.status)} · {t("content.revision", {revision:detail.revision})}</p><details><summary>{t('content.source')}</summary><pre lang="ru-RU" style={{whiteSpace:'pre-wrap'}}>{JSON.stringify(detail.source,null,2)}</pre></details>
       <label>{t('content.json')}<textarea lang="kk-KZ" style={{width:'100%',minHeight:320}} value={text} readOnly={specialist} onChange={event => setText(event.target.value)}/></label>

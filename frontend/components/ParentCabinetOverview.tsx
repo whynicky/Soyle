@@ -3,7 +3,7 @@
 import { ArrowRight, ClipboardList, History, MessageSquareText, Plus } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { api, type AdaptivePlan, type Dashboard, type Exercise, type SpecialistAdvice } from "@/lib/api";
-import { formatDate, t, useLocale } from "@/lib/i18n";
+import { shortDashes, formatDate, t, useLocale } from "@/lib/i18n";
 import { useRefreshOnReturn } from "@/lib/hooks/useRefreshOnReturn";
 import type { SkillObservation } from "./FamilyPractice";
 import { WorkspaceSkeleton } from "./WorkspaceSkeleton";
@@ -65,14 +65,14 @@ export function ParentCabinetOverview({ childId, exercises, onRecord, onSpeciali
     <section className="workspace-overview-card workspace-practice-card">
       <header><History size={20} strokeWidth={1.7} aria-hidden="true"/><h2>{t("familyReview.recentPractice")}</h2></header>
       {week && last ? <>
-        <h3>{title}</h3>
+        <h3>{shortDashes(title ?? "")}</h3>
         <p>{shortDate(last.created_at)}{last.attempt_status && <> · {t(statusLabels[last.attempt_status])}</>}{last.duration_seconds > 0 && <> · {new Intl.NumberFormat(locale, { style: "unit", unit: last.duration_seconds < 60 ? "second" : "minute", unitDisplay: "short" }).format(last.duration_seconds < 60 ? last.duration_seconds : Math.round(last.duration_seconds / 60))}</>}</p>
         <p>{t("familyReview.week", { count: week.sessions, minutes: week.minutes })}</p>
       </> : progress.data ? <p>{t("familyReview.first")}</p> : !progress.failed && <WorkspaceSkeleton/>}
       {(word || scored) && <div className="workspace-overview-detail">
         <small>{t("familyReview.success")}</small>
         {word ? <><h3>«{word.label}»</h3><p>{t(word.outcome === "independent" ? "familyReview.independent" : "familyReview.prompted")}</p><small>{shortDate(word.created_at)}</small></>
-          : scored && <><h3>{exercises.find(item => item.id === scored.exercise_id)?.title || t(moduleLabels[scored.module])}</h3><p>{t("journey.answerCount", { correct: scored.correct_answers!, total: scored.attempts_count! })}</p><small>{shortDate(scored.created_at)}</small></>}
+          : scored && <><h3>{shortDashes(exercises.find(item => item.id === scored.exercise_id)?.title || t(moduleLabels[scored.module]))}</h3><p>{t("journey.answerCount", { correct: scored.correct_answers!, total: scored.attempts_count! })}</p><small>{shortDate(scored.created_at)}</small></>}
       </div>}
       <button type="button" className="small-button" onClick={onResults}>{t("familyReview.results")}<ArrowRight size={16}/></button>
     </section>
@@ -86,7 +86,7 @@ export function ParentCabinetOverview({ childId, exercises, onRecord, onSpeciali
       <header><ClipboardList size={20} strokeWidth={1.7} aria-hidden="true"/><h2>{t("familyReview.practicePlan")}</h2></header>
       {plan?.items.length ? <>
         <small>{shortDate(plan.created_at)} · {t("practice.duration", { minutes: plan.target_minutes })}</small>
-        <ul className="workspace-overview-list">{plan.items.slice(0, 3).map(item => <li key={item.id}>{item.exercise_title}</li>)}</ul>
+        <ul className="workspace-overview-list">{plan.items.slice(0, 3).map(item => <li key={item.id}>{shortDashes(item.exercise_title)}</li>)}</ul>
       </> : plans.data ? <p>{t("familyReview.noPlan")}</p> : !plans.failed && <WorkspaceSkeleton/>}
       <button type="button" className="small-button" onClick={onPlan}>{t("familyReview.openPlan")}<ArrowRight size={16}/></button>
       {specialist && <div className="workspace-overview-detail"><h3>{t("familyReview.advice")}</h3><small>{specialist.specialist_name} · {shortDate(specialist.created_at)}</small><p>{specialist.comment}</p><button type="button" className="small-button" onClick={onSpecialist}>{t("journey.openSpecialist")}<ArrowRight size={16}/></button></div>}

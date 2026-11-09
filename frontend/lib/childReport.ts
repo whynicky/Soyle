@@ -1,6 +1,6 @@
 import artwork from "@/assets/branding/soyle-artwork.json";
 import type { Child, ChildConsent, Exercise } from "./api";
-import { translate, type Locale, type MessageKey } from "./locale";
+import { shortDashes, translate, type Locale, type MessageKey } from "./locale";
 import { childReportStyles } from "./childReportStyles";
 
 type Note = {
@@ -144,10 +144,10 @@ export function renderChildReport(data: ChildDataExport, locale: Locale, exercis
   const renderEntry = (entry: Entry) => {
     const date = time(entry.date);
     const image = entry.image && /^data:image\/(png|jpeg|webp);base64,[a-z\d+/]+={0,2}$/i.test(entry.image)
-      ? `<img src="${e(entry.image)}" alt="${e(entry.title)}" decoding="async">` : "";
-    return `<li>${image}<div class="entry"><div><strong>${e(entry.title)}</strong>${
+      ? `<img src="${e(entry.image)}" alt="${e(shortDashes(entry.title))}" decoding="async">` : "";
+    return `<li>${image}<div class="entry"><div><strong>${e(shortDashes(entry.title))}</strong>${
       entry.status ? `<small>${e(entry.status)}</small>` : ""
-    }${entry.description ? `<p>${e(entry.description)}</p>` : ""}</div>${date}</div></li>`;
+    }${entry.description ? `<p>${e(shortDashes(entry.description))}</p>` : ""}</div>${date}</div></li>`;
   };
   const section = (id: string, heading: MessageKey, entries: Entry[], empty?: MessageKey) => {
     if (!entries.length && !empty) return "";
@@ -217,8 +217,8 @@ export function renderChildReport(data: ChildDataExport, locale: Locale, exercis
   <p class="eyebrow">${e(title)}</p>
   <h1>${e(data.child.name)}</h1>
   <dl class="profile">
-    <div><dt>${e(t("childReport.birthDate"))}</dt><dd>${time(data.child.birth_date, dates) || "—"}</dd></div>
-    <div><dt>${e(t("childReport.generated"))}</dt><dd>${time(data.exported_at) || "—"}</dd></div>
+    <div><dt>${e(t("childReport.birthDate"))}</dt><dd>${time(data.child.birth_date, dates) || "-"}</dd></div>
+    <div><dt>${e(t("childReport.generated"))}</dt><dd>${time(data.exported_at) || "-"}</dd></div>
   </dl>
 </header>
 <section aria-labelledby="results">
