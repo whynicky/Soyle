@@ -84,14 +84,22 @@ test('landing copy and AAC demonstration follow the selected language', async ({
   const overview = page.locator('.sl-hero-window');
   await expect(page.getByRole('dialog')).toHaveCount(0);
   await expect(overview.getByText('Қарым-қатынас кеңістігі', { exact: true })).toBeVisible();
-  await expect(page.getByRole('tab', { selected: true })).toHaveAttribute('id', 'sl-tab-lesson');
+  await expect(page.getByRole('tab', { selected: true })).toHaveAttribute('id', 'sl-tab-overview');
   await expect(overview.locator('button, a')).toHaveCount(0);
   expect(await page.locator('.sl-page audio').evaluateAll(players => players.every(player => (player as HTMLAudioElement).paused))).toBe(true);
 
-  await page.locator('#sl-tab-lesson').click();
-  await expect(page.locator('.sl-scenario-copy p:not([hidden])')).toContainText('Ересек тапсырманы ашады');
-  await expect(page.getByRole('tab', { selected: true })).toHaveAttribute('id', 'sl-tab-lesson');
-  const lesson = page.getByRole('tabpanel');
+  const panel = page.getByRole('tabpanel');
+  await expect(panel.getByRole('heading', { name: 'Үйдегі жаттығу' })).toBeVisible();
+  await expect(panel.locator('.sl-object-choice')).toHaveCount(0);
+  const note = panel.locator('details');
+  await note.locator('summary').click();
+  await expect(note).not.toHaveAttribute('open');
+  await note.locator('summary').click();
+  await expect(note).toHaveAttribute('open', '');
+  const startLesson = panel.getByRole('button', { name: 'Тапсырманы байқап көру' });
+  await startLesson.click();
+  await expect(page.getByRole('tab', { selected: true })).toHaveAttribute('id', 'sl-tab-overview');
+  const lesson = panel.locator('.sl-exercise-sheet');
   await expect(lesson.getByRole('heading', { name: 'Алма қайда?' })).toBeVisible();
   const audio = page.waitForResponse(response => response.url().endsWith('/audio/landing/lesson-kk-apple.mp3'));
   await lesson.getByRole('button', { name: 'Сұрақты тыңдау' }).click();
@@ -100,14 +108,19 @@ test('landing copy and AAC demonstration follow the selected language', async ({
   await lesson.locator('.sl-lesson-next').click();
   await expect(lesson.getByRole('heading', { name: 'Су қайда?' })).toBeVisible();
 
-  await page.locator('#sl-tab-communication').click();
-  const board = page.getByRole('tabpanel');
+  await panel.getByRole('button', { name: 'Шолуға оралу' }).click();
+  await expect(startLesson).toBeFocused();
+  await panel.getByRole('button', { name: 'Қарым-қатынас карточкаларын байқап көру' }).click();
+  const board = panel.locator('.sl-aac');
   await expect(board.locator('.sl-phrase')).toHaveText('Су ішкім келеді.');
   await board.getByRole('button',{name:'Алма',exact:true}).click();
   await expect(board.locator('.sl-phrase')).toHaveText('Алма жегім келеді.');
   const phraseRequest = page.waitForRequest(request => request.url().endsWith('/api/public/speech/kk/apple'));
   await board.getByRole('button', { name: 'Дыбыстау', exact: true }).click();
   await phraseRequest;
+  await panel.getByRole('button', { name: 'Шолуға оралу' }).click();
+  await expect(panel.getByRole('heading', { name: 'Үйдегі жаттығу' })).toBeVisible();
+  await expect(panel.locator('.sl-object-choice')).toHaveCount(0);
   await page.locator('.sl-footer').getByRole('button',{name:'Русский',exact:true}).click();
   await expect(page.getByRole('heading',{name:'Больше способов сказать важное'})).toBeVisible();
   const family = page.locator('#family');
@@ -413,21 +426,21 @@ test('landing previews remain visible when switching languages with motion enabl
     await expect(scene.locator('.sl-window-sidebar')).toBeVisible();
   }
   const tabs = page.getByRole('tab');
-  await expect(tabs).toHaveCount(4);
+  await expect(tabs).toHaveCount(3);
   for (const tab of await tabs.all()) {
     await tab.click();
     await expect(tab).toHaveAttribute('aria-selected', 'true');
     await expect(page.getByRole('tabpanel')).toHaveCount(1);
-    expect((await scene.boundingBox())?.height).toBe(initialHeight);
+    if (desktop.viewport > 760) expect((await scene.boundingBox())?.height).toBe(initialHeight);
   }
 
-  await scene.locator('.sl-window-sidebar').getByRole('button', { name: 'История', exact: true }).click();
-  await expect(page.getByRole('tab', { name: 'Посмотреть историю' })).toHaveAttribute('aria-selected', 'true');
+  await scene.locator('.sl-window-sidebar').getByRole('button', { name: 'Наблюдения', exact: true }).click();
+  await expect(page.getByRole('tab', { name: 'Наблюдения' })).toHaveAttribute('aria-selected', 'true');
   const history = page.getByRole('tabpanel');
   if (desktop.viewport <= 760) await history.getByRole('combobox').selectOption({ index: 1 });
   else await history.getByRole('button', { name: /Слушай и находи/ }).click();
   await expect(history.locator('.sl-record-detail:not([hidden])')).toContainText('Нашёл яблоко');
-  await page.getByRole('tab', { name: 'Открыть план' }).click();
+  await page.getByRole('tab', { name: 'План занятий' }).click();
   const plan = page.getByRole('tabpanel');
   if (desktop.viewport <= 760) await plan.getByRole('combobox').selectOption({ index: 2 });
   else await plan.getByRole('button', { name: /Собрать просьбу из карточек/ }).click();
@@ -443,12 +456,12 @@ test('landing previews remain visible when switching languages with motion enabl
   const planLink = family.getByRole('link', { name: 'Посмотреть план' });
   await planLink.focus();
   await page.keyboard.press('Enter');
-  await expect(page.getByRole('tab', { name: 'Открыть план' })).toHaveAttribute('aria-selected', 'true');
+  await expect(page.getByRole('tab', { name: 'План занятий' })).toHaveAttribute('aria-selected', 'true');
   const historyLink = family.getByRole('link', { name: 'Посмотреть историю' });
   await expect(historyLink).toHaveAttribute('href', '#sl-tab-history');
   await historyLink.focus();
   await page.keyboard.press('Enter');
-  await expect(page.getByRole('tab', { name: 'Посмотреть историю' })).toHaveAttribute('aria-selected', 'true');
+  await expect(page.getByRole('tab', { name: 'Наблюдения' })).toHaveAttribute('aria-selected', 'true');
   await page.goto('/#sl-tab-plan');
   await expect(page.getByRole('tab', { selected: true })).toHaveAttribute('id', 'sl-tab-plan');
 });

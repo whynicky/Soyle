@@ -4,7 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState, type KeyboardEvent, type ReactNode } from "react";
 import {
-  BookOpen, Camera, Check, ChevronRight,
+  ArrowLeft, BookOpen, Camera, Check, ChevronDown, ChevronRight,
   ClipboardList, Download, History, LayoutGrid, LockKeyhole, MessagesSquare, MessageSquare, Route,
   Volume2, X,
 } from "lucide-react";
@@ -89,12 +89,14 @@ const choices = [
 ] as const;
 
 const previews = [
-  { id: "communication", icon: MessageSquare },
-  { id: "lesson", icon: BookOpen },
-  { id: "history", icon: History },
+  { id: "overview", icon: LayoutGrid },
   { id: "plan", icon: ClipboardList },
+  { id: "history", icon: History },
 ] as const;
-const defaultPreview = previews.findIndex(({ id }) => id === "lesson");
+type PreviewId = (typeof previews)[number]["id"];
+type DemoActivity = "lesson" | "communication";
+type DemoScreen = PreviewId | DemoActivity;
+const previewFragment = (id: PreviewId) => `#sl-tab-${id}`;
 
 function Wordmark() {
   return (
@@ -223,7 +225,7 @@ function CommunicationBoard({ speech }: { speech: ReturnType<typeof useLandingSp
   const [selected, setSelected] = useState<ChoiceId>("water");
   const { speaking } = speech;
   return (
-    <div className="sl-example-sheet sl-aac" id="communication">
+    <div className="sl-example-sheet sl-aac">
       <DemoHeading title={t("landing.showcase.board")} />
       <div className="sl-object-options" role="group" aria-label={t("landing.demo.cardLibrary")}>
         {choices.map(({ id, label }) => (
@@ -277,7 +279,7 @@ const exercise = [
   { answer: "play", prompt: "landing.desktop.ballPrompt" },
 ] as const;
 
-function LessonPreview({ locale, active }: { locale: Locale; active: boolean }) {
+function LessonPreview({ locale }: { locale: Locale }) {
   const [step, setStep] = useState(0);
   const [answer, setAnswer] = useState<(typeof choices)[number]["id"] | null>(null);
   const [failedSource, setFailedSource] = useState<string | null>(null);
@@ -289,9 +291,8 @@ function LessonPreview({ locale, active }: { locale: Locale; active: boolean }) 
 
   useEffect(() => {
     const player = audio.current;
-    if (!active) player?.pause();
     return () => player?.pause();
-  }, [active, source]);
+  }, [source]);
 
   function playQuestion() {
     const player = audio.current;
@@ -356,6 +357,59 @@ const observations = [
   { day: 22, title: "landing.desktop.listening", note: "landing.desktop.listeningNote" },
   { day: 19, title: "landing.desktop.playtime", note: "landing.desktop.playtimeNote" },
 ] as const;
+
+function ParentOverview({ locale, onTry }: {
+  locale: Locale;
+  onTry: (activity: DemoActivity, opener: HTMLButtonElement) => void;
+}) {
+  const name = t("landing.demo.profileName");
+  const date = new Intl.DateTimeFormat(locale, { day: "numeric", month: "short", timeZone: "UTC" });
+  const [latest, previous] = observations;
+
+  return (
+    <div className="sl-example-sheet sl-overview" id="communication">
+      <header className="sl-overview-heading">
+        <h3 className="sl-heading-4">{t("landing.demo.homePractice")}</h3>
+        <div className="sl-demo-profile">
+          <span aria-hidden="true">{name[0]}</span>
+          <div><strong>{name}</strong><small>{t("landing.copy116")}</small></div>
+        </div>
+      </header>
+      <div className="sl-overview-grid">
+        <section className="sl-overview-task" aria-labelledby="sl-overview-task-title">
+          <p className="sl-demo-label"><ClipboardList size={16} aria-hidden="true" />{t("landing.demo.inPlan")}</p>
+          <h4 id="sl-overview-task-title">{t("landing.feature.listenAndChoose")}</h4>
+          <p className="sl-body">{t("landing.demo.listenAction")}</p>
+          <button type="button" className="sl-lesson-next" onClick={(event) => onTry("lesson", event.currentTarget)}>
+            {t("landing.demo.tryLesson")}
+          </button>
+        </section>
+        <section className="sl-overview-advice" aria-labelledby="sl-overview-advice-title">
+          <h4 id="sl-overview-advice-title" className="sl-demo-label"><MessageSquare size={16} aria-hidden="true" />{t("familyReview.advice")}</h4>
+          <p className="sl-body">{t("landing.showcase.planTip")}</p>
+          <button type="button" className="sl-demo-text-button" onClick={(event) => onTry("communication", event.currentTarget)}>
+            {t("landing.demo.tryCommunication")}
+          </button>
+        </section>
+        <section className="sl-overview-notes" aria-labelledby="sl-overview-notes-title">
+          <h4 id="sl-overview-notes-title">{t("landing.demo.latestNotes")}</h4>
+          <details open>
+            <summary className="sl-overview-note-row">
+              <strong>{t(latest.title)}</strong>
+              <time dateTime={`2026-10-${latest.day}`}>{date.format(Date.UTC(2026, 9, latest.day))}</time>
+              <ChevronDown size={15} aria-hidden="true" />
+            </summary>
+            <p className="sl-body">{t(latest.note)}</p>
+          </details>
+          <div className="sl-overview-note-row">
+            <strong>{t(previous.title)}</strong>
+            <time dateTime={`2026-10-${previous.day}`}>{date.format(Date.UTC(2026, 9, previous.day))}</time>
+          </div>
+        </section>
+      </div>
+    </div>
+  );
+}
 
 type DemoRecord = { title: string; meta: string; dateTime?: string; icon: ReactNode; detail: ReactNode };
 
@@ -424,7 +478,7 @@ function HistoryPreview({ locale }: { locale: Locale }) {
 
 const tasks = [
   { title: "landing.showcase.planTask", day: "landing.desktop.monday", note: "landing.showcase.planTip", instruction: "landing.demo.drinkAction", icon: MessageSquare },
-  { title: "landing.desktop.listenTask", day: "landing.desktop.wednesday", note: "landing.desktop.listenTip", instruction: "landing.demo.listenAction", icon: BookOpen },
+  { title: "landing.feature.listenAndChoose", day: "landing.desktop.wednesday", note: "landing.desktop.listenTip", instruction: "landing.demo.listenAction", icon: BookOpen },
   { title: "landing.desktop.phraseTask", day: "landing.desktop.friday", note: "landing.desktop.phraseTip", instruction: "landing.demo.phraseAction", icon: ClipboardList },
 ] as const;
 
@@ -481,9 +535,6 @@ function HeroWindow() {
   );
 }
 
-type PreviewId = (typeof previews)[number]["id"];
-const previewFragment = (id: PreviewId) => `#sl-tab-${id}`;
-
 const roleCards = [
   { id: "child", icon: MessagesSquare, caption: "landing.roles.child.title" },
   { id: "parent", icon: null },
@@ -513,10 +564,10 @@ function ProductRoles() {
               {id === "parent" && (
                 <Image
                   className="sl-role-practice-photo"
-                  src="/landing/soyle-practice-together.webp"
+                  src="/landing/soyle-reading-together.webp"
                   alt={t("landing.roles.parent.photoAlt")}
-                  width={1440}
-                  height={960}
+                  width={1536}
+                  height={1024}
                   unoptimized
                 />
               )}
@@ -655,7 +706,10 @@ export function LandingPage({ initialTheme }: { initialTheme: LandingTheme }) {
   const locale = useLocale();
   const speech = useLandingSpeech(locale);
   const { stop: stopSpeech } = speech;
-  const [preview, setPreview] = useState(defaultPreview);
+  const [screen, setScreen] = useState<DemoScreen>("overview");
+  const activity = screen === "lesson" || screen === "communication" ? screen : null;
+  const preview = activity ? "overview" : screen;
+  const activityOpener = useRef<HTMLButtonElement>(null);
   const root = useRef<HTMLDivElement>(null);
   const prepareTheme = useCallback((scheme: "light" | "dark") => {
     const mobile = window.matchMedia(mobileScenery).matches;
@@ -673,18 +727,31 @@ export function LandingPage({ initialTheme }: { initialTheme: LandingTheme }) {
   }, []);
   const { theme, changeTheme } = usePublicTheme(initialTheme, prepareTheme);
 
-  const switchPreview = useCallback((index: number) => {
+  const openDemo = useCallback((id: DemoScreen) => {
     stopSpeech();
-    setPreview(index);
+    setScreen(id);
   }, [stopSpeech]);
+
+  function tryActivity(id: DemoActivity, opener: HTMLButtonElement) {
+    activityOpener.current = opener;
+    openDemo(id);
+  }
+
+  function returnToOverview() {
+    openDemo("overview");
+    requestAnimationFrame(() => activityOpener.current?.focus());
+  }
+
+  const focusActivityBack = useCallback((button: HTMLButtonElement | null) => {
+    button?.focus();
+  }, []);
 
   useEffect(() => {
     const selectFromHash = () => {
       const { hash } = window.location;
-      const index = previews.findIndex(({ id }) => previewFragment(id) === hash);
-      if (index >= 0) switchPreview(index);
-      else if (hash === "#communication") switchPreview(0);
-      else if (hash === "#journey") switchPreview(defaultPreview);
+      const tab = previews.find(({ id }) => previewFragment(id) === hash);
+      if (tab) openDemo(tab.id);
+      else if (hash === "#communication" || hash === "#journey") openDemo("overview");
     };
     const frame = requestAnimationFrame(selectFromHash);
     window.addEventListener("hashchange", selectFromHash);
@@ -692,7 +759,7 @@ export function LandingPage({ initialTheme }: { initialTheme: LandingTheme }) {
       cancelAnimationFrame(frame);
       window.removeEventListener("hashchange", selectFromHash);
     };
-  }, [switchPreview]);
+  }, [openDemo]);
 
   useEffect(() => {
     const page = root.current;
@@ -728,24 +795,21 @@ export function LandingPage({ initialTheme }: { initialTheme: LandingTheme }) {
   }, []);
 
   function onTabKey(event: KeyboardEvent<HTMLButtonElement>) {
+    const index = previews.findIndex(({ id }) => id === preview);
     const last = previews.length - 1;
     const next = {
-      ArrowLeft: preview === 0 ? last : preview - 1,
-      ArrowRight: preview === last ? 0 : preview + 1,
+      ArrowLeft: index === 0 ? last : index - 1,
+      ArrowRight: index === last ? 0 : index + 1,
       Home: 0,
       End: last,
     }[event.key];
     if (next === undefined) return;
     event.preventDefault();
-    switchPreview(next);
-    root.current?.querySelector<HTMLButtonElement>(`#sl-tab-${previews[next].id}`)?.focus();
+    const id = previews[next].id;
+    openDemo(id);
+    root.current?.querySelector<HTMLButtonElement>(previewFragment(id))?.focus();
   }
 
-  function openDemo(id: PreviewId) {
-    switchPreview(previews.findIndex((item) => item.id === id));
-  }
-
-  const current = previews[preview];
   const links = [
     { href: "#journey", label: t("landing.showcase.navJourney") },
     { href: "#family", label: t("landing.showcase.navFamily") },
@@ -792,21 +856,16 @@ export function LandingPage({ initialTheme }: { initialTheme: LandingTheme }) {
           </div>
           <div className="sl-preview" data-reveal>
             <div className="sl-tabs" role="tablist" aria-label={t("landing.desktop.sections")}>
-              {previews.map(({ id, icon: Icon }, index) => (
+              {previews.map(({ id, icon: Icon }) => (
                 <button
                   key={id} id={`sl-tab-${id}`} type="button" role="tab"
-                  aria-selected={preview === index} aria-controls={`sl-panel-${id}`}
-                  tabIndex={preview === index ? 0 : -1}
-                  onClick={() => switchPreview(index)} onKeyDown={onTabKey}
+                  aria-selected={preview === id} aria-controls={`sl-panel-${id}`}
+                  tabIndex={preview === id ? 0 : -1}
+                  onClick={() => openDemo(id)} onKeyDown={onTabKey}
                 >
                   <Icon size={16} aria-hidden="true" />
-                  <span>{t(`landing.desktop.tab.${id}`)}</span>
+                  <span>{t(`landing.demo.tab.${id}`)}</span>
                 </button>
-              ))}
-            </div>
-            <div className="sl-scenario-copy" aria-live="polite">
-              {previews.map(({ id }) => (
-                <p key={id} className="sl-body" hidden={current.id !== id}>{t(`landing.story.${id}.text`)}</p>
               ))}
             </div>
             <div className="sl-desktop-scene">
@@ -815,24 +874,35 @@ export function LandingPage({ initialTheme }: { initialTheme: LandingTheme }) {
                 className="sl-desktop-window"
                 sidebar={(
                   <div className="sl-window-links" role="group" aria-label={t("landing.desktop.sections")}>
-                    {previews.map(({ id, icon: Icon }, index) => (
-                      <button key={id} type="button" aria-pressed={preview === index} aria-label={t(`landing.mobile.tab.${id}`)} onClick={() => switchPreview(index)}>
-                        <Icon size={17} aria-hidden="true" /><span className="sl-rail-label">{t(`landing.mobile.tab.${id}`)}</span>
-                      </button>
-                    ))}
+                    {previews.map(({ id, icon: Icon }) => {
+                      const label = t(id === "overview" ? "landing.demo.overview" : `landing.demo.tab.${id}`);
+                      return (
+                        <button key={id} type="button" aria-pressed={preview === id} aria-label={label} onClick={() => openDemo(id)}>
+                          <Icon size={17} aria-hidden="true" /><span className="sl-rail-label">{label}</span>
+                        </button>
+                      );
+                    })}
                   </div>
                 )}
               >
                 <div className="sl-desktop-body">
-                  {previews.map(({ id }, index) => (
+                  {previews.map(({ id }) => (
                     <div
                       className="sl-preview-panel"
                       key={id} id={`sl-panel-${id}`} role="tabpanel" aria-labelledby={`sl-tab-${id}`}
-                      tabIndex={preview === index ? 0 : -1}
-                      hidden={current.id !== id} inert={current.id !== id} aria-hidden={current.id !== id || undefined}
+                      tabIndex={preview === id ? 0 : -1}
+                      hidden={preview !== id} inert={preview !== id} aria-hidden={preview !== id || undefined}
                     >
-                      {id === "lesson" && <LessonPreview locale={locale} active={current.id === id} />}
-                      {id === "communication" && <CommunicationBoard speech={speech} />}
+                      {id === "overview" && <>
+                        <div hidden={activity !== null}><ParentOverview locale={locale} onTry={tryActivity} /></div>
+                        {activity && <div className="sl-child-preview">
+                          <button type="button" ref={focusActivityBack} className="sl-demo-text-button sl-preview-back" onClick={returnToOverview}>
+                            <ArrowLeft size={16} aria-hidden="true" />
+                            {t("landing.demo.backToOverview")}
+                          </button>
+                          {activity === "lesson" ? <LessonPreview locale={locale} /> : <CommunicationBoard speech={speech} />}
+                        </div>}
+                      </>}
                       {id === "history" && <HistoryPreview locale={locale} />}
                       {id === "plan" && <PlanPreview />}
                     </div>
