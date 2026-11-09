@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import { AccountLanguagePicker } from "./AccountLanguagePicker";
-import { SiteThemeChoice } from "./PublicTheme";
+import { WorkspaceThemeChoice } from "./PublicTheme";
 import { WorkspaceSkeleton } from "./WorkspaceSkeleton";
 import { TranslationEditor } from "./TranslationEditor";
 import { t, useLocale, formatDate } from "@/lib/i18n";
@@ -146,7 +146,7 @@ export function SpecialistWorkspace({ user, onLogout }: { user: User; onLogout: 
       <div className="desk-topline">
         <button type="button" className="desk-menu" ref={menu} aria-controls="desk-navigation" aria-expanded={menuOpen} onClick={() => setMenuOpen(true)}><Menu size={18}/>{t("screen.AuthenticatedApp.ui48")}</button>
         <span className="desk-mobile-logo"><BrandLogo variant="mark" size={25}/></span>
-        <SiteThemeChoice/>
+        <WorkspaceThemeChoice/>
       </div>
       <header className={section === "children" ? "desk-heading desk-roster-heading" : "desk-heading"}>
         <div><h1>{section === "children" ? t("desk.rosterTitle") : section === "profile" && child ? child.name : t(route.page.label)}</h1>

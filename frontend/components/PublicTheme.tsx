@@ -1,9 +1,9 @@
 "use client";
 
-import { createContext, useContext, useEffect, useSyncExternalStore, type ReactNode } from "react";
+import { createContext, useContext, useEffect, useId, useSyncExternalStore, type ReactNode } from "react";
 import { flushSync } from "react-dom";
-import { ChevronDown, Moon, Sun } from "lucide-react";
-import { t } from "@/lib/i18n";
+import { ChevronDown, Monitor, Moon, Sun } from "lucide-react";
+import { t, useLocale } from "@/lib/i18n";
 import { landingThemeCookie, landingThemes, parseLandingTheme, type LandingTheme } from "@/lib/landingTheme";
 import "@/app/public-theme.css";
 
@@ -154,6 +154,31 @@ export function ThemeChoice({ theme, changeTheme, compact = false }: ThemeContro
 export function SiteThemeChoice() {
   const control = useContext(SiteThemeContext);
   return control && <ThemeChoice {...control}/>;
+}
+
+const themeIcons = { light: Sun, dark: Moon, system: Monitor };
+
+export function WorkspaceThemeChoice({ labeled = false }: { labeled?: boolean }) {
+  useLocale();
+  const control = useContext(SiteThemeContext);
+  const name = useId();
+  if (!control) return null;
+
+  return <fieldset className={`workspace-theme-choice${labeled ? " workspace-theme-choice--labeled" : ""}`}>
+    <legend className="sr-only">{t("landing.theme.label")}</legend>
+    {landingThemes.map(mode => {
+      const Icon = themeIcons[mode];
+      const label = t(`landing.theme.${mode}`);
+      return <label key={mode} title={labeled ? undefined : label}>
+        <input type="radio" name={name} value={mode} checked={control.theme === mode}
+          onChange={event => void control.changeTheme(mode, event.currentTarget)}/>
+        <span className="workspace-theme-option">
+          <Icon size={18} aria-hidden="true"/>
+          <span className={labeled ? undefined : "sr-only"}>{label}</span>
+        </span>
+      </label>;
+    })}
+  </fieldset>;
 }
 
 export function PublicThemeToggle({ theme, onChange }: {

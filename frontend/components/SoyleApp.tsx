@@ -2,7 +2,7 @@
 import { TranslationEditor } from "./TranslationEditor";
 import { LanguagePicker } from "./LanguagePicker";
 import { AuthLoading, AuthScreen, type AuthEntryMode } from "./AuthScreen";
-import { SiteThemeChoice, SiteThemeSurface } from "./PublicTheme";
+import { SiteThemeSurface, WorkspaceThemeChoice } from "./PublicTheme";
 import { WorkspaceSkeleton } from "./WorkspaceSkeleton";
 import type { LandingTheme } from "@/lib/landingTheme";
 
@@ -960,7 +960,7 @@ function AuthenticatedApp({ user, onLogout, externalError, onDismissExternalErro
           <div className="mobile-logo"><BrandLogo variant="mark" size={28} /></div>
           <div className="top-actions v2-top-actions">
             {user.role === "parent" && <div className="notification-wrap"><button className="notification-button" onClick={() => setNotificationsOpen((value) => !value)} aria-label={t("nav.notifications")}><Bell size={19}/>{notifications.unread > 0 && <i>{notifications.unread}</i>}</button>{notificationsOpen && <div className="notification-panel"><div className="notification-head"><div><span className="kicker">{t("screen.AuthenticatedApp.ui60")}</span><strong>{t("screen.AuthenticatedApp.ui61")}</strong></div>{notifications.unread > 0 && <button onClick={markAllNotificationsRead}>{t("screen.AuthenticatedApp.ui62")}</button>}</div><div className="notification-list">{notifications.items.length ? notifications.items.map((item) => <button key={item.id} className={item.is_read ? "read" : "unread"} onClick={() => markNotificationRead(item.id)}><span className="notification-symbol"><Trophy size={18}/></span><div><strong>{item.title}</strong><p>{item.message}</p><small>{formatDate(item.created_at, {day: "numeric", month: "long"})}</small></div>{!item.is_read && <i/>}</button>) : <div className="notification-empty"><Bell size={24}/><strong>{t("screen.AuthenticatedApp.ui63")}</strong><span>{t("screen.AuthenticatedApp.ui64")}</span></div>}</div></div>}</div>}
-            {workspaceRole && <SiteThemeChoice/>}
+            {workspaceRole && <WorkspaceThemeChoice/>}
             {user.role === "student" && <StarVault total={dashboard?.stars || 0} onOpen={() => openScreen("achievements")}/>}
           </div>
         </header>
@@ -2497,7 +2497,7 @@ function SettingsScreen({ petPreferences, role, settings, saving, onChange, onLo
         {(role === "admin" || role === "specialist") && <><TranslationEditor specialist={role === "specialist"}/><TranslationEditor resource="aac" specialist={role === "specialist"}/></>}
         <section className="settings-section theme-setting">
           <div className="settings-section-heading"><h3>{t("settings.appearance")}</h3></div>
-          <SiteThemeChoice/>
+          <WorkspaceThemeChoice labeled/>
         </section>
         <section className="settings-section preference-setting">
           <div className="settings-section-heading"><span className="kicker">{t("settings.accessibility")}</span><h3>{t("settings.comfort")}</h3></div>

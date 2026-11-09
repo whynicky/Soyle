@@ -130,7 +130,14 @@ test('landing copy and AAC demonstration follow the selected language', async ({
 
 
 test('landing island stays compact and reloading from the demo returns to the hero', async ({ page }) => {
-  await page.goto('/');
+  const scriptErrors: string[] = [];
+  page.on('console', message => {
+    if (message.type() === 'error' && message.text().includes('Encountered a script tag')) scriptErrors.push(message.text());
+  });
+  await page.goto('/app');
+  await page.locator('.sa-home').click();
+  await expect(page.locator('.sl-page')).toBeVisible();
+  expect(scriptErrors).toEqual([]);
   await page.locator('.sl-header').getByRole('button', { name: 'Қазақша', exact: true }).click();
   const header = page.locator('.sl-header');
   const width = await page.evaluate(() => innerWidth);

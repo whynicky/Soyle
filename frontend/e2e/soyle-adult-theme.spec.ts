@@ -5,7 +5,9 @@ import { workspacePages } from "../lib/workspacePages";
 const testApi = "http://localhost:8011";
 const browserApi = "http://localhost:8010";
 const surface = (page: Page) => page.locator(".adult-workspace");
-const themeControl = (page: Page) => page.locator(".v2-topbar, .desk-topline").getByRole("combobox", { name: "Тема" });
+const themeControl = (page: Page) => page.locator(".v2-topbar, .desk-topline").getByRole("group", { name: "Тема" });
+const themeLabels = { light: "Светлая", dark: "Тёмная", system: "Системная" };
+const themeOption = (page: Page, theme: keyof typeof themeLabels) => themeControl(page).getByRole("radio", { name: themeLabels[theme] });
 const expectNoOverflow = async (page: Page) => {
   await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)).toBeLessThanOrEqual(1);
 };
@@ -22,12 +24,15 @@ test("adult theme is shared with public pages and isolated from the child", asyn
   await page.emulateMedia({ colorScheme: "dark" });
   await login(page, "parent", "Parent123!");
   await expect(surface(page)).toHaveAttribute("data-site-theme", "system");
+  await expect(themeOption(page, "system")).toBeChecked();
   await expect(surface(page)).toHaveCSS("background-color", "rgb(11, 12, 13)");
-  await themeControl(page).selectOption("light");
+  await themeOption(page, "light").check();
   await expect(surface(page)).toHaveCSS("background-color", "rgb(248, 247, 244)");
   await page.reload();
-  await expect(themeControl(page)).toHaveValue("light");
-  await themeControl(page).selectOption("dark");
+  await expect(themeOption(page, "light")).toBeChecked();
+  await themeOption(page, "light").press("ArrowRight");
+  await expect(themeOption(page, "dark")).toBeFocused();
+  await expect(themeOption(page, "dark")).toBeChecked();
   await expect(surface(page)).toHaveAttribute("data-site-theme", "dark");
 
   expect(await (await page.request.get("/privacy")).text()).toContain('data-site-theme="dark"');
@@ -74,7 +79,7 @@ for (const role of ["parent", "specialist", "admin"] as const) {
 
     await context.addCookies([{ name: "soyle-landing-theme", value: "light", url: "http://localhost:3003" }]);
     await login(page, username, password);
-    await expect(themeControl(page)).toHaveValue("light");
+    await expect(themeOption(page, "light")).toBeChecked();
     await page.evaluate(() => document.fonts.ready);
     if (role === "parent") {
       await expect(page.locator(".workspace-overview")).toBeVisible();
@@ -94,7 +99,7 @@ for (const role of ["parent", "specialist", "admin"] as const) {
     await expectNoOverflow(page);
     await page.screenshot({ path: info.outputPath(`${role}-light.png`), animations: "disabled" });
 
-    await themeControl(page).selectOption("dark");
+    await themeOption(page, "dark").check();
     await expect(surface(page)).toHaveCSS("background-color", "rgb(11, 12, 13)");
     await page.screenshot({ path: info.outputPath(`${role}-dark.png`), animations: "disabled" });
 
@@ -122,7 +127,7 @@ for (const role of ["parent", "specialist", "admin"] as const) {
     for (const { slug: section } of workspacePages[role]) {
       const query = childId && section !== "children" && section !== "translations" ? `?child=${childId}` : "";
       await page.goto(`/app/${role}/${section}${query}`);
-      await expect(themeControl(page)).toHaveValue("dark");
+      await expect(themeOption(page, "dark")).toBeChecked();
       await expectNoOverflow(page);
       if (role === "parent" && section === "guides") {
         await page.locator(".v2-guide-grid > button").first().click();
@@ -135,15 +140,15 @@ for (const role of ["parent", "specialist", "admin"] as const) {
         await page.waitForLoadState("networkidle");
         const audit = await new AxeBuilder({ page }).include(".adult-workspace").withRules(["color-contrast"]).analyze();
         expect(audit.violations.flatMap(problem => problem.nodes.map(node => node.failureSummary)), `${role}/${section}, dark`).toEqual([]);
-        await themeControl(page).selectOption("light");
+        await themeOption(page, "light").check();
         await expect(surface(page)).toHaveAttribute("data-site-theme", "light");
         await page.reload();
         await expect(surface(page)).toHaveCSS("background-color", "rgb(248, 247, 244)");
-        await expect(themeControl(page)).toHaveValue("light");
+        await expect(themeOption(page, "light")).toBeChecked();
         await page.waitForLoadState("networkidle");
         const lightAudit = await new AxeBuilder({ page }).include(".adult-workspace").withRules(["color-contrast"]).analyze();
         expect(lightAudit.violations.flatMap(problem => problem.nodes.map(node => node.failureSummary)), `${role}/${section}, light`).toEqual([]);
-        await themeControl(page).selectOption("dark");
+        await themeOption(page, "dark").check();
       }
     }
   });
