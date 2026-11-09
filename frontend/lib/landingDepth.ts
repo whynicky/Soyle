@@ -31,22 +31,22 @@ function layoutOrigin(element: HTMLElement) {
   return { x, y };
 }
 
-function plantClearance(hero: HTMLElement, image: HTMLImageElement, edge: Float32Array) {
+function plantClearance(hero: HTMLElement, image: HTMLImageElement, edge: Float32Array, content: Iterable<HTMLElement>) {
   const width = image.offsetWidth;
   const height = image.offsetHeight;
   if (!width || !height) return 0;
   const left = image.getBoundingClientRect().left + window.scrollX;
   const top = layoutOrigin(hero).y + hero.offsetHeight - height;
   let clearance = Infinity;
-  for (const action of hero.querySelectorAll<HTMLElement>(".sl-hero-board button, .sl-hero-phrase p")) {
-    const { x, y } = layoutOrigin(action);
+  for (const element of content) {
+    const { x, y } = layoutOrigin(element);
     const first = Math.max(0, Math.floor((x - left) / width * edge.length));
-    const last = Math.min(edge.length - 1, Math.ceil((x + action.offsetWidth - left) / width * edge.length));
+    const last = Math.min(edge.length - 1, Math.ceil((x + element.offsetWidth - left) / width * edge.length));
     for (let i = first; i <= last; i++) {
-      clearance = Math.min(clearance, top + edge[i] * height - y - action.offsetHeight);
+      clearance = Math.min(clearance, top + edge[i] * height - y - element.offsetHeight);
     }
   }
-  // Leave room for thin stems, rounding, and the button focus outline.
+  // Leave room for thin stems and rounding around the wordmarks.
   return Number.isFinite(clearance) ? Math.max(0, clearance - 8) : 0;
 }
 
@@ -64,8 +64,9 @@ function scrollTimeline() {
 function layerPositions(phase: number, { scale, plantBase, clearance }: Geometry) {
   // Show the separation early, then ease the scenery into its resting position.
   const depth = phase * (2 - phase);
-  const foreground = Math.min(68 * scale, clearance) * depth;
-  return [244 * scale * depth, 124 * scale * depth, -foreground, 1 + foreground / plantBase];
+  const windowTravel = Math.min(26 * scale, clearance);
+  const foreground = Math.min(68 * scale, clearance - windowTravel) * depth;
+  return [244 * scale * depth, 124 * scale * depth, -foreground, 1 + foreground / plantBase, windowTravel * depth];
 }
 
 const translateY = (value: number) => `0 ${value}px`;
@@ -78,8 +79,10 @@ export function observeHeroDepth(hero: HTMLElement) {
     hero.querySelector<HTMLElement>(".sl-hero-hills img"),
     hero.querySelector<HTMLElement>(".sl-hero-foreground-track"),
     hero.querySelector<HTMLElement>(".sl-hero-foreground-extension img"),
+    hero.querySelector<HTMLElement>(".sl-hero-platform"),
   ];
   if (!plants || elements.some(element => !element) || !("IntersectionObserver" in window)) return;
+  const brand = hero.querySelectorAll<HTMLElement>(".sl-platform-brand, .sl-hero-rail-brand");
   const layers = (elements as HTMLElement[]).map((element, index) => ({
     element,
     property: index === 3 ? "scale" as const : "translate" as const,
@@ -158,7 +161,7 @@ export function observeHeroDepth(hero: HTMLElement) {
       travel: Math.max(1, Math.min(hero.offsetHeight * .58, 650)),
       scale: Number(style.getPropertyValue("--sl-hero-depth-scale")),
       plantBase: Number.parseFloat(style.getPropertyValue("--sl-hero-plants-base")),
-      clearance: edge && plants!.currentSrc === edgeSource ? plantClearance(hero, plants!, edge) : 0,
+      clearance: edge && plants!.currentSrc === edgeSource ? plantClearance(hero, plants!, edge, brand) : 0,
     };
     const changed = !geometry || next.travel !== geometry.travel || next.scale !== geometry.scale
       || next.plantBase !== geometry.plantBase || Math.abs(next.clearance - geometry.clearance) > .25;
@@ -238,10 +241,7 @@ export function observeHeroDepth(hero: HTMLElement) {
   const resize = typeof ResizeObserver !== "undefined" ? new ResizeObserver(requestMeasurement) : null;
   resize?.observe(hero);
   resize?.observe(plants);
-  const board = hero.querySelector(".sl-hero-board");
-  if (board) resize?.observe(board);
-  const content = new MutationObserver(requestMeasurement);
-  if (board) content.observe(board, { childList: true, characterData: true, subtree: true });
+  brand.forEach(element => resize?.observe(element));
   void document.fonts.ready.then(requestMeasurement);
   if (!resize) window.addEventListener("resize", requestMeasurement, { passive: true });
   plants.addEventListener("load", readPlants);
@@ -252,7 +252,6 @@ export function observeHeroDepth(hero: HTMLElement) {
     disposed = true;
     viewport.disconnect();
     resize?.disconnect();
-    content.disconnect();
     cancelAnimationFrame(frame);
     cancelAnimationFrame(measurement);
     stopAnimations();

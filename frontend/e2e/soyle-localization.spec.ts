@@ -83,19 +83,10 @@ test('landing copy and AAC demonstration follow the selected language', async ({
   await expect(page.getByRole('heading',{name:'Бала ойын жеткізудің түрлі жолын табады'})).toBeVisible();
   const overview = page.locator('.sl-hero-window');
   await expect(page.getByRole('dialog')).toHaveCount(0);
-  await expect(overview.getByRole('heading', { name: 'Не қалайсың?', exact: true })).toBeVisible();
+  await expect(overview.getByText('Қарым-қатынас кеңістігі', { exact: true })).toBeVisible();
   await expect(page.getByRole('tab', { selected: true })).toHaveAttribute('id', 'sl-tab-lesson');
-  await expect(overview.locator('.sl-hero-choice')).toHaveCount(6);
-  await expect(overview.locator('.sl-hero-phrase p')).toHaveText('Су ішкім келеді.');
-  const help = overview.getByRole('button', { name: 'Көмек', exact: true });
-  await help.click();
-  await expect(help).toHaveAttribute('aria-pressed', 'true');
-  await expect(overview.locator('button[aria-pressed="true"]')).toHaveCount(1);
-  await expect(overview.locator('.sl-hero-phrase p')).toHaveText('Маған көмектесші.');
+  await expect(overview.locator('button, a')).toHaveCount(0);
   expect(await page.locator('.sl-page audio').evaluateAll(players => players.every(player => (player as HTMLAudioElement).paused))).toBe(true);
-  const phraseRequest = page.waitForRequest(request => request.url().endsWith('/api/public/speech/kk/help'));
-  await overview.getByRole('button', { name: 'Дыбыстау', exact: true }).click();
-  await phraseRequest;
 
   await page.locator('#sl-tab-lesson').click();
   await expect(page.locator('.sl-scenario-copy p:not([hidden])')).toContainText('Ересек тапсырманы ашады');
@@ -114,11 +105,14 @@ test('landing copy and AAC demonstration follow the selected language', async ({
   await expect(board.locator('.sl-phrase')).toHaveText('Су ішкім келеді.');
   await board.getByRole('button',{name:'Алма',exact:true}).click();
   await expect(board.locator('.sl-phrase')).toHaveText('Алма жегім келеді.');
+  const phraseRequest = page.waitForRequest(request => request.url().endsWith('/api/public/speech/kk/apple'));
+  await board.getByRole('button', { name: 'Дыбыстау', exact: true }).click();
+  await phraseRequest;
   await page.locator('.sl-footer').getByRole('button',{name:'Русский',exact:true}).click();
   await expect(page.getByRole('heading',{name:'Больше способов сказать важное'})).toBeVisible();
   const family = page.locator('#family');
-  await expect(family.getByRole('heading', { name: 'Наблюдения остаются под рукой' })).toBeVisible();
-  await expect(family.getByText('За обедом выбрала карточку «Вода».', { exact: true })).toBeVisible();
+  await expect(family.getByRole('heading', { name: 'Наблюдения под рукой' })).toBeVisible();
+  await expect(family.getByText('Сегодня сама выбрала карточку «Вода».', { exact: true })).toBeVisible();
 });
 
 
@@ -441,8 +435,12 @@ test('landing previews remain visible when switching languages with motion enabl
   await expect(plan.locator('.sl-record-detail:not([hidden])')).toContainText('Попробуйте вместе собрать просьбу из карточек.');
 
   const family = page.locator('#family');
-  await expect(family.locator('.sl-feature-panel')).toHaveCount(2);
-  const planLink = family.getByRole('link', { name: 'Открыть план' });
+  await expect(family.locator('.sl-feature-week li')).toHaveCount(7);
+  await expect(family.locator('.sl-feature-week li[aria-current]')).toHaveCount(1);
+  await expect(family.locator('.sl-feature-tasks li')).toHaveCount(2);
+  await expect(family.locator('.sl-feature-stack h4')).toHaveText('Просьба за обедом');
+  await expect(family.locator('.sl-feature-scene').getByRole('link')).toHaveCount(0);
+  const planLink = family.getByRole('link', { name: 'Посмотреть план' });
   await planLink.focus();
   await page.keyboard.press('Enter');
   await expect(page.getByRole('tab', { name: 'Открыть план' })).toHaveAttribute('aria-selected', 'true');

@@ -42,7 +42,7 @@ html[data-public-theme-transition="circle"]::view-transition-new(root) {
 }
 @media (prefers-reduced-motion: no-preference) {
   html[data-public-theme-transition="fade"] :is(.sa-page, .sl-page),
-  html[data-public-theme-transition="fade"] :is(.sa-page, .sl-page) :is(p, h1, h2, h3, a, button, label, input, .sl-island, .sa-nav, .sl-window, .sl-desktop-body, .sl-record-detail, .sl-feature, .sl-feature-panel) {
+  html[data-public-theme-transition="fade"] :is(.sa-page, .sl-page) :is(p, h1, h2, h3, a, button, label, input, .sl-island, .sa-nav, .sl-window, .sl-desktop-body, .sl-record-detail, .sl-feature, .sl-feature-scene, .sl-feature-panel) {
     transition: background-color 190ms ease, border-color 190ms ease, color 190ms ease;
   }
   html[data-public-theme-transition="fade"] :is(.sl-scene-photo img, .sa-scene-art) {

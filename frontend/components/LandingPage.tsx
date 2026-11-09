@@ -16,18 +16,17 @@ import { BrandMark } from "./PublicBrandMark";
 import { preloadThemeImage, PublicThemeToggle, usePublicTheme } from "./PublicTheme";
 import "@/app/landing.css";
 
-const scenery = {
-  desktop: "soyle-sculpted-desktop",
-  plan: "soyle-sculpted-plan",
-  observation: "soyle-heather-closeup",
-} as const;
-
 const heroSizes = "(max-width: 760px) 1040px, (max-width: 1200px) 1200px, 100vw";
 const mobileScenery = "(max-width: 480px)";
 const phonePhotoSrcSet = [480, 768, 1168, 1760, 2336, 3504]
   .map(width => `/landing/soyle-in-hands-${width}.webp ${width}w`).join(", ");
 
-type Scene = keyof typeof scenery | "hero" | "foreground" | "end";
+const featureScenery = {
+  plan: "soyle-sculpted-plan",
+  observation: "soyle-heather-closeup",
+} as const;
+
+type Scene = "desktop" | "hero" | "foreground" | "end" | keyof typeof featureScenery;
 type SceneTone = "day" | "night";
 
 function isHeroLayer(scene: Scene) {
@@ -39,13 +38,13 @@ function sceneVariant(scene: Scene, tone: SceneTone, mobile = false) {
     ? (isHeroLayer(scene) ? "488px" : "max(100vw, 480px)")
     : isHeroLayer(scene) ? heroSizes : scene === "end" ? "100vw"
       : scene === "desktop" ? "(max-width: 760px) calc(100vw - 40px), 1168px"
-        : "(max-width: 760px) calc(100vw - 40px), (max-width: 1232px) 55vw, 642px";
+        : "(max-width: 760px) calc(100vw - 40px), (max-width: 1232px) calc(55vw - 36px), 642px";
   if (scene === "hero" || scene === "foreground" || scene === "end") {
     const prefix = `/landing/scenery/${scene}-${tone}${mobile ? "-mobile" : ""}`;
     const widths = mobile ? [520, 1040, 1560] : [1280, 2400, 3840];
     return { src: `${prefix}-${widths[0]}.webp`, srcSet: widths.map(width => `${prefix}-${width}.webp ${width}w`).join(", "), sizes };
   }
-  const file = scenery[scene] + (tone === "night" ? "-night" : "");
+  const file = (scene === "desktop" ? "soyle-sculpted-desktop" : featureScenery[scene]) + (tone === "night" ? "-night" : "");
   const width = scene === "desktop" ? 1536 : 1080;
   return { src: `/landing/${file}.webp`, srcSet: `/landing/scenery/${file}-768.webp 768w, /landing/${file}.webp ${width}w`, sizes };
 }
@@ -87,13 +86,6 @@ const choices = [
   { id: "water", label: "landing.showcase.water" },
   { id: "apple", label: "landing.showcase.apple" },
   { id: "play", label: "landing.showcase.play" },
-] as const;
-
-const heroChoices = [
-  ...choices,
-  { id: "rest", label: "landing.heroBoard.rest" },
-  { id: "help", label: "landing.heroBoard.help" },
-  { id: "more", label: "landing.heroBoard.more" },
 ] as const;
 
 const previews = [
@@ -158,21 +150,19 @@ function StartLink() {
   );
 }
 
-type SpeechSource = "hero" | "preview";
 type ChoiceId = (typeof choices)[number]["id"];
-type HeroChoiceId = (typeof heroChoices)[number]["id"];
 
 function useLandingSpeech(locale: Locale) {
-  const [speakingFrom, setSpeakingFrom] = useState<SpeechSource | null>(null);
-  const [errorFrom, setErrorFrom] = useState<SpeechSource | null>(null);
+  const [speaking, setSpeaking] = useState(false);
+  const [error, setError] = useState(false);
   const audio = useRef<HTMLAudioElement>(null);
   const playRequest = useRef(0);
 
   const stop = useCallback(() => {
     playRequest.current++;
     audio.current?.pause();
-    setSpeakingFrom(null);
-    setErrorFrom(null);
+    setSpeaking(false);
+    setError(false);
   }, []);
 
   useEffect(() => {
@@ -184,40 +174,40 @@ function useLandingSpeech(locale: Locale) {
     };
   }, [stop]);
 
-  async function speak(id: HeroChoiceId, from: SpeechSource) {
+  async function speak(id: ChoiceId) {
     const player = audio.current;
     if (!player) return;
-    if (speakingFrom === from) {
+    if (speaking) {
       stop();
       return;
     }
 
     const request = ++playRequest.current;
     player.src = `/api/public/speech/${locale === "kk-KZ" ? "kk" : "ru"}/${id}`;
-    setErrorFrom(null);
-    setSpeakingFrom(from);
+    setError(false);
+    setSpeaking(true);
     try {
       await player.play();
     } catch {
       if (player === audio.current && request === playRequest.current) {
-        setSpeakingFrom(null);
-        setErrorFrom(from);
+        setSpeaking(false);
+        setError(true);
       }
     }
   }
 
   const player = (
-    <audio ref={audio} preload="none" onEnded={() => setSpeakingFrom(null)} onError={() => {
-      if (speakingFrom) {
-        setErrorFrom(speakingFrom);
-        setSpeakingFrom(null);
+    <audio ref={audio} preload="none" onEnded={() => setSpeaking(false)} onError={() => {
+      if (speaking) {
+        setError(true);
+        setSpeaking(false);
         }
       }} />
   );
-  return { speakingFrom, errorFrom, stop, speak, player };
+  return { speaking, error, stop, speak, player };
 }
 
-function DemoObject({ id }: { id: HeroChoiceId }) {
+function DemoObject({ id }: { id: ChoiceId }) {
   return <Image className="sl-object" src={`/landing/soyle-object-${id}.webp`} width={144} height={144} alt="" unoptimized />;
 }
 
@@ -231,7 +221,7 @@ function DemoHeading({ title }: { title: string }) {
 
 function CommunicationBoard({ speech }: { speech: ReturnType<typeof useLandingSpeech> }) {
   const [selected, setSelected] = useState<ChoiceId>("water");
-  const speaking = speech.speakingFrom === "preview";
+  const { speaking } = speech;
   return (
     <div className="sl-example-sheet sl-aac" id="communication">
       <DemoHeading title={t("landing.showcase.board")} />
@@ -249,31 +239,30 @@ function CommunicationBoard({ speech }: { speech: ReturnType<typeof useLandingSp
       </div>
       <div className="sl-phrase-bar">
         <p className="sl-phrase" aria-live="polite"><span key={selected}>{t(`landing.aac.${selected}`)}</span></p>
-        <button type="button" className="sl-lesson-next" onClick={() => speech.speak(selected, "preview")}>
+        <button type="button" className="sl-lesson-next" onClick={() => speech.speak(selected)}>
           {speaking ? <X size={16} aria-hidden="true" /> : <Volume2 size={16} aria-hidden="true" />}
           {t(speaking ? "landing.copy124" : "landing.heroBoard.speak")}
         </button>
-        {speech.errorFrom === "preview" && <small className="sl-audio-error" role="status">{t("landing.copy126")}</small>}
+        {speech.error && <small className="sl-audio-error" role="status">{t("landing.copy126")}</small>}
       </div>
     </div>
   );
 }
 
-function WorkspaceWindow({ children, sidebar, className = "", cover = false }: {
+function WorkspaceWindow({ children, sidebar, className = "" }: {
   children: ReactNode;
   sidebar?: ReactNode;
   className?: string;
-  cover?: boolean;
 }) {
   return (
     <div className={`sl-window sl-glass ${className}`}>
-      {!cover && <div className="sl-window-bar">
+      <div className="sl-window-bar">
         <div className="sl-window-brand">
           <BrandMark size={21} />
           Söyle
         </div>
         <span className="sl-window-caption">{t("landing.demo.sampleData")}</span>
-      </div>}
+      </div>
       <div className="sl-window-layout">
         {sidebar && <div className="sl-window-sidebar">{sidebar}</div>}
         {children}
@@ -461,40 +450,30 @@ function PlanPreview() {
   );
 }
 
-function PlatformCover({ speech }: { speech: ReturnType<typeof useLandingSpeech> }) {
-  const [selected, setSelected] = useState<HeroChoiceId>("water");
-  const speaking = speech.speakingFrom === "hero";
+function HeroWindow() {
   return (
-    <div className="sl-platform-cover">
-      <div className="sl-platform-art" aria-hidden="true" />
-      <div className="sl-platform-copy">
-        <div className="sl-hero-board">
-          <div className="sl-hero-board-heading">
-            <h2 id="sl-hero-board-title">{t("landing.heroBoard.pick")}</h2>
-            <p role="status">{t(speech.errorFrom === "hero" ? "landing.copy126" : "landing.heroBoard.hint")}</p>
-          </div>
-          <div className="sl-hero-grid" role="group" aria-labelledby="sl-hero-board-title">
-            {heroChoices.map(({ id, label }) => (
-              <button className="sl-hero-choice" key={id} type="button" aria-pressed={selected === id} onClick={() => {
-                if (selected === id) return;
-                speech.stop();
-                setSelected(id);
-              }}>
-                <DemoObject id={id} />
-                {t(label)}
-                <Check className="sl-hero-check" size={14} aria-hidden="true" />
-              </button>
-            ))}
-          </div>
-          <div className="sl-hero-phrase">
-            <div className="sl-hero-phrase-copy">
-              <span>{t("landing.heroBoard.phrase")}</span>
-              <p aria-live="polite" aria-atomic="true"><span key={selected}>{t(`landing.aac.${selected}`)}</span></p>
+    <div className="sl-hero-platform">
+      <div className="sl-window sl-hero-window">
+        <div className="sl-window-layout">
+          <div className="sl-window-sidebar" aria-hidden="true">
+            <div className="sl-window-brand sl-hero-rail-brand">
+              <BrandMark size={22} />
+              <span className="sl-rail-label">Söyle</span>
             </div>
-            <button type="button" className="sl-lesson-next" onClick={() => speech.speak(selected, "hero")}>
-              {speaking ? <X size={16} aria-hidden="true" /> : <Volume2 size={16} aria-hidden="true" />}
-              {t(speaking ? "landing.copy124" : "landing.heroBoard.speak")}
-            </button>
+            <div className="sl-window-links">
+              <span className="sl-window-current"><LayoutGrid size={16} /><span className="sl-rail-label">{t("nav.home")}</span></span>
+              <span><MessageSquare size={16} /><span className="sl-rail-label">{t("landing.heroWindow.communication")}</span></span>
+              <span><BookOpen size={16} /><span className="sl-rail-label">{t("nav.lessons")}</span></span>
+            </div>
+          </div>
+          <div className="sl-platform-cover">
+            <div className="sl-platform-brand">
+              <div className="sl-platform-wordmark">
+                <BrandMark size={38} />
+                <span>Söyle</span>
+              </div>
+              <p>{t("landing.heroWindow.description")}</p>
+            </div>
           </div>
         </div>
       </div>
@@ -553,14 +532,20 @@ function ProductRoles() {
   );
 }
 
+const exampleWeek = Array.from({ length: 7 }, (_, index) => new Date(Date.UTC(2026, 9, 19 + index)));
+const featureTasks = [
+  { title: "landing.feature.requestWater", icon: MessageSquare },
+  { title: "landing.feature.listenAndChoose", icon: BookOpen },
+] as const;
+
 function FamilyPractice({ theme, locale, onOpenDemo }: {
   theme: LandingTheme;
   locale: Locale;
   onOpenDemo: (id: PreviewId) => void;
 }) {
-  const { day, title, note } = observations[0];
   const date = new Intl.DateTimeFormat(locale, { month: "long", day: "numeric", timeZone: "UTC" });
-  const demoProfile = `${t("landing.copy116")} · ${t("landing.demo.profileName")}`;
+  const weekday = new Intl.DateTimeFormat(locale, { weekday: "short", timeZone: "UTC" });
+  const observation = observations[0];
 
   return (
     <section className="sl-family sl-container" id="family" aria-labelledby="sl-family-title">
@@ -569,53 +554,72 @@ function FamilyPractice({ theme, locale, onOpenDemo }: {
         <p className="sl-body">{t("landing.showcase.familyIntro")}</p>
       </div>
       <div className="sl-feature-list">
-        <article className="sl-feature">
+        <article className="sl-feature" data-reveal>
           <div className="sl-feature-copy">
             <h3 className="sl-heading-3">{t("landing.feature.planTitle")}</h3>
             <p className="sl-body">{t("landing.feature.planDescription")}</p>
+            <a className="sl-text-link sl-feature-link" href={previewFragment("plan")} onClick={() => onOpenDemo("plan")}>
+              {t("landing.feature.planLink")}
+            </a>
           </div>
           <div className="sl-feature-scene sl-feature-plan">
             <ScenePhoto scene="plan" theme={theme} />
             <div className="sl-feature-panel">
-              <div className="sl-feature-bar">
-                <span><ClipboardList size={17} aria-hidden="true" />{t("landing.handoff.assign.label")}</span>
-                <span>{demoProfile}</span>
+              <div className="sl-feature-preview-heading">
+                <h4>{t("landing.feature.weekPlan")}</h4>
+                <span className="sl-caption">{t("landing.feature.example")}</span>
               </div>
-              <div className="sl-feature-content">
-                <h4>{t("landing.handoff.task")}</h4>
-                <div className="sl-feature-detail">
-                  <p className="sl-feature-meta">{t("landing.demo.adultTip")}</p>
-                  <p>{t("landing.handoff.instruction")}</p>
-                </div>
-                <a className="sl-lesson-next" href={previewFragment("plan")} onClick={() => onOpenDemo("plan")}>
-                  {t("landing.desktop.tab.plan")}
-                </a>
-              </div>
+              <ul className="sl-feature-week" role="list">
+                {exampleWeek.map((day, index) => {
+                  const dateTime = day.toISOString().slice(0, 10);
+                  return (
+                    <li key={dateTime} aria-current={index === 0 || undefined}>
+                      <time dateTime={dateTime}>
+                        <span>{weekday.format(day)}</span>
+                        <strong>{day.getUTCDate()}</strong>
+                      </time>
+                    </li>
+                  );
+                })}
+              </ul>
+              <ul className="sl-feature-tasks" role="list">
+                {featureTasks.map(({ title, icon: Icon }) => (
+                  <li key={title}>
+                    <Icon size={17} aria-hidden="true" />
+                    <span>{t(title)}</span>
+                  </li>
+                ))}
+              </ul>
             </div>
           </div>
         </article>
 
-        <article className="sl-feature sl-feature-reverse">
+        <article className="sl-feature sl-feature-reverse" data-reveal>
           <div className="sl-feature-copy">
             <h3 className="sl-heading-3">{t("landing.feature.historyTitle")}</h3>
             <p className="sl-body">{t("landing.feature.historyDescription")}</p>
+            <a className="sl-text-link sl-feature-link" href={previewFragment("history")} onClick={() => onOpenDemo("history")}>
+              {t("landing.desktop.tab.history")}
+            </a>
           </div>
           <div className="sl-feature-scene sl-feature-history">
             <ScenePhoto scene="observation" theme={theme} />
-            <div className="sl-feature-panel">
-              <div className="sl-feature-bar">
-                <span><MessageSquare size={17} aria-hidden="true" />{t("landing.showcase.noteLabel")}</span>
-                <span>{demoProfile}</span>
-              </div>
-              <div className="sl-feature-content">
-                <div className="sl-feature-entry">
-                  <time className="sl-feature-meta" dateTime={`2026-10-${day}`}>{date.format(Date.UTC(2026, 9, day))}</time>
-                  <h4>{t(title)}</h4>
+            <div className="sl-feature-stack">
+              <div className="sl-feature-panel">
+                <div className="sl-feature-preview-heading">
+                  <time className="sl-caption" dateTime={`2026-10-${observation.day}`}>
+                    {date.format(Date.UTC(2026, 9, observation.day))}
+                  </time>
+                  <span className="sl-caption">{t("landing.feature.example")}</span>
                 </div>
-                <div className="sl-feature-detail"><p>{t(note)}</p></div>
-                <a className="sl-lesson-next" href={previewFragment("history")} onClick={() => onOpenDemo("history")}>
-                  {t("landing.desktop.tab.history")}
-                </a>
+                <div className="sl-feature-note">
+                  <h4>{t(observation.title)}</h4>
+                  <p>{t("landing.feature.note")}</p>
+                </div>
+                <p className="sl-feature-note-author sl-caption">
+                  <MessageSquare size={16} aria-hidden="true" />
+                  {t("landing.showcase.noteLabel")}
+                </p>
               </div>
             </div>
           </div>
@@ -771,22 +775,7 @@ export function LandingPage({ initialTheme }: { initialTheme: LandingTheme }) {
               </div>
             </div>
 
-            <div className="sl-hero-platform">
-              <WorkspaceWindow
-                className="sl-hero-window"
-                cover
-                sidebar={(
-                  <div className="sl-window-links" aria-hidden="true">
-                    <p className="sl-sidebar-label">{t("landing.roles.child.title")}</p>
-                    <span><LayoutGrid size={17} /><span className="sl-rail-label">{t("nav.home")}</span></span>
-                    <span className="sl-window-current"><MessageSquare size={17} /><span className="sl-rail-label">{t("nav.words")}</span></span>
-                    <span><BookOpen size={17} /><span className="sl-rail-label">{t("nav.lessons")}</span></span>
-                  </div>
-                )}
-              >
-                <PlatformCover speech={speech} />
-              </WorkspaceWindow>
-            </div>
+            <HeroWindow />
           </div>
           <div className="sl-hero-foreground" aria-hidden="true">
             <div className="sl-hero-foreground-track">
