@@ -20,9 +20,6 @@ body:has(> .sl-page) {
   --sl-island-glass: light-dark(rgb(252 249 247 / 95%), rgb(22 22 22 / 95%));
   --sl-scenery-base: light-dark(#d3c6cc, #000);
   --sl-scenery-earth: light-dark(#6a625f, #101010);
-  --sl-mark: var(--sl-accent);
-  --sl-mark-letter: var(--sl-on-accent);
-  --sl-mark-dot: light-dark(#c8c6c3, #8a8a85);
   --sl-error: light-dark(#963f2d, #ffbca8);
   --sl-ease: cubic-bezier(.22, 1, .36, 1);
   background: var(--sl-paper);
@@ -108,16 +105,9 @@ html:has(> body > .sl-page[data-landing-theme="dark"]) { color-scheme: dark; }
   display: inline-flex;
   align-items: center;
   justify-self: start;
-  gap: 8px;
   width: fit-content;
   min-height: 44px;
-  font-size: 1.5rem;
-  line-height: 1;
-  font-weight: 700;
-  letter-spacing: -.06em;
 }
-.sl-brand-mark { flex: none; }
-.sl-wordmark span { margin-inline-start: -8px; color: var(--sl-accent); }
 .sl-island-actions { display: flex; align-items: center; gap: 6px; }
 .sl-header .locale-picker {
   display: flex;
@@ -296,8 +286,6 @@ html:has(> body > .sl-page[data-landing-theme="dark"]) { color-scheme: dark; }
   --sl-window-glass: light-dark(rgb(246 246 243 / 82%), rgb(24 24 24 / 82%));
   --sl-canvas: light-dark(rgb(248 248 247 / 93%), rgb(20 20 20 / 96%));
   --sl-shadow: light-dark(#27272740, #0009);
-  --sl-mark: var(--sl-accent);
-  --sl-mark-dot: light-dark(#c8c8c5, #8a8a85);
 }
 .sl-window {
   position: relative;
@@ -334,7 +322,7 @@ html:has(> body > .sl-page[data-landing-theme="dark"]) { color-scheme: dark; }
   color: var(--sl-accent-hover);
   font-size: .75rem;
 }
-.sl-window-brand { display: flex; align-items: center; gap: 8px; color: var(--sl-ink); font-size: .875rem; font-weight: 600; }
+.sl-window-brand { display: flex; align-items: center; }
 .sl-window-caption { color: var(--sl-panel-muted); font-size: .6875rem; }
 .sl-window-layout { display: grid; grid-template-columns: 170px minmax(0, 1fr); }
 .sl-window-sidebar {
@@ -357,7 +345,7 @@ html:has(> body > .sl-page[data-landing-theme="dark"]) { color-scheme: dark; }
   line-height: 1.3;
 }
 .sl-window-links svg { flex: none; }
-.sl-window svg:not(.sl-brand-mark), .sl-tabs svg { stroke-width: 1.65; }
+.sl-window svg:not(.soyle-logo), .sl-tabs svg { stroke-width: 1.65; }
 .sl-window-links button:hover { background: var(--sl-hover-surface); }
 .sl-window-links .sl-window-current,
 .sl-window-links button[aria-pressed="true"] { background: var(--sl-selection); color: var(--sl-accent-hover); }
@@ -381,27 +369,12 @@ html:has(> body > .sl-page[data-landing-theme="dark"]) { color-scheme: dark; }
   text-align: center;
 }
 .sl-platform-brand {
-  --sl-mark: #fff;
-  --sl-mark-letter: #2b2340;
-  --sl-mark-dot: #dfd2f4;
   display: grid;
   justify-items: center;
   gap: 4px;
   min-width: 0;
-  text-shadow: 0 2px 12px rgb(20 15 32 / 50%);
 }
-.sl-platform-wordmark {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  font-size: 2rem;
-  line-height: 1.2;
-  font-weight: 600;
-  letter-spacing: -.045em;
-}
-.sl-platform-wordmark svg { flex: none; }
-.sl-platform-brand p { font-size: 1rem; line-height: 1.4; text-wrap: balance; }
+.sl-platform-brand p { font-size: 1rem; line-height: 1.4; text-wrap: balance; text-shadow: 0 2px 12px rgb(20 15 32 / 50%); }
 
 .sl-object-options { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: clamp(6px, 1vw, 14px); }
 .sl-page .sl-object-choice {
@@ -1089,9 +1062,6 @@ html:has(> body > .sl-page[data-landing-theme="dark"]) { color-scheme: dark; }
   --sl-footer-muted: light-dark(#ece9e5, #e1e1de);
   --sl-footer-line: light-dark(#ffffff35, #ffffff2b);
   --sl-footer-control: light-dark(#222222c9, #141414c9);
-  --sl-mark: light-dark(#f3f0ed, #f0edea);
-  --sl-mark-letter: light-dark(#242424, #141414);
-  --sl-mark-dot: light-dark(#9a9691, #888);
   --sl-accent: light-dark(#f3f0ed, #f0edea);
   position: relative;
   isolation: isolate;
@@ -1121,6 +1091,7 @@ html:has(> body > .sl-page[data-landing-theme="dark"]) { color-scheme: dark; }
   width: fit-content;
   color: var(--sl-footer-muted);
 }
+.sl-footer-brand .sl-wordmark { --soyle-logo-color: #f5f3f0; }
 .sl-footer-brand p { max-width: 220px; margin-top: 8px; color: var(--sl-footer-muted); }
 .sl-footer-bottom {
   display: flex;
@@ -1256,11 +1227,12 @@ html:has(> body > .sl-page[data-landing-theme="dark"]) { color-scheme: dark; }
   .sl-hero-window .sl-window-layout { grid-template-columns: 44px minmax(0, 1fr); }
   .sl-hero-window .sl-window-sidebar { padding: 12px 4px; }
   .sl-hero-rail-brand { justify-content: center; margin-block-end: 10px; padding: 0; }
+  .sl-hero-rail-brand .soyle-logo { width: 17px; }
+  .sl-hero-rail-brand .soyle-logo-word { display: none; }
   .sl-hero-window .sl-window-links > span { justify-content: center; padding: 0; }
   .sl-hero-window .sl-rail-label { display: none; }
   .sl-platform-cover { --sl-cover-shade-width: 72%; --sl-cover-shade-strength: 55%; padding: 12px; }
-  .sl-platform-wordmark { font-size: 1.5rem; }
-  .sl-platform-wordmark svg { width: 31px; height: 31px; }
+  .sl-platform-logo { width: auto; height: 28px; }
   .sl-platform-brand p { font-size: .875rem; }
   .sl-window-bar { min-height: 44px; padding-inline: 16px; }
   .sl-journey, .sl-family { padding-block: 44px 48px; }
@@ -1360,9 +1332,7 @@ html:has(> body > .sl-page[data-landing-theme="dark"]) { color-scheme: dark; }
   }
   .sl-closing .sl-end-photo { --sl-scene-position: center; }
   .sl-heading-1 { font-size: 2.25rem; line-height: 1.08; }
-  .sl-header .sl-wordmark { gap: 4px; font-size: 1.25rem; }
-  .sl-header .sl-brand-mark { width: 24px; height: 24px; }
-  .sl-header .sl-wordmark span { margin-inline-start: -4px; }
+  .sl-header .sl-wordmark .soyle-logo { width: auto; height: 22px; }
   .sl-header { max-width: calc(100% - 24px); }
   .sl-island { gap: 8px; padding-inline-start: 9px; }
   .sl-island-actions { gap: 2px; }

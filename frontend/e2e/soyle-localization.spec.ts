@@ -230,13 +230,13 @@ test('landing theme reveal keeps the active demo and scroll and follows through 
   await login.fill('sample-parent');
   await password.fill('Sample1234!');
   await expect(password).toBeFocused();
-  await page.getByRole('button', { name: 'Включить светлую тему' }).click();
+  await page.getByRole('combobox', { name: 'Тема' }).selectOption('light');
   await expect(page.locator('.sa-page')).toHaveAttribute('data-entry-theme', 'light');
   await expect(page.locator('html')).not.toHaveAttribute('data-public-theme-transition', /.+/);
   await expect(page.getByRole('heading', { name: 'Регистрация родителя' })).toBeVisible();
   await expect(login).toHaveValue('sample-parent');
   await expect(password).toHaveValue('Sample1234!');
-  await expect(password).toBeFocused();
+  await expect(page.getByRole('combobox', { name: 'Тема' })).toHaveValue('light');
   await page.getByRole('button', { name: 'Создать аккаунт', exact: true }).click();
   await expect(page.getByLabel('Ваше имя')).toHaveAccessibleDescription('Заполните это поле.');
   await expect(page.getByLabel('Ваше имя')).toBeFocused();

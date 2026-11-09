@@ -13,12 +13,12 @@ export function ChildShell({ children, home, navigationCollapsed }: ShellProps) 
   return <div className={`app-shell student-mode child-shell soyle-parent-v2 soyle-unified ${home ? "room-home-active" : ""} ${navigationCollapsed ? "child-nav-collapsed" : ""}`}>{children}</div>;
 }
 
-export function ParentShell({ children }: ShellProps) {
-  return <div className="app-shell parent-mode parent-shell soyle-parent-v2 soyle-unified">{children}</div>;
+export function ParentShell({ children, navigationCollapsed }: ShellProps) {
+  return <div className={`app-shell parent-mode parent-shell soyle-parent-v2 soyle-unified${navigationCollapsed ? " workspace-rail-collapsed" : ""}`}>{children}</div>;
 }
 
-export function AdminShell({ children }: ShellProps) {
-  return <div className="app-shell admin-mode admin-shell soyle-parent-v2 soyle-unified">{children}</div>;
+export function AdminShell({ children, navigationCollapsed }: ShellProps) {
+  return <div className={`app-shell admin-mode admin-shell soyle-parent-v2 soyle-unified${navigationCollapsed ? " workspace-rail-collapsed" : ""}`}>{children}</div>;
 }
 
 export function ExerciseFocusShell({

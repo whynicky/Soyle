@@ -30,7 +30,15 @@ export function FunctionalSkillMap({ childId, focusCategory, onFocused }: { chil
   const [message, setMessage] = useState("");
   useEffect(() => {
     if (!childId) return;
-    api<SkillObservation[]>(`/api/observations/${childId}`).then((value) => { setItems(value); setNotes(Object.fromEntries(value.map((item) => [item.category, item.note]))); }).catch(() => setMessage(t("familyPractice.ui6")));
+    const controller = new AbortController();
+    api<SkillObservation[]>(`/api/observations/${childId}`, { signal: controller.signal }).then(value => {
+      if (controller.signal.aborted) return;
+      setItems(value);
+      setNotes(Object.fromEntries(value.map(item => [item.category, item.note])));
+    }).catch(() => {
+      if (!controller.signal.aborted) setMessage(t("familyPractice.ui6"));
+    });
+    return () => controller.abort();
   }, [childId]);
   useEffect(() => {
     if (focusCategory && target.current) {

@@ -1,0 +1,448 @@
+/* A theme boundary for the adult app and legal documents. Child styles never inherit these tokens. */
+.site-theme-surface {
+  color-scheme: light dark;
+  --site-page: light-dark(#f8f7f4, #0b0c0d);
+  --site-surface: light-dark(#fff, #171819);
+  --site-raised: light-dark(#efede9, #222426);
+  --site-ink: light-dark(#242424, #f3f2ef);
+  --site-muted: light-dark(#626260, #a6a8aa);
+  --site-line: light-dark(#dfddd8, #383a3c);
+  --site-control: light-dark(#918e88, #666a6c);
+  --site-action: light-dark(#242424, #f0edea);
+  --site-on-action: light-dark(#fff, #18191a);
+  --site-action-hover: light-dark(#3c3c3c, #fff);
+  --site-selected: light-dark(#e4eee7, #263a31);
+  --site-green: light-dark(#335d48, #add1bc);
+  --site-chart: light-dark(#547763, #9bc6aa);
+  --site-focus: light-dark(#4c705b, #b3d4bf);
+  --site-warning: light-dark(#824c23, #edbe91);
+  --site-warning-bg: light-dark(#fbefe3, #382b20);
+  --site-error: light-dark(#9b3632, #ffb4ae);
+  --site-error-bg: light-dark(#fbecea, #392424);
+  --site-overlay: light-dark(#15171565, #000a);
+  --site-float: 0 8px 28px light-dark(#191b161c, #0006);
+  --site-radius: 18px;
+  --soyle-logo-color: var(--site-ink);
+  --font-body: "Söyle Onest", system-ui, sans-serif;
+  --font-display: var(--font-body);
+  background: var(--site-page);
+  color: var(--site-ink);
+  min-height: 100dvh;
+  font: 400 1rem/1.5 var(--font-body);
+}
+.site-theme-surface, .adult-workspace .soyle-unified {
+  --ink: var(--site-ink);
+  --muted: var(--site-muted);
+  --cream: var(--site-page);
+  --paper: var(--site-surface);
+  --line: var(--site-line);
+  --coral: var(--site-action);
+  --blue: var(--site-green);
+  --forest: var(--site-green);
+  --mint: var(--site-green);
+  --sage: var(--site-chart);
+  --coral-soft: var(--site-raised);
+  --blue-soft: var(--site-raised);
+  --mint-soft: var(--site-selected);
+  --lime: var(--site-selected);
+  --danger: var(--site-error);
+  --shadow: none;
+}
+.site-theme-surface[data-site-theme="light"] { color-scheme: light; }
+.site-theme-surface[data-site-theme="dark"] { color-scheme: dark; }
+html:has(body > .site-theme-surface) { color-scheme: light dark; background: light-dark(#f8f7f4, #0b0c0d); }
+html:has(body > .site-theme-surface[data-site-theme="light"]) { color-scheme: light; }
+html:has(body > .site-theme-surface[data-site-theme="dark"]) { color-scheme: dark; }
+body:has(> .site-theme-surface) { background: transparent; }
+
+.site-theme-surface :is(a, button, input, select, textarea, summary, [tabindex="0"]):focus-visible {
+  outline: 2px solid var(--site-focus);
+  outline-offset: 3px;
+}
+.legal-toolbar { width: min(760px, calc(100% - 32px)); margin-inline: auto; padding-top: 20px; display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.legal-toolbar fieldset { margin: 0; }
+.legal-theme .legal-page { padding-top: 24px; }
+.legal-theme .legal-page :is(h1,h2) { font-family: var(--font-display); font-weight: 600; }
+.legal-theme .legal-page h1 { font-size: clamp(30px, 5vw, 40px); }
+.legal-theme .legal-page a { color: var(--site-green); text-underline-offset: .2em; }
+.legal-theme .legal-page dl { border-color: var(--site-line); background: var(--site-surface); }
+.legal-toolbar .locale-picker button { background: var(--site-surface); color: var(--site-ink); border-color: var(--site-control); }
+.legal-toolbar .locale-picker button.active { background: var(--site-selected); color: var(--site-green); }
+.site-theme-surface .invitation-banner { background: var(--site-selected); color: var(--site-ink); border-color: var(--site-line); }
+.site-theme-surface .invitation-banner button { background: var(--site-surface); color: var(--site-ink); border: 1px solid var(--site-control); border-radius: 10px; }
+
+.adult-workspace :is(.app-shell, .clinician-desk) {
+  --v2-navy: var(--site-ink);
+  --v2-copy: var(--site-muted);
+  --v2-teal: var(--site-focus);
+  --v2-teal-dark: var(--site-green);
+  --v2-cream: var(--site-page);
+  --v2-line: var(--site-line);
+  --v2-shadow: none;
+  --v2-peach: var(--site-raised);
+  --v2-sky: var(--site-raised);
+  --v2-mint: var(--site-selected);
+  --v2-lilac: var(--site-raised);
+  --desk-ink: var(--site-ink);
+  --desk-muted: var(--site-muted);
+  --desk-paper: var(--site-surface);
+  --desk-line: var(--site-line);
+  background: var(--site-page);
+  color: var(--site-ink);
+}
+.adult-workspace :is(.app-shell, .clinician-desk, .onboarding-page) :is(h1,h2,h3,h4,strong) {
+  font-family: var(--font-display);
+  font-weight: 600;
+  color: var(--site-ink);
+}
+.adult-workspace :is(.app-shell, .clinician-desk) h1 { font-size: clamp(28px, 3vw, 36px); line-height: 1.15; letter-spacing: -.025em; }
+.adult-workspace :is(.app-shell, .clinician-desk) h2 { font-size: clamp(20px, 2vw, 24px); line-height: 1.25; }
+.adult-workspace :is(.app-shell, .clinician-desk) h3 { font-size: 18px; line-height: 1.35; }
+.adult-workspace :is(.app-shell, .clinician-desk) :is(p, small, .kicker) { color: var(--site-muted); }
+.adult-workspace :is(.app-shell, .clinician-desk) p { font-size: 15px; line-height: 1.55; }
+.adult-workspace :is(.app-shell, .clinician-desk) .kicker { font-weight: 600; letter-spacing: .04em; }
+.adult-workspace :is(.app-shell, .clinician-desk) svg:not(.soyle-logo) { stroke-width: 1.7; }
+.adult-workspace :is(.sidebar, .desk-rail) {
+  width: 252px;
+  padding: 20px 14px 16px;
+  background: var(--site-surface);
+  border-inline-end: 1px solid var(--site-line);
+  box-shadow: none;
+}
+.adult-workspace .sidebar .brand { height: 44px; padding-inline: 10px; }
+.adult-workspace .sidebar .brand .soyle-logo { width: auto; height: 31px; }
+.adult-workspace .soyle-unified > .main { margin-inline-start: 252px; background: var(--site-page); }
+.adult-workspace .soyle-unified > .main::before { display: none; }
+.adult-workspace .soyle-unified .main > .v2-topbar,
+.adult-workspace .desk-topline {
+  min-height: 68px;
+  height: auto;
+  padding-block: 10px;
+  gap: 10px;
+  background: var(--site-page);
+  color: var(--site-ink);
+  border-bottom: 1px solid var(--site-line);
+  backdrop-filter: none;
+  box-shadow: none;
+}
+.adult-workspace .desk-topline { justify-content: flex-end; }
+.adult-workspace .desk-topline > .site-theme-choice { margin-inline-start: auto; }
+.adult-workspace .desk-brand { padding: 0 10px 14px; min-height: 58px; }
+.adult-workspace :is(.sidebar, .desk-rail) .workspace-nav { margin: 8px 0 16px; gap: 12px; }
+.adult-workspace .workspace-nav-group > p { margin: 0 10px 3px; font-size: 12px; color: var(--site-muted); }
+.adult-workspace .workspace-nav-group a { min-height: 37px; padding: 7px 10px; gap: 10px; color: var(--site-ink); border-radius: 10px; font-size: 14px; font-weight: 400; }
+.adult-workspace .workspace-nav-group svg { color: var(--site-muted); }
+.adult-workspace .workspace-nav-group a:hover { background: var(--site-raised); }
+.adult-workspace .workspace-nav-group a[aria-current="page"] { color: var(--site-green); background: var(--site-selected); font-weight: 600; box-shadow: none; }
+.adult-workspace .workspace-nav-group a[aria-current="page"] svg { color: inherit; }
+.adult-workspace .workspace-rail-toggle {
+  display: inline-grid;
+  place-items: center;
+  flex: none;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border: 1px solid var(--site-line);
+  border-radius: 10px;
+  background: var(--site-surface);
+  color: var(--site-muted);
+  cursor: pointer;
+}
+.adult-workspace .workspace-rail-toggle:hover { color: var(--site-ink); background: var(--site-raised); }
+.adult-workspace .sidebar > .workspace-rail-toggle { position: absolute; inset: 24px 14px auto auto; }
+.adult-workspace :is(.sidebar-account, .desk-identity) { border-color: var(--site-line); margin-top: auto; }
+.adult-workspace .desk-identity :is(button,small) { color: var(--site-muted); }
+.adult-workspace .desk-identity > fieldset { margin: 8px 0 0; min-width: 0; }
+.adult-workspace :is(.account-menu-panel, .notification-panel, .v2-guide-modal, dialog, [role="dialog"]:not(.sidebar,.desk-rail)) {
+  background: var(--site-surface);
+  color: var(--site-ink);
+  border-color: var(--site-line);
+  box-shadow: var(--site-float);
+}
+.adult-workspace :is(.overlay, .v2-guide-modal-backdrop, .desk-overlay), .adult-workspace dialog::backdrop { background: var(--site-overlay); }
+.adult-workspace :is(.account-menu-trigger, .notification-button, .menu-button, .sidebar-close, .desk-menu, .desk-close, .notification-item) {
+  color: var(--site-ink);
+  background: var(--site-surface);
+  border-color: var(--site-line);
+  box-shadow: none;
+}
+.adult-workspace .soyle-unified .v2-topbar .menu-button { color: var(--site-ink); }
+.adult-workspace :is(.account-menu-panel, .notification-panel) :is(button, span, strong) { color: var(--site-ink); }
+.adult-workspace :is(.account-menu-panel button, .notification-list button):hover { background: var(--site-raised); }
+.adult-workspace .notification-list button.unread { background: var(--site-selected); }
+.adult-workspace :is(.notification-head, .notification-list button) { border-color: var(--site-line); }
+.adult-workspace :is(.notification-symbol, .setting-icon, .stat-card > span, .desk-monogram, .goal-builder-icon) { background: var(--site-selected); color: var(--site-green); }
+.adult-workspace .notification-button > i { background: var(--site-green); color: var(--site-surface); }
+.adult-workspace .account-menu-trigger-icon { color: var(--site-muted); }
+.adult-workspace .notification-panel { max-width: calc(100vw - 32px); }
+.adult-workspace .soyle-unified .main > .page { padding-top: 28px; max-width: 1470px; }
+.adult-workspace :is(.workspace-heading, .desk-heading) > span { color: var(--site-muted); }
+.adult-workspace :is(.focused-parent-cabinet > .workspace-heading, .admin-page > .admin-heading) { padding: 0 0 18px; border-color: var(--site-line); }
+.adult-workspace .workspace-heading h1 { margin-top: 0; }
+.adult-workspace .workspace-profile-heading { margin-block: 4px 0; font-size: clamp(28px, 3vw, 36px); }
+.adult-workspace .workspace-heading .cabinet-child-picker { margin: 8px 0 0; padding: 0; background: transparent; border: 0; }
+.adult-workspace .workspace-profile-heading .cabinet-child-picker { display: inline-flex; margin: 0; max-width: 100%; }
+.adult-workspace .desk-heading { margin: 28px 0 24px; }
+.adult-workspace .desk-roster-heading { padding: 0 0 20px; min-height: 104px; border-radius: 0; border-bottom: 1px solid var(--site-line); background: transparent; }
+.adult-workspace .desk-roster-heading img { width: 105px; mix-blend-mode: normal; }
+.adult-workspace .desk-roster li a:hover { background: var(--site-raised); }
+.adult-workspace :is(.desk-row-open, .desk-text-button) { color: var(--site-green); }
+.adult-workspace .desk-roster li:nth-child(n) .desk-monogram { width: 42px; height: 42px; border-radius: 12px; background: var(--site-raised); color: var(--site-ink); }
+.desk-close, .desk-mobile-logo, .desk-overlay { display: none; }
+
+.adult-workspace :is(.app-shell, .clinician-desk, .onboarding-page) .primary-button {
+  min-height: 44px;
+  padding: 10px 16px;
+  border: 1px solid transparent;
+  border-radius: 12px;
+  background: var(--site-action);
+  color: var(--site-on-action);
+  box-shadow: none;
+  font: 600 15px/1.4 var(--font-body);
+}
+.adult-workspace :is(.app-shell, .clinician-desk, .onboarding-page) .primary-button:hover:not(:disabled) { background: var(--site-action-hover); transform: none; }
+.adult-workspace :is(.app-shell, .clinician-desk, .onboarding-page) :is(.small-button, .secondary-button, .profile-logout) {
+  min-height: 42px;
+  padding: 8px 12px;
+  border: 1px solid var(--site-control);
+  border-radius: 10px;
+  background: var(--site-surface);
+  color: var(--site-ink);
+  box-shadow: none;
+  font: 600 14px/1.35 var(--font-body);
+}
+.adult-workspace :is(.app-shell, .clinician-desk) :is(.small-button, .secondary-button, .profile-logout):hover:not(:disabled) { background: var(--site-raised); transform: none; }
+.adult-workspace :is(.app-shell, .clinician-desk) :is(.primary-button, .secondary-button, .small-button):disabled {
+  background: var(--site-raised);
+  color: var(--site-muted);
+  opacity: .7;
+  cursor: not-allowed;
+}
+.adult-workspace :is(.app-shell, .clinician-desk, .onboarding-page) :is(input:not([type="checkbox"],[type="radio"],[type="range"],[type="file"]),select,textarea) {
+  min-height: 44px;
+  max-width: 100%;
+  border: 1px solid var(--site-control);
+  border-radius: 10px;
+  background: var(--site-surface);
+  color: var(--site-ink);
+  box-shadow: none;
+  font-family: var(--font-body);
+  font-size: 16px;
+}
+.adult-workspace :is(input, textarea)::placeholder { color: var(--site-muted); }
+.adult-workspace .workspace-heading .workspace-profile-heading select {
+  width: auto;
+  max-width: 100%;
+  font-size: inherit;
+  font-weight: 600;
+  padding: 4px 12px;
+}
+.adult-workspace :is(input[type="checkbox"],input[type="radio"],input[type="range"]) { accent-color: var(--site-green); }
+.adult-workspace :is(input,select,textarea)[aria-invalid="true"] { border-color: var(--site-error); }
+.adult-workspace .clinician-desk .desk-search { background: var(--site-surface); border-color: var(--site-control); border-radius: 10px; }
+.adult-workspace .clinician-desk .desk-search input { border: 0; padding-inline: 2px; }
+.adult-workspace .desk-search:focus-within { outline: 2px solid var(--site-focus); outline-offset: 2px; }
+.adult-workspace :is(.toggle, .setting-toggle) { background: var(--site-control); }
+.adult-workspace :is(.toggle.on, .setting-toggle[aria-checked="true"]) { background: var(--site-green); }
+.adult-workspace .toggle i { background: var(--site-surface); }
+.adult-workspace :is(.locale-picker button, .usage-periods button, .admin-queue-filters button, .admin-library-views button, .admin-tabs button, .review-workspace-tabs button) {
+  background: var(--site-surface);
+  color: var(--site-ink);
+  border: 1px solid var(--site-control);
+  box-shadow: none;
+  min-height: 44px;
+}
+.adult-workspace :is(.locale-picker, .usage-periods, .admin-queue-filters, .admin-library-views, .admin-tabs, .review-workspace-tabs) button:is(.active, [aria-pressed="true"]) {
+  color: var(--site-green);
+  background: var(--site-selected);
+  border-color: var(--site-focus);
+}
+.adult-workspace .theme-setting .site-theme-choice > span { display: none; }
+
+.adult-workspace :is(.soyle-unified, .clinician-desk) :is(
+  .admin-card, .settings-section, .cabinet-panel, .invite-create-panel, .goal-builder, .goals-hero,
+  .practice-goal-card, .practice-preferences-card, .adaptive-plan-card, .plan-history-card,
+  .data-control, .content-review-workspace, .review-section, .usage-breakdown-card, .usage-history-card, .stat-card,
+  .journey-metrics > article, .journey-history, .journey-observations, .journey-details, .journey-empty,
+  .v2-photo-card, .world-empty, .world-library-tools, .aac-composer-top, .aac-board, .aac-quick, .aac-category-panel,
+  .v2-guide-card, .v2-guide-hero, .v2-guide-grid > button, .profile-hero-card, .profile-info-card,
+  .profile-quick-links > button, .vocabulary-panel, .empty-state, .student-account-grid article,
+  .ai-prompt-panel, .ai-conversation
+) {
+  background: var(--site-surface);
+  border: 1px solid var(--site-line);
+  border-radius: var(--site-radius);
+  color: var(--site-ink);
+  box-shadow: none;
+}
+.adult-workspace :is(.soyle-unified, .clinician-desk) :is(
+  .skill-observation-grid article, .home-activity-list article, .real-life-history, .practice-goal-details,
+  .admin-content-summary, .admin-next-review, .admin-queue-note, .admin-review-stages li,
+  .usage-note, .usage-empty, .usage-row.header, .period-pill, .desk-goal, .desk-summary,
+  .prepared-plan article, .plan-summary, .goals-hero-note, .invite-link-result, .invite-steps li span,
+  .journey-heading, .journey-step, .journey-empty, .journey-filter, .cabinet-empty,
+  .v2-world-words-link, .aac-quick button, .aac-card, .v2-guide-modal-section, pre,
+  .ai-conversation-head, .ai-thread, .ai-quick-questions button, .ai-privacy-note, .user-message,
+  .v2-guide-note
+) { background: var(--site-raised); color: var(--site-ink); border-color: var(--site-line); box-shadow: none; }
+.adult-workspace :is(.soyle-unified, .clinician-desk) :is(
+  .cabinet-entry, .cabinet-panel-heading, .admin-review-item, .account-row, .usage-row, .admin-queue-counters > div,
+  .setting-row, .desk-summary section, .journey-history article, .connected-specialist, .record-history
+) { border-color: var(--site-line); }
+.adult-workspace :is(.soyle-unified, .clinician-desk) :is(
+  .admin-content-kind, .admin-queue-counters span, .admin-review-stages span, .admin-next-review > span, .cabinet-empty-inline,
+  .setting-row > div > span, .cabinet-method-note > summary, .admin-review-item summary, .usage-chart figcaption, .usage-chart-day small,
+  .usage-row, .record-history small, .observation-note label, .admin-content-toolbar label, .cabinet-child-picker
+) { color: var(--site-muted); }
+.adult-workspace :is(.soyle-unified, .clinician-desk) :is(.admin-published-grid article, .linked-exercises, .goal-observation-form, .observation-note, .translation-row) {
+  background: var(--site-surface); color: var(--site-ink); border-color: var(--site-line);
+}
+.adult-workspace :is(.soyle-unified, .clinician-desk) :is(.cabinet-notice:not(.error), .family-inline-message, .success-box, .admin-queue-status.ready, .status.active, .observation-status.independent) {
+  color: var(--site-green); background: var(--site-selected); border-color: var(--site-focus);
+}
+.adult-workspace .system-status:not(.blocked) { color: var(--site-green); background: var(--site-selected); border-color: var(--site-line); }
+.adult-workspace .system-status i { background: currentColor; }
+.adult-workspace :is(.soyle-unified, .clinician-desk) :is(.review-gate-banner, .review-warning, .unreviewed-demo-banner, .adult-preview-banner, .offline-banner, .medical-note, .admin-queue-status.changes, .stop-conditions) {
+  color: var(--site-warning); background: var(--site-warning-bg); border-color: var(--site-warning);
+}
+.adult-workspace :is(.soyle-unified, .clinician-desk) :is(.game-error, .journey-error, .cabinet-notice.error, .review-error, .status.blocked, .system-status.blocked) {
+  color: var(--site-error); background: var(--site-error-bg); border-color: var(--site-error);
+}
+.adult-workspace :is(.soyle-unified, .clinician-desk) :is(.danger-button, .setting-icon.danger) { color: var(--site-error); background: var(--site-error-bg); border-color: var(--site-error); }
+.adult-workspace .usage-chart-day i { background: var(--site-chart); }
+.adult-workspace .usage-chart-bars { border-color: var(--site-line); }
+.adult-workspace .usage-loading i { background: var(--site-raised); }
+
+.adult-workspace :is(.account-table, .usage-history-wrap) { max-width: 100%; overflow-x: auto; }
+.adult-workspace :is(.account-table, .usage-history-wrap) :is(table,tbody,tr,th,td) {
+  background: var(--site-surface);
+  color: var(--site-ink);
+  border-color: var(--site-line);
+}
+.adult-workspace :is(.account-table, .usage-history-wrap) th { background: var(--site-raised); font-weight: 600; }
+.adult-workspace :is(.account-table, .usage-history-wrap) td { padding-block: 10px; }
+.adult-workspace :is(.admin-page, .focused-parent-cabinet) { gap: 24px; }
+
+.adult-workspace :is(.soyle-unified, .clinician-desk) :is(.invite-steps, .known-specialist summary, .vocabulary-panel summary, .library-search, .goals-hero-note span, .settings-save-status) { color: var(--site-muted); }
+.adult-workspace .soyle-unified :is(.review-gated-library, .v2-guide-note) { background: var(--site-warning-bg); color: var(--site-warning); border-color: var(--site-warning); }
+.adult-workspace .soyle-unified :is(.v2-guide-tabs, .v2-world-tabs, .aac-tabs, .aac-toolbar) button {
+  background: var(--site-surface);
+  color: var(--site-ink);
+  border-color: var(--site-control);
+  box-shadow: none;
+}
+.adult-workspace .soyle-unified :is(.v2-guide-tabs, .v2-world-tabs, .aac-tabs, .aac-toolbar) button:is(.active, [aria-selected="true"], [aria-pressed="true"]) {
+  background: var(--site-selected);
+  color: var(--site-green);
+  border-color: var(--site-focus);
+}
+.adult-workspace .soyle-unified .v2-guide-hero::after { background: linear-gradient(90deg, var(--site-surface) 38%, transparent 78%); }
+.adult-workspace .soyle-unified .v2-guide-hero-copy > span { background: var(--site-raised); color: var(--site-green); }
+.adult-workspace .soyle-unified :is(.v2-guide-hero-copy, .v2-guide-modal-copy) > button {
+  background: var(--site-action); color: var(--site-on-action); box-shadow: none; font-weight: 600;
+}
+.adult-workspace .soyle-unified :is(.v2-guide-grid > button > svg, .v2-guide-close) { background: var(--site-raised); color: var(--site-ink); box-shadow: none; }
+.adult-workspace .soyle-unified .library-search > span { background: var(--site-surface); border-color: var(--site-control); }
+.adult-workspace .soyle-unified .library-search input { border: 0; }
+.adult-workspace .soyle-unified :is(.aac-card-actions, .aac-card-main) :is(strong, small) { color: var(--site-ink); }
+.adult-workspace .soyle-unified .aac-free .aac-tabs button small { color: inherit; }
+.adult-workspace .soyle-unified .review-gated-library > div:nth-of-type(2) > span {
+  background: var(--site-surface);
+  color: var(--site-ink);
+  border-color: var(--site-line);
+}
+.adult-workspace .soyle-unified .profile-info-card :is(dt, dd) { color: var(--site-ink); }
+.adult-workspace .soyle-unified :is(.usage-row, .audit-table .table-row).header { background: var(--site-raised); color: var(--site-ink); }
+
+.workspace-overview { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; min-width: 0; }
+.workspace-overview > [role="alert"] { grid-column: 1 / -1; }
+.workspace-overview-card {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 12px;
+  min-width: 0;
+  padding: clamp(16px, 2vw, 24px);
+  border: 1px solid var(--site-line);
+  border-radius: var(--site-radius);
+  background: var(--site-surface);
+}
+.workspace-overview-card > header { display: flex; align-items: center; gap: 10px; }
+.workspace-overview-card > header > svg { color: var(--site-green); flex: none; }
+.workspace-overview-card :is(h2,h3,p,ul) { margin: 0; }
+.workspace-overview-card :is(p,li) { overflow-wrap: anywhere; }
+.workspace-practice-card { grid-column: 1 / -1; }
+.workspace-overview-card > button:last-child { margin-top: auto; }
+.workspace-overview-detail { display: grid; gap: 6px; border-top: 1px solid var(--site-line); padding-top: 12px; width: 100%; }
+.workspace-overview-detail button { justify-self: start; }
+.workspace-overview-list { list-style: none; padding: 0; width: 100%; }
+.workspace-overview-list li { padding: 8px 0; border-top: 1px solid var(--site-line); }
+.workspace-overview-list li p { margin-top: 4px; }
+.workspace-skeleton { width: min(100%, 440px); display: grid; gap: 8px; padding-block: 4px; }
+.workspace-skeleton i { background: var(--site-raised); height: 13px; border-radius: 6px; }
+.workspace-skeleton i:nth-of-type(1) { width: 60%; }
+.workspace-skeleton i:nth-of-type(3) { width: 75%; }
+.workspace-loading { min-height: 100dvh; display: grid; place-content: center; justify-items: center; gap: 20px; }
+.workspace-loading .workspace-skeleton { width: min(48vw, 280px); }
+.adult-workspace .onboarding-page, .adult-workspace .auth-loading { background: var(--site-page); }
+.adult-workspace .onboarding-card { background: var(--site-surface); border-color: var(--site-line); box-shadow: none; }
+
+@media (min-width: 1280px) {
+  .workspace-overview { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .workspace-practice-card { grid-column: auto; }
+}
+@media (min-width: 1051px) {
+  .adult-workspace .workspace-rail-collapsed :is(.sidebar, .desk-rail) { width: 76px; padding-inline: 10px; }
+  .adult-workspace .soyle-unified.workspace-rail-collapsed > .main { margin-inline-start: 76px; }
+  .adult-workspace .clinician-desk.workspace-rail-collapsed { grid-template-columns: 76px minmax(0, 1fr); }
+  .adult-workspace .workspace-rail-collapsed :is(.sidebar .brand, .desk-brand) { padding-inline: 0; justify-content: center; }
+  .adult-workspace .workspace-rail-collapsed .desk-brand { flex-direction: column; gap: 8px; }
+  .adult-workspace .workspace-rail-collapsed .sidebar > .workspace-rail-toggle { position: static; margin: 8px auto 0; }
+  .adult-workspace .workspace-rail-collapsed .workspace-nav-group > p { display: none; }
+  .adult-workspace .workspace-rail-collapsed .desk-identity > fieldset { display: none; }
+  .adult-workspace .workspace-rail-collapsed .workspace-nav-group a { justify-content: center; min-height: 40px; padding-inline: 6px; }
+  .adult-workspace .workspace-rail-collapsed :is(.workspace-nav-group a > span, .desk-identity button > span, .desk-identity > strong, .desk-identity > small, .account-menu-name, .account-menu-chevron) {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+  .adult-workspace .workspace-rail-collapsed :is(.desk-identity button, .account-menu-trigger) { justify-content: center; }
+}
+@media (max-width: 1050px) {
+  .adult-workspace .workspace-rail-toggle { display: none; }
+  .adult-workspace .soyle-unified > .main { margin-inline-start: 0; }
+  .adult-workspace :is(.sidebar, .desk-rail) .workspace-nav-group a { min-height: 44px; }
+  .adult-workspace .clinician-desk { grid-template-columns: minmax(0, 1fr); }
+  .adult-workspace .desk-rail {
+    position: fixed;
+    z-index: 51;
+    inset: 0 auto 0 0;
+    height: 100dvh;
+    visibility: hidden;
+    transform: translateX(-100%);
+    width: min(300px, calc(100vw - 44px));
+  }
+  .adult-workspace .desk-rail.open { visibility: visible; transform: none; }
+  .adult-workspace .desk-overlay { display: block; position: fixed; inset: 0; z-index: 50; }
+  .adult-workspace .desk-menu-content { display: flex; }
+  .adult-workspace :is(.desk-close, .desk-menu, .desk-mobile-logo) { display: inline-flex; align-items: center; }
+  .adult-workspace .desk-close { justify-content: center; min-width: 44px; min-height: 44px; border-radius: 10px; border: 1px solid var(--site-line); }
+  .adult-workspace .desk-menu { min-height: 44px; border-radius: 10px; padding-inline: 8px; }
+  .adult-workspace .desk-topline { justify-content: flex-start; }
+}
+@media (max-width: 720px) {
+  .adult-workspace .soyle-unified .main > .page { padding: 20px 16px 40px; }
+  .adult-workspace .soyle-unified .main > .v2-topbar { padding-inline: 12px; gap: 6px; }
+  .adult-workspace .v2-top-actions { gap: 5px; }
+  .adult-workspace .desk-topline { flex-wrap: nowrap; gap: 6px; }
+  .adult-workspace .desk-heading { margin-block: 20px; }
+  .adult-workspace .desk-roster-heading { display: flex; min-height: 0; }
+  .adult-workspace .desk-roster-heading h1 { padding: 0; }
+  .adult-workspace .desk-roster-heading img { position: static; width: 62px; }
+  .workspace-overview { grid-template-columns: minmax(0, 1fr); }
+  .adult-workspace .notification-panel { inset-inline-end: -120px; }
+  .adult-workspace .soyle-unified .v2-guide-hero::after { background: linear-gradient(180deg, var(--site-surface) 42%, transparent 85%); }
+}

@@ -2,6 +2,8 @@
 import { TranslationEditor } from "./TranslationEditor";
 import { LanguagePicker } from "./LanguagePicker";
 import { AuthLoading, AuthScreen, type AuthEntryMode } from "./AuthScreen";
+import { SiteThemeChoice, SiteThemeSurface } from "./PublicTheme";
+import { WorkspaceSkeleton } from "./WorkspaceSkeleton";
 import type { LandingTheme } from "@/lib/landingTheme";
 
 import { ExercisePetProvider, ExercisePet, useExercisePet } from "./pet/ExercisePet";
@@ -200,17 +202,13 @@ const modules = [
     get time() { return t("module.mixed.time"); },
   },
 ];
-function BrandIcon({ size = 26 }: { size?: number }) {
-  return <BrandLogo variant="icon" width={size} decorative />;
-}
-
 function ModuleGlyph({ module, size = 30 }: { module: ModuleName; size?: number }) {
   const Icon = module === "motor" ? Mic2 : module === "sensory" ? Ear : MessageCircle;
   return <span className={`module-glyph ${module}`} aria-hidden="true"><Icon size={size} strokeWidth={1.8}/><i/></span>;
 }
 
 import { SpecialistWorkspace, FamilySpecialistAccess, ParentAccountDeletion } from "./SpecialistWorkspace";
-import { WorkspaceNavigation } from "./WorkspaceNavigation";
+import { WorkspaceNavigation, WorkspaceRailToggle } from "./WorkspaceNavigation";
 import { readWorkspacePage, workspaceHref, workspacePages, type WorkspacePage } from "@/lib/workspacePages";
 import { SpecialistInvitation } from "./SpecialistInvitation";
 import { AdminContentQueue } from "./AdminContentQueue";
@@ -284,9 +282,15 @@ export function SoyleApp({ authTheme = "system", authMode = "login" }: { authThe
     }
   };
   const invitation = invitationToken ? <SpecialistInvitation token={invitationToken} user={user} onClose={() => { setInvitationToken(""); window.history.replaceState(null, "", window.location.pathname + window.location.search); }}/> : null;
-  if (!user) return <>{invitation}<AuthScreen key={authMode} initialMode={authMode} theme={authTheme} onAuthenticated={setUser} /></>;
-  if (user.role === "specialist") return <>{invitation}<SpecialistWorkspace user={user} onLogout={logout}/>{authActionError && <p role="alert">{authActionError}</p>}</>;
-  return <>{invitation}<AuthenticatedApp user={user} onLogout={logout} externalError={authActionError} onDismissExternalError={() => setAuthActionError("")} /></>;
+  if (!user) {
+    const entry = <AuthScreen key={authMode} initialMode={authMode} theme={authTheme} onAuthenticated={setUser}/>;
+    return invitation ? <SiteThemeSurface className="auth-entry-theme" initialTheme={authTheme}>{invitation}{entry}</SiteThemeSurface> : entry;
+  }
+  const workspace = user.role === "specialist"
+    ? <><SpecialistWorkspace user={user} onLogout={logout}/>{authActionError && <p role="alert">{authActionError}</p>}</>
+    : <AuthenticatedApp user={user} onLogout={logout} externalError={authActionError} onDismissExternalError={() => setAuthActionError("")}/>;
+  if (user.role === "student") return <>{invitation}{workspace}</>;
+  return <SiteThemeSurface className="adult-workspace" initialTheme={authTheme}>{invitation}{workspace}</SiteThemeSurface>;
 }
 
 function AuthenticatedApp({ user, onLogout, externalError, onDismissExternalError }: { user: User; onLogout: () => void; externalError: string; onDismissExternalError: () => void }) {
@@ -298,6 +302,7 @@ function AuthenticatedApp({ user, onLogout, externalError, onDismissExternalErro
   const currentPage = destination === "home" && workspaceRole ? workspacePages[workspaceRole][0] : page?.screen === screen ? page : undefined;
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [childNavigationCollapsed, setChildNavigationCollapsed] = useState(false);
+  const [workspaceNavigationCollapsed, setWorkspaceNavigationCollapsed] = useState(false);
   const [compactNavigation, setCompactNavigation] = useState(false);
   const menuButtonRef = useRef<HTMLButtonElement>(null);
   const sidebarCloseRef = useRef<HTMLButtonElement>(null);
@@ -396,6 +401,7 @@ function AuthenticatedApp({ user, onLogout, externalError, onDismissExternalErro
     return () => query.removeEventListener("change", update);
   }, []);
   const childRail = user.role === "student" && childNavigationCollapsed && !compactNavigation;
+  const workspaceRail = Boolean(workspaceRole) && workspaceNavigationCollapsed && !compactNavigation;
   const sidebarIsDialog = compactNavigation;
   const navigationHidden = sidebarIsDialog && !sidebarOpen;
   useEffect(() => {
@@ -767,7 +773,7 @@ function AuthenticatedApp({ user, onLogout, externalError, onDismissExternalErro
     return () => window.removeEventListener("soyle-language-selected", selected);
   });
 
-  if (user.role === "parent" && childrenLoading) return <div className="auth-loading"><div className="brand-mark"><BrandIcon /></div><span>{t("screen.AuthenticatedApp.ui40")}</span></div>;
+  if (user.role === "parent" && childrenLoading) return <div className="workspace-loading"><BrandLogo variant="mark" size={32}/><WorkspaceSkeleton/></div>;
   if (["parent", "student"].includes(user.role) && childrenError) return <div className="auth-loading" role="alert"><ShieldAlert size={30}/><span>{childrenError}</span><button className="primary-button" onClick={loadChildren}>{t("screen.AuthenticatedApp.ui41")}</button></div>;
   if (user.role === "parent" && !children.length) return <ChildOnboarding user={user} onCreated={(newChild) => { setChildren([newChild]); setSelectedChildId(newChild.id); }} onLogout={onLogout} />;
 
@@ -911,16 +917,17 @@ function AuthenticatedApp({ user, onLogout, externalError, onDismissExternalErro
   const AppRoleShell = user.role === "student" ? ChildShell : user.role === "admin" ? AdminShell : ParentShell;
 
   return (
-    <AppRoleShell home={user.role === "student" && screen === "home"} navigationCollapsed={childNavigationCollapsed}>
+    <AppRoleShell home={user.role === "student" && screen === "home"} navigationCollapsed={workspaceRole ? workspaceRail : childNavigationCollapsed}>
       {user.role === "student" && <div className="mobile-account-access"><AccountMenu name={user.full_name} onOpen={next => openScreen(next)} onLogout={onLogout}/></div>}
       {user.role === "student" && compactNavigation && navigationHidden && <button ref={menuButtonRef} type="button" className="child-menu-toggle" onClick={() => { setSidebarOpen(true); }} aria-label={t("landing.copy046")} aria-expanded={false} aria-controls="primary-navigation"><Menu size={23}/><span>{t("screen.AuthenticatedApp.ui48")}</span></button>}
       <div className="ambient ambient-one" />
       <div className="ambient ambient-two" />
       <aside id="primary-navigation" className={`sidebar ${sidebarOpen ? "open" : ""}`} aria-label={t("screen.AuthenticatedApp.ui49")} role={sidebarIsDialog && sidebarOpen ? "dialog" : undefined} aria-modal={sidebarIsDialog && sidebarOpen ? true : undefined} aria-hidden={navigationHidden ? true : undefined} inert={navigationHidden ? true : undefined}>
         <button ref={sidebarBrandRef} type="button" className="brand" onClick={() => childRail ? setChildNavigationCollapsed(false) : openScreen("home")} aria-label={childRail ? t("screen.AuthenticatedApp.ui50") : t("screen.AuthenticatedApp.ui51")} title={childRail ? t("screen.AuthenticatedApp.ui52") : undefined} aria-expanded={childRail ? false : undefined} aria-controls={childRail ? "primary-navigation" : undefined}>
-          <BrandLogo variant={user.role === "student" && childNavigationCollapsed && !compactNavigation ? "vertical" : "compact"} width={user.role === "student" && childNavigationCollapsed && !compactNavigation ? 72 : 170} decorative />
+          <BrandLogo variant={childRail || workspaceRail ? "mark" : "full"} size={childRail || workspaceRail ? 30 : 44} decorative />
         </button>
         {!childRail && <button ref={sidebarCloseRef} type="button" className="sidebar-close" onClick={user.role === "student" && !compactNavigation ? () => { setChildNavigationCollapsed(true); window.requestAnimationFrame(() => sidebarBrandRef.current?.focus()); } : closeSidebar} aria-label={user.role === "student" && !compactNavigation ? t("screen.AuthenticatedApp.ui53") : t("landing.copy045")} aria-expanded={user.role === "student" && !compactNavigation ? true : undefined} aria-controls="primary-navigation">{user.role === "student" && !compactNavigation ? <PanelLeftClose/> : <X/>}</button>}
+        {workspaceRole && <WorkspaceRailToggle collapsed={workspaceRail} onToggle={() => setWorkspaceNavigationCollapsed(value => !value)} controls="primary-navigation"/>}
         {workspaceRole ? <WorkspaceNavigation role={workspaceRole} current={currentPage} childId={child?.id} onOpen={item => {
           openScreen(item.screen, item.section);
           window.requestAnimationFrame(() => document.getElementById("workspace-content")?.focus({ preventScroll: true }));
@@ -941,7 +948,7 @@ function AuthenticatedApp({ user, onLogout, externalError, onDismissExternalErro
           <span>{user.role === "student" ? t("screen.AuthenticatedApp.ui56") : t("shell.template13", { v0: dashboard?.week_sessions || 0 })}</span>
         </div>}
         <div className="sidebar-account">
-          <AccountMenu key={String(sidebarOpen)} name={user.full_name} onExpand={() => setChildNavigationCollapsed(false)} onOpen={next => { openScreen(next); if (sidebarIsDialog) window.requestAnimationFrame(() => menuButtonRef.current?.focus()); }} onLogout={onLogout}/>
+          <AccountMenu key={String(sidebarOpen)} name={user.full_name} onExpand={() => workspaceRole ? setWorkspaceNavigationCollapsed(false) : setChildNavigationCollapsed(false)} onOpen={next => { openScreen(next); if (sidebarIsDialog) window.requestAnimationFrame(() => menuButtonRef.current?.focus()); }} onLogout={onLogout}/>
         </div>
       </aside>
 
@@ -950,11 +957,10 @@ function AuthenticatedApp({ user, onLogout, externalError, onDismissExternalErro
       <main className="main" id={workspaceRole ? "workspace-content" : undefined} tabIndex={workspaceRole ? -1 : undefined} inert={sidebarIsDialog && sidebarOpen ? true : undefined}>
         <header className="topbar v2-topbar">
           {user.role !== "student" && <button ref={menuButtonRef} className="menu-button" onClick={() => setSidebarOpen(true)} aria-label={t("landing.copy046")} aria-expanded={sidebarOpen} aria-controls="primary-navigation"><Menu size={20}/><span>{t("screen.AuthenticatedApp.ui48")}</span></button>}
-          <div className="mobile-logo"><BrandLogo variant="compact" width={116} /></div>
+          <div className="mobile-logo"><BrandLogo variant="mark" size={28} /></div>
           <div className="top-actions v2-top-actions">
             {user.role === "parent" && <div className="notification-wrap"><button className="notification-button" onClick={() => setNotificationsOpen((value) => !value)} aria-label={t("nav.notifications")}><Bell size={19}/>{notifications.unread > 0 && <i>{notifications.unread}</i>}</button>{notificationsOpen && <div className="notification-panel"><div className="notification-head"><div><span className="kicker">{t("screen.AuthenticatedApp.ui60")}</span><strong>{t("screen.AuthenticatedApp.ui61")}</strong></div>{notifications.unread > 0 && <button onClick={markAllNotificationsRead}>{t("screen.AuthenticatedApp.ui62")}</button>}</div><div className="notification-list">{notifications.items.length ? notifications.items.map((item) => <button key={item.id} className={item.is_read ? "read" : "unread"} onClick={() => markNotificationRead(item.id)}><span className="notification-symbol"><Trophy size={18}/></span><div><strong>{item.title}</strong><p>{item.message}</p><small>{formatDate(item.created_at, {day: "numeric", month: "long"})}</small></div>{!item.is_read && <i/>}</button>) : <div className="notification-empty"><Bell size={24}/><strong>{t("screen.AuthenticatedApp.ui63")}</strong><span>{t("screen.AuthenticatedApp.ui64")}</span></div>}</div></div>}</div>}
-            {user.role === "parent" && <span className="v2-top-divider"/>}
-            {user.role === "parent" && <span className="v2-user-greeting"><span>{t("screen.AuthenticatedApp.ui65")}</span><strong>{user.full_name.split(" ")[0]}!</strong></span>}
+            {workspaceRole && <SiteThemeChoice/>}
             {user.role === "student" && <StarVault total={dashboard?.stars || 0} onOpen={() => openScreen("achievements")}/>}
           </div>
         </header>
@@ -1005,7 +1011,7 @@ function ChildOnboarding({ user, onCreated, onLogout }: { user: User; onCreated:
   useLocale();
   const [name, setName] = useState(""); const [birthDate, setBirthDate] = useState(""); const [module, setModule] = useState<ModuleName>("mixed"); const [error, setError] = useState("");
   const submit = async (event: React.FormEvent) => { event.preventDefault(); setError(""); try { const child = await api<Child>("/api/children", { method: "POST", body: JSON.stringify({ name, birth_date: birthDate, primary_module: module, avatar_color: "#f07d68" }) }); onCreated(child); } catch (cause) { setError(cause instanceof Error ? cause.message : t("screen.ChildOnboarding.ui1")); } };
-  return <div className="onboarding-page"><div className="onboarding-card"><div className="brand"><BrandLogo variant="vertical" width={150} /><span>{t("screen.ChildOnboarding.ui2")}</span></div><span className="kicker">{t("screen.ChildOnboarding.ui3")} {user.full_name.toUpperCase()}</span><h1>{t("screen.ChildOnboarding.ui4")}</h1><p>{t("screen.ChildOnboarding.ui5")}</p><form onSubmit={submit}><label>{t("screen.ChildOnboarding.ui6")}<input value={name} onChange={(e) => setName(e.target.value)} placeholder={t("screen.ChildOnboarding.ui7")} required minLength={2}/></label><label>{t("screen.ChildOnboarding.ui8")}<input type="date" max={new Date().toISOString().slice(0,10)} value={birthDate} onChange={(e) => setBirthDate(e.target.value)} required/></label><label>{t("screen.ChildOnboarding.ui9")}<select value={module} onChange={(e) => setModule(e.target.value as ModuleName)}><option value="sensory">{t("screen.ChildOnboarding.ui10")}</option><option value="mixed">{t("screen.ChildOnboarding.ui11")}</option></select></label>{error && <div className="auth-error">{error}</div>}<button className="primary-button">{t("screen.ChildOnboarding.ui12")} <ChevronRight size={18}/></button></form><button className="auth-switch" onClick={onLogout}>{t("screen.ChildOnboarding.ui13")}</button></div></div>;
+  return <div className="onboarding-page"><div className="onboarding-card"><div className="brand"><BrandLogo size={42} /><span>{t("screen.ChildOnboarding.ui2")}</span></div><span className="kicker">{t("screen.ChildOnboarding.ui3")} {user.full_name.toUpperCase()}</span><h1>{t("screen.ChildOnboarding.ui4")}</h1><p>{t("screen.ChildOnboarding.ui5")}</p><form onSubmit={submit}><label>{t("screen.ChildOnboarding.ui6")}<input value={name} onChange={(e) => setName(e.target.value)} placeholder={t("screen.ChildOnboarding.ui7")} required minLength={2}/></label><label>{t("screen.ChildOnboarding.ui8")}<input type="date" max={new Date().toISOString().slice(0,10)} value={birthDate} onChange={(e) => setBirthDate(e.target.value)} required/></label><label>{t("screen.ChildOnboarding.ui9")}<select value={module} onChange={(e) => setModule(e.target.value as ModuleName)}><option value="sensory">{t("screen.ChildOnboarding.ui10")}</option><option value="mixed">{t("screen.ChildOnboarding.ui11")}</option></select></label>{error && <div className="auth-error">{error}</div>}<button className="primary-button">{t("screen.ChildOnboarding.ui12")} <ChevronRight size={18}/></button></form><button className="auth-switch" onClick={onLogout}>{t("screen.ChildOnboarding.ui13")}</button></div></div>;
 }
 
 function roleLabel(role: Role) {
@@ -2155,15 +2161,35 @@ function ParentScreen({ page, navigate, exercises, child, childProfiles, onSelec
     try { await api(`/api/children/${child.id}`, { method: "DELETE", body: JSON.stringify({ password: deletePassword }) }); onDeleted(child.id); }
     catch (cause) { setDataMessage(cause instanceof Error ? cause.message : t("screen.ParentScreen.ui7")); }
   };
+  const childPicker = childProfiles.length > 1 && <label className="cabinet-child-picker">
+    <span className={section === "overview" ? "sr-only" : undefined}>{t("screen.ParentScreen.ui14")}</span>
+    <select id="workspace-child-profile" value={child?.id || ""} onChange={event => {
+      const url = new URL(window.location.href);
+      url.searchParams.set("child", event.target.value);
+      window.history.replaceState(null, "", url);
+      onSelectChild(Number(event.target.value));
+      window.requestAnimationFrame(() => document.getElementById("workspace-child-profile")?.focus({ preventScroll: true }));
+    }}>
+      {childProfiles.map(item => <option key={item.id} value={item.id}>{item.name}</option>)}
+    </select>
+  </label>;
+
   return <div className="page-enter stack-xl parent-page focused-parent-cabinet">
     <header className="workspace-heading">
-      <span>{t("screen.ParentScreen.ui12")} / {section === "overview" ? t(page.label) : child?.name}</span>
-      <h1>{section === "overview" && child ? child.name : t(page.label)}</h1>
+      {section === "overview" && child ? <>
+        <span>{t(page.label)}</span>
+        {childPicker ? <>
+          <h1 className="sr-only">{child.name}</h1>
+          <div className="workspace-profile-heading">{childPicker}</div>
+        </> : <h1 className="workspace-profile-heading">{child.name}</h1>}
+      </> : <>
+        <h1>{t(page.label)}</h1>
+        {childPicker || (child && <span>{child.name}</span>)}
+      </>}
     </header>
-    {childProfiles.length > 1 && <label className="cabinet-child-picker">{t("screen.ParentScreen.ui14")}<select value={child?.id || ""} onChange={event => { const url = new URL(window.location.href); url.searchParams.set("child", event.target.value); window.history.replaceState(null, "", url); onSelectChild(Number(event.target.value)); }}>{childProfiles.map(item => <option key={item.id} value={item.id}>{item.name}</option>)}</select></label>}
     {section === "overview" && (child ? <ParentCabinetOverview key={locale} childId={child.id} exercises={exercises}
       onRecord={category => { setRecordCategory(category); navigate("practice"); }}
-      onSpecialist={() => navigate("specialist")} onResults={() => onNavigate("progress")}/>
+      onSpecialist={() => navigate("specialist")} onResults={() => onNavigate("progress")} onPlan={() => onNavigate("goals")}/>
       : <p>{t("familyReview.noChild")}</p>)}
     {section === "practice" && <div className="cabinet-page">
     <FunctionalSkillMap childId={child?.id} focusCategory={section === "practice" ? recordCategory : null} onFocused={recordFocused}/>
@@ -2348,13 +2374,13 @@ function AdminScreen({ page }: { page: WorkspacePage }) {
   if (tab === "exercises" && reviewWorkspace) return <div className="page-enter admin-review-page"><ContentReviewWorkspace data={reviewWorkspace} onClose={closeReviewWorkspace} onSpeak={(text, rate) => speak(text, rate, true, reviewWorkspace.version.language || "ru", "exercise", reviewWorkspace.version.id)} onReview={reviewContent} onPublish={publishContent}/></div>;
   if (tab === "exercises" && homePreview) return <div className="page-enter admin-review-page"><HomeActivityReviewPreview activity={homePreview} onClose={closeHomePreview} onPublish={publishHomeContent}/></div>;
   return <div className="page-enter stack-xl admin-page">
-    <div className="admin-heading"><header className="workspace-heading"><span>{t("screen.AdminScreen.ui45")}</span><h1>{t(page.label)}</h1></header><span className={`system-status ${apiHealthy === false ? "blocked" : ""}`}><i/> {apiHealthy === null ? t("screen.AdminScreen.ui47") : apiHealthy ? t("screen.AdminScreen.ui48") : t("screen.AdminScreen.ui49")}</span></div>
+    <div className="admin-heading"><header className="workspace-heading"><h1>{t(tab === "exercises" ? "screen.AdminScreen.ui81" : page.label)}</h1></header><span className={`system-status ${apiHealthy === false ? "blocked" : ""}`}><i/> {apiHealthy === null ? t("screen.AdminScreen.ui47") : apiHealthy ? t("screen.AdminScreen.ui48") : t("screen.AdminScreen.ui49")}</span></div>
     {adminError && <div className="game-error" role="alert"><ShieldAlert size={18}/><span>{adminError}</span><button className="small-button" onClick={() => void load()}>{t("screen.AdminScreen.ui50")}</button></div>}
     {tab === "users" && <div className="stats-row admin-stats"><StatCard icon={<Users/>} value={String(stats.users)} label={t("screen.AdminScreen.ui51")}/><StatCard icon={<UserRound/>} value={String(stats.children)} label={t("screen.AdminScreen.ui52")}/><StatCard icon={<Target/>} value={String(stats.sessions)} label={t("screen.AdminScreen.ui53")}/><StatCard icon={<Gamepad2/>} value={String(stats.exercises)} label={t("screen.AdminScreen.ui54")}/></div>}
     {tab === "users" && <section className="admin-card"><div className="admin-card-head"><div><span className="kicker">{t("screen.AdminScreen.ui60")}</span><h3>{t("screen.AdminScreen.ui61")}</h3><p>{t("screen.AdminScreen.ui62")}</p></div></div><div className="admin-table-wrap"><table className="account-table"><caption className="sr-only">{t("screen.AdminScreen.ui63")}</caption><thead><tr><th scope="col">{t("screen.AdminScreen.ui64")}</th><th scope="col">{t("screen.AdminScreen.ui65")}</th><th scope="col">{t("screen.AdminScreen.ui66")}</th><th scope="col">{t("screen.AdminScreen.ui67")}</th></tr></thead><tbody>{users.map((item) => <tr key={item.id}><td data-label={t("screen.AdminScreen.ui64")}><b>{item.full_name}</b><small>{item.email}</small></td><td data-label={t("screen.AdminScreen.ui65")}><select aria-label={t("screen.AdminScreen.template2", { v0: item.full_name })} value={item.role} onChange={(e) => changeRole(item.id, e.target.value as Exclude<Role,"student">)}><option value="parent">{t("screen.AdminScreen.ui68")}</option><option value="specialist">{t("screen.AdminScreen.ui69")}</option><option value="admin">{t("screen.AdminScreen.ui70")}</option></select></td><td data-label={t("screen.AdminScreen.ui66")}><i className={`status ${item.is_active ? "active" : "blocked"}`}>{item.is_active ? t("screen.AdminScreen.ui71") : t("screen.AdminScreen.ui72")}</i></td><td data-label={t("screen.AdminScreen.ui67")}><button type="button" className="small-button" onClick={() => toggleUser(item)}>{item.is_active ? t("screen.AdminScreen.ui73") : t("screen.AdminScreen.ui74")}</button></td></tr>)}</tbody></table></div><div className="student-accounts"><div className="student-accounts-head"><span className="kicker">{t("screen.AdminScreen.ui75")}</span><small>{students.length}  {t("screen.AdminScreen.ui76")}</small></div><div className="student-account-grid">{students.map((item) => <article key={item.id}><span className="student-icon"><Backpack/></span><div><strong>{item.child_name}</strong><small>{t("screen.AdminScreen.ui77")} {item.username}</small><small>{t("screen.AdminScreen.ui78")} {item.parent_name}</small></div><i className="status active">{t("screen.AdminScreen.ui79")}</i></article>)}</div></div></section>}
     {(tab === "exercises" || tab === "library") && <section className="admin-card admin-content-panel">
       {tab === "exercises" && <>
-      <div className="admin-card-head"><div><span className="kicker">{t("screen.AdminScreen.ui80")}</span><h2>{t("screen.AdminScreen.ui81")}</h2><p>{t("screen.AdminScreen.ui82")}</p></div><button type="button" className="primary-button" aria-expanded={formOpen} onClick={() => setFormOpen(!formOpen)}>{formOpen ? t("screen.AdminScreen.ui83") : t("screen.AdminScreen.ui84")}</button></div>
+      <div className="admin-card-head"><div><span className="kicker">{t("screen.AdminScreen.ui80")}</span><p>{t("screen.AdminScreen.ui82")}</p></div><button type="button" className="primary-button" aria-expanded={formOpen} onClick={() => setFormOpen(!formOpen)}>{formOpen ? t("screen.AdminScreen.ui83") : t("screen.AdminScreen.ui84")}</button></div>
       {formOpen && <form className="exercise-form exercise-draft-form" onSubmit={addExercise}><label>{t("screen.AdminScreen.ui85")}<input placeholder={t("screen.AdminScreen.ui86")} value={form.title} onChange={(e) => setForm({...form,title:e.target.value})} required/></label><label>{t("screen.AdminScreen.ui87")}<input placeholder={t("screen.AdminScreen.ui88")} value={form.objective} onChange={(e) => setForm({...form,objective:e.target.value})} required/></label><label>{t("screen.AdminScreen.ui89")}<input placeholder={t("screen.AdminScreen.ui90")} value={form.instruction} onChange={(e) => setForm({...form,instruction:e.target.value})} required/></label><label>{t("screen.AdminScreen.ui91")}<select value={form.difficulty} onChange={(e) => setForm({...form,difficulty:Number(e.target.value)})}><option value={1}>{t("screen.AdminScreen.ui92")}</option><option value={2}>{t("screen.AdminScreen.ui93")}</option><option value={3}>{t("screen.AdminScreen.ui94")}</option></select></label><label className="draft-stimuli">{t("screen.AdminScreen.ui95")}<textarea value={form.stimuli} onChange={(e) => setForm({...form,stimuli:e.target.value})} placeholder={t("screen.AdminScreen.ui96")} required/><small>{t("screen.AdminScreen.ui97")}</small></label><div className="draft-form-actions"><button className="primary-button">{t("screen.AdminScreen.ui98")}</button><span>{t("screen.AdminScreen.ui99")}</span></div></form>}
       {formMessage && <div className="usage-note" role="status"><ShieldCheck size={18}/><p>{formMessage}</p></div>}
       </>}
@@ -2450,12 +2476,6 @@ function ProfileScreen({ user, child, dashboard, settings, onOpen, onLogout }: {
 
 function SettingsScreen({ petPreferences, role, settings, saving, onChange, onLogout, onOpenParent }: { petPreferences: ReturnType<typeof usePetPreferences>; role: Role; settings: AppSettings; saving: boolean; onChange: (settings: AppSettings) => void; onLogout: () => void; onOpenParent: () => void }) {
   useLocale();
-  const themes = [
-    { id: "peach", name: t("theme.calm"), description: t("theme.calmDescription"), colors: ["#1668c7", "#eaf3ff", "#ffffff"] },
-    { id: "ocean", name: t("theme.ocean"), description: t("theme.oceanDescription"), colors: ["#2d7180", "#e5f2f4", "#ffffff"] },
-    { id: "lavender", name: t("theme.lavender"), description: t("theme.lavenderDescription"), colors: ["#6759aa", "#f0eef8", "#ffffff"] },
-    { id: "contrast", name: t("theme.contrast"), description: t("theme.contrastDescription"), colors: ["#164f91", "#dcecff", "#ffffff"] },
-  ] as const;
   const update = <K extends keyof AppSettings>(key: K, value: AppSettings[K]) => onChange({ ...settings, [key]: value });
   if (role === "student") return <div className="page-enter child-settings-page">
     <PageTitle eyebrow={t("settings.childHeading")} title={t("settings.childTitle")} subtitle={t("settings.childDescription")}/>
@@ -2467,7 +2487,7 @@ function SettingsScreen({ petPreferences, role, settings, saving, onChange, onLo
     <div className="child-settings-footer"><span aria-live="polite">{saving ? t("common.saving") : t("common.saved")}</span><button type="button" className="profile-logout" onClick={onLogout}><LogOut size={18}/> {t("common.logout")}</button></div>
   </div>;
   return <div className="page-enter settings-page redesigned-settings">
-    <div className="settings-page-header"><PageTitle eyebrow={t("settings.heading")} title={t("settings.family")} subtitle={t("settings.description")}/><span className="settings-save-status" role="status">{saving ? <Timer size={16}/> : <CircleCheck size={16}/>} {saving ? t("settings.savingChanges") : t("settings.allSaved")}</span></div>
+    <div className="settings-page-header"><header className="workspace-heading"><h1>{t("nav.settings")}</h1></header><span className="settings-save-status" role="status">{saving ? <Timer size={16}/> : <CircleCheck size={16}/>} {saving ? t("settings.savingChanges") : t("settings.allSaved")}</span></div>
     <div className="settings-layout">
       <div className="settings-sections">
         <section className="settings-section language-setting">
@@ -2476,8 +2496,8 @@ function SettingsScreen({ petPreferences, role, settings, saving, onChange, onLo
         </section>
         {(role === "admin" || role === "specialist") && <><TranslationEditor specialist={role === "specialist"}/><TranslationEditor resource="aac" specialist={role === "specialist"}/></>}
         <section className="settings-section theme-setting">
-          <div className="settings-section-heading"><div><span className="kicker">{t("settings.appearance")}</span><h3>{t("settings.color")}</h3><p>{t("settings.colorDescription")}</p></div></div>
-          <div className="theme-options" role="group" aria-label={t("settings.color")}>{themes.map((item) => <button type="button" key={item.id} className={settings.theme === item.id ? "active" : ""} aria-pressed={settings.theme === item.id} onClick={() => update("theme", item.id as AppSettings["theme"])}><span className="theme-swatch">{item.colors.map((color) => <i key={color} style={{background:color}}/>)}</span><span className="theme-copy"><strong>{item.name}</strong><small>{item.description}</small></span>{settings.theme === item.id && <span className="theme-selected"><Check size={14}/> {t("common.selected")}</span>}</button>)}</div>
+          <div className="settings-section-heading"><h3>{t("settings.appearance")}</h3></div>
+          <SiteThemeChoice/>
         </section>
         <section className="settings-section preference-setting">
           <div className="settings-section-heading"><span className="kicker">{t("settings.accessibility")}</span><h3>{t("settings.comfort")}</h3></div>

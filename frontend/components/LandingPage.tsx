@@ -12,7 +12,7 @@ import { t, useLocale, type Locale } from "@/lib/i18n";
 import { observeHeroDepth } from "@/lib/landingDepth";
 import { landingThemes, type LandingTheme } from "@/lib/landingTheme";
 import { LanguagePicker } from "./LanguagePicker";
-import { BrandMark } from "./PublicBrandMark";
+import { BrandLogo } from "./BrandLogo";
 import { preloadThemeImage, PublicThemeToggle, usePublicTheme } from "./PublicTheme";
 import "@/app/landing.css";
 
@@ -101,8 +101,7 @@ const previewFragment = (id: PreviewId) => `#sl-tab-${id}`;
 function Wordmark() {
   return (
     <Link className="sl-wordmark" href="/" aria-label={t("landing.copy036")}>
-      <BrandMark size={28} />
-      Söyle<span aria-hidden="true">.</span>
+      <BrandLogo size={26} decorative />
     </Link>
   );
 }
@@ -260,8 +259,7 @@ function WorkspaceWindow({ children, sidebar, className = "" }: {
     <div className={`sl-window sl-glass ${className}`}>
       <div className="sl-window-bar">
         <div className="sl-window-brand">
-          <BrandMark size={21} />
-          Söyle
+          <BrandLogo size={20} />
         </div>
         <span className="sl-window-caption">{t("landing.demo.sampleData")}</span>
       </div>
@@ -511,8 +509,7 @@ function HeroWindow() {
         <div className="sl-window-layout">
           <div className="sl-window-sidebar" aria-hidden="true">
             <div className="sl-window-brand sl-hero-rail-brand">
-              <BrandMark size={22} />
-              <span className="sl-rail-label">Söyle</span>
+              <BrandLogo size={22} decorative />
             </div>
             <div className="sl-window-links">
               <span className="sl-window-current"><LayoutGrid size={16} /><span className="sl-rail-label">{t("nav.home")}</span></span>
@@ -522,10 +519,7 @@ function HeroWindow() {
           </div>
           <div className="sl-platform-cover">
             <div className="sl-platform-brand">
-              <div className="sl-platform-wordmark">
-                <BrandMark size={38} />
-                <span>Söyle</span>
-              </div>
+              <BrandLogo size={36} color="#fff" className="sl-platform-logo" />
               <p>{t("landing.heroWindow.description")}</p>
             </div>
           </div>

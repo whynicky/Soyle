@@ -1,10 +1,18 @@
 "use client";
 
-import { BarChart3, BookOpen, ClipboardList, FileClock, FileText, FolderOpen, House, Images, KeyRound, MessageCircle, MessageSquareText, ShieldCheck, Target, UserRound, Users } from "lucide-react";
+import { BarChart3, BookOpen, ClipboardList, FileClock, FileText, FolderOpen, House, Images, KeyRound, MessageCircle, MessageSquareText, PanelLeftClose, PanelLeftOpen, ShieldCheck, Target, UserRound, Users } from "lucide-react";
 import { t } from "@/lib/i18n";
 import { workspaceHref, workspacePages, type WorkspacePage, type WorkspaceRole } from "@/lib/workspacePages";
 
 const icons = { children: Users, profile: UserRound, history: Target, recommendations: MessageCircle, translations: BookOpen, overview: House, observations: ClipboardList, progress: BarChart3, goals: Target, specialist: UserRound, guides: BookOpen, assistant: MessageCircle, photos: Images, words: MessageSquareText, access: KeyRound, exercises: ClipboardList, library: FolderOpen, users: Users, audit: ShieldCheck, usage: FileClock };
+
+export function WorkspaceRailToggle({ collapsed, onToggle, controls }: { collapsed: boolean; onToggle: () => void; controls: string }) {
+  const label = t(collapsed ? "screen.AuthenticatedApp.ui50" : "screen.AuthenticatedApp.ui53");
+  const Icon = collapsed ? PanelLeftOpen : PanelLeftClose;
+  return <button type="button" className="workspace-rail-toggle" onClick={onToggle} aria-label={label} title={label} aria-expanded={!collapsed} aria-controls={controls}>
+    <Icon size={19} aria-hidden="true"/>
+  </button>;
+}
 
 export function WorkspaceNavigation({ role, current, childId, onOpen }: {
   role: WorkspaceRole; current?: WorkspacePage; childId?: number; onOpen: (page: WorkspacePage) => void;
@@ -16,7 +24,7 @@ export function WorkspaceNavigation({ role, current, childId, onOpen }: {
       <p>{t(group)}</p>
       {pages.filter(page => page.group === group).map(page => {
         const Icon = icons[page.slug as keyof typeof icons] || FileText;
-        return <a key={page.slug} href={workspaceHref(role, page, childId)} aria-current={current === page ? "page" : undefined}
+        return <a key={page.slug} href={workspaceHref(role, page, childId)} title={t(page.label)} aria-current={current === page ? "page" : undefined}
           onClick={event => {
             if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
             event.preventDefault(); onOpen(page);

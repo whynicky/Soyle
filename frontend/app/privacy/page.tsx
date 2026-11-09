@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import { t, useLocale } from "@/lib/i18n";
-import { LanguagePicker } from "@/components/LanguagePicker";
 import { useEffect, useState } from "react";
 import { api } from "@/lib/api";
 
@@ -14,7 +13,7 @@ export default function PrivacyPage() {
   const [profile, setProfile] = useState<PrivacyProfile | null>(null);
   const [error, setError] = useState("");
   useEffect(() => { let active = true; api<PrivacyProfile>("/api/privacy").then(value => { if (active) setProfile(value); }).catch(() => { if (active) setError(t("legal.privacy.ui8")); }); return () => { active = false; }; }, []);
-  return <main className="legal-page"><LanguagePicker compact/><Link href="/">{t("legal.privacy.ui9")}</Link><h1>{t("legal.privacy.ui10")}</h1><p>{t("legal.privacy.ui11")}</p>
+  return <main className="legal-page"><Link href="/">{t("legal.privacy.ui9")}</Link><h1>{t("legal.privacy.ui10")}</h1><p>{t("legal.privacy.ui11")}</p>
     <h2>{t("legal.privacy.ui12")}</h2><p>{t("legal.privacy.ui13")}</p>
     {error && <p role="alert">{error}</p>}{!profile && !error && <p role="status">{t("legal.privacy.ui14")}</p>}{profile && <><p>{profile.operator_configured ? t("legal.privacy.ui15") : t("legal.privacy.ui16")}</p><dl>{fields.map(([key, label]) => <div key={key}><dt><strong>{label}</strong></dt><dd>{profile[key] || t("legal.privacy.ui17")}</dd></div>)}</dl></>}
     <h2>{t("legal.privacy.ui18")}</h2><p>{t("legal.privacy.ui19")}</p>

@@ -48,6 +48,10 @@ html[data-public-theme-transition="circle"]::view-transition-new(root) {
   html[data-public-theme-transition="fade"] :is(.sl-scene-photo img, .sa-scene-art) {
     animation: public-theme-fade 190ms ease both;
   }
+  html[data-public-theme-transition="fade"] .sa-page,
+  html[data-public-theme-transition="fade"] .sa-page :is(p, h1, h2, a, button, label, input, .sa-nav, .sa-scene-art) {
+    transition-duration: 240ms;
+  }
 }
 @keyframes public-theme-fade {
   from { opacity: .7; }
@@ -55,4 +59,75 @@ html[data-public-theme-transition="circle"]::view-transition-new(root) {
 }
 @media (prefers-reduced-motion: reduce) {
   html[data-public-theme-transition="circle"]::view-transition-new(root) { animation: none; }
+}
+
+.site-theme-choice {
+  position: relative;
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: 8px;
+  width: fit-content;
+  min-width: 0;
+  font-size: 14px;
+}
+.site-theme-choice > select {
+  appearance: none;
+  min-height: 44px;
+  max-width: 100%;
+  padding: 8px 30px 8px 12px;
+  color: var(--site-ink, var(--sa-text));
+  border: 1px solid var(--site-control, var(--sa-line));
+  border-radius: 10px;
+  background: var(--site-surface, var(--sa-paper));
+  font: inherit;
+  font-size: 16px;
+  cursor: pointer;
+}
+.site-theme-choice > svg {
+  position: absolute;
+  inset-inline-end: 10px;
+  pointer-events: none;
+}
+.site-theme-choice-compact {
+  display: grid;
+  place-items: center;
+  inline-size: 44px;
+  block-size: 44px;
+  border-radius: 50%;
+}
+.site-theme-choice-compact:hover { background: var(--sa-selected); }
+.site-theme-choice-compact > select {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  opacity: 0;
+}
+.site-theme-choice-compact:focus-within { outline: 2px solid var(--sa-focus); outline-offset: 2px; }
+.site-theme-glyph { pointer-events: none; }
+.site-theme-glyph[data-theme="dark"] .public-theme-moon { display: none; }
+.site-theme-glyph[data-theme="dark"] .public-theme-sun { display: block; }
+@media (prefers-color-scheme: dark) {
+  .site-theme-glyph[data-theme="system"] .public-theme-moon { display: none; }
+  .site-theme-glyph[data-theme="system"] .public-theme-sun { display: block; }
+}
+@media (max-width: 600px) {
+  .site-theme-choice:not(.site-theme-choice-compact) > span { display: none; }
+}
+@media (prefers-reduced-motion: no-preference) {
+  html[data-public-theme-transition="fade"] .site-theme-surface,
+  html[data-public-theme-transition="fade"] .site-theme-surface :is(
+    .app-shell, .main, .clinician-desk, .sidebar, .desk-rail, .topbar, .desk-topline,
+    .account-menu-panel, .notification-panel, .cabinet-notice,
+    article, section, aside, header, h1, h2, h3, p, small, span, label, table, th, td,
+    a, button, input, textarea, select, dialog, [role="dialog"]
+  ) {
+    transition: background-color 240ms ease, border-color 240ms ease, color 240ms ease;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .site-theme-surface, .site-theme-surface * {
+    transition-duration: 0s !important;
+    animation-duration: 0s !important;
+  }
 }

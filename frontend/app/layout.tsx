@@ -17,6 +17,8 @@ import "./mobile-family.css";
 import "./family-refresh.css";
 import "./workspace.css";
 import "./specialist.css";
+import "./adult-workspace.css";
+
 
 export const viewport: Viewport = { width: "device-width", initialScale: 1, viewportFit: "cover" };
 

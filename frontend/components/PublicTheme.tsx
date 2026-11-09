@@ -1,10 +1,10 @@
 "use client";
 
-import { useEffect, useSyncExternalStore } from "react";
+import { createContext, useContext, useEffect, useSyncExternalStore, type ReactNode } from "react";
 import { flushSync } from "react-dom";
-import { Moon, Sun } from "lucide-react";
+import { ChevronDown, Moon, Sun } from "lucide-react";
 import { t } from "@/lib/i18n";
-import { landingThemeCookie, parseLandingTheme, type LandingTheme } from "@/lib/landingTheme";
+import { landingThemeCookie, landingThemes, parseLandingTheme, type LandingTheme } from "@/lib/landingTheme";
 import "@/app/public-theme.css";
 
 type ColorScheme = "light" | "dark";
@@ -62,7 +62,7 @@ function saveTheme(theme: LandingTheme) {
   flushSync(() => window.dispatchEvent(new Event(themeChange)));
 }
 
-export function usePublicTheme(initialTheme: LandingTheme, prepare?: PrepareTheme) {
+export function usePublicTheme(initialTheme: LandingTheme, prepare?: PrepareTheme, motion: "reveal" | "fade" = "reveal") {
   const theme = useSyncExternalStore(subscribe, readTheme, () => initialTheme);
 
   useEffect(() => {
@@ -97,10 +97,10 @@ export function usePublicTheme(initialTheme: LandingTheme, prepare?: PrepareThem
       }
       if (!origin.isConnected) return;
 
-      if (typeof document.startViewTransition !== "function") {
+      if (motion === "fade" || typeof document.startViewTransition !== "function") {
         root.dataset.publicThemeTransition = "fade";
         saveTheme(next);
-        await new Promise<void>((resolve) => setTimeout(resolve, 200));
+        await new Promise<void>((resolve) => setTimeout(resolve, motion === "fade" ? 240 : 200));
         return;
       }
 
@@ -126,6 +126,34 @@ export function usePublicTheme(initialTheme: LandingTheme, prepare?: PrepareThem
   }
 
   return { theme, changeTheme };
+}
+
+type ThemeControl = ReturnType<typeof usePublicTheme>;
+const SiteThemeContext = createContext<ThemeControl | null>(null);
+
+export function SiteThemeSurface({ initialTheme, className, children }: {
+  initialTheme: LandingTheme; className: string; children: ReactNode;
+}) {
+  const control = usePublicTheme(initialTheme, undefined, "fade");
+  return <SiteThemeContext.Provider value={control}>
+    <div className={`site-theme-surface ${className}`} data-site-theme={control.theme}>{children}</div>
+  </SiteThemeContext.Provider>;
+}
+
+export function ThemeChoice({ theme, changeTheme, compact = false }: ThemeControl & { compact?: boolean }) {
+  const label = t("landing.theme.label");
+  return <label className={`site-theme-choice${compact ? " site-theme-choice-compact" : ""}`}>
+    {compact ? <span className="site-theme-glyph" data-theme={theme} aria-hidden="true"><Sun size={17} className="public-theme-sun"/><Moon size={17} className="public-theme-moon"/></span> : <span>{label}</span>}
+    <select aria-label={label} value={theme} onChange={event => void changeTheme(parseLandingTheme(event.target.value), event.currentTarget)}>
+      {landingThemes.map(mode => <option value={mode} key={mode}>{t(`landing.theme.${mode}`)}</option>)}
+    </select>
+    {!compact && <ChevronDown size={14} aria-hidden="true"/>}
+  </label>;
+}
+
+export function SiteThemeChoice() {
+  const control = useContext(SiteThemeContext);
+  return control && <ThemeChoice {...control}/>;
 }
 
 export function PublicThemeToggle({ theme, onChange }: {

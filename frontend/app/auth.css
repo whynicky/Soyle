@@ -10,9 +10,6 @@
   --sa-focus: light-dark(#454545, #e3e1dd);
   --sa-cta: light-dark(#242424, #f0edea);
   --sa-on-cta: light-dark(#fff, #161616);
-  --sl-mark: var(--sa-text);
-  --sl-mark-letter: var(--sa-paper);
-  --sl-mark-dot: light-dark(#aaa8a4, #8a8984);
   --sa-scene-day: image-set(url("/landing/scenery/end-day-mobile-520.webp") 1x, url("/landing/scenery/end-day-mobile-1040.webp") 2x, url("/landing/scenery/end-day-mobile-1560.webp") 3x);
   --sa-scene-night: image-set(url("/landing/scenery/end-night-mobile-520.webp") 1x, url("/landing/scenery/end-night-mobile-1040.webp") 2x, url("/landing/scenery/end-night-mobile-1560.webp") 3x);
   --sa-scene: var(--sa-scene-day);
@@ -192,7 +189,7 @@
   .sa-nav-actions { gap: 2px; }
   .sa-home { gap: 5px; font-size: 1.125rem; white-space: nowrap; }
   .sa-home > svg:first-child { margin-inline-end: 0; }
-  .sa-home .sl-brand-mark { width: 22px; height: 22px; }
+  .sa-home .soyle-logo { width: auto; height: 22px; }
   .sa-nav .locale-picker button { min-height: 44px; padding-inline: 5px; }
   .sa-layout {
     grid-template: "form" minmax(min-content, 1fr) "scenery" auto / minmax(0, 1fr);

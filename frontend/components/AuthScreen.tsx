@@ -7,15 +7,15 @@ import { api, ApiError, clearLegacyAuth, type User } from "@/lib/api";
 import { unlockSpeechAudio } from "@/lib/speech";
 import { t, useLocale } from "@/lib/i18n";
 import type { LandingTheme } from "@/lib/landingTheme";
-import { BrandMark } from "./PublicBrandMark";
+import { BrandLogo } from "./BrandLogo";
 import { LanguagePicker } from "./LanguagePicker";
-import { preloadThemeImage, PublicThemeToggle, usePublicTheme } from "./PublicTheme";
+import { preloadThemeImage, ThemeChoice, usePublicTheme } from "./PublicTheme";
 import "@/app/auth.css";
 
 export function AuthLoading({ theme: initialTheme }: { theme: LandingTheme }) {
   const { theme } = usePublicTheme(initialTheme);
   return <div className="sa-loading" data-entry-theme={theme} role="status">
-    <BrandMark size={40} /><span>{t("screen.SoyleApp.ui1")}</span>
+    <BrandLogo variant="mark" size={40} decorative /><span>{t("screen.SoyleApp.ui1")}</span>
   </div>;
 }
 
@@ -34,7 +34,7 @@ export function AuthScreen({ onAuthenticated, theme: initialTheme, initialMode }
   theme: LandingTheme;
   initialMode: AuthEntryMode;
 }) {
-  const { theme, changeTheme } = usePublicTheme(initialTheme, prepareAuthTheme);
+  const { theme, changeTheme } = usePublicTheme(initialTheme, prepareAuthTheme, "fade");
   useLocale();
   const headingRef = useRef<HTMLHeadingElement>(null);
   const formRef = useRef<HTMLFormElement>(null);
@@ -123,14 +123,13 @@ export function AuthScreen({ onAuthenticated, theme: initialTheme, initialMode }
   return (
     <main className="sa-page" data-entry-theme={theme}>
       <header className="sa-nav">
-        <Link href="/" className="sa-home" aria-label={t("nav.homeLink")}>
+        <Link href="/" className="sa-home" aria-label={t("landing.copy036")}>
           <ArrowLeft size={16} aria-hidden="true" />
-          <BrandMark size={25} />
-          <span>Söyle.</span>
+          <BrandLogo size={25} decorative />
         </Link>
         <div className="sa-nav-actions">
           <LanguagePicker compact />
-          <PublicThemeToggle theme={theme} onChange={changeTheme} />
+          <ThemeChoice theme={theme} changeTheme={changeTheme} compact />
         </div>
       </header>
       <div className="sa-layout">

@@ -75,7 +75,7 @@
   .clinician-desk { grid-template-columns: 1fr; align-content: start; }
   .desk-rail { height: auto; position: static; padding: 12px 20px; border: 0; border-bottom: 1px solid var(--desk-line); }
   .desk-brand { padding: 0; }
-  .desk-brand img { max-width: 118px; }
+  .desk-brand .soyle-logo { width: auto; height: 32px; }
   .desk-menu { display: inline-flex; }
   .desk-menu-content { display: none; }
   .desk-menu-content.open { display: grid; gap: 16px; padding: 18px 0 8px; }

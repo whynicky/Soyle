@@ -2,6 +2,8 @@
 
 import Image from "next/image";
 import { AccountLanguagePicker } from "./AccountLanguagePicker";
+import { SiteThemeChoice } from "./PublicTheme";
+import { WorkspaceSkeleton } from "./WorkspaceSkeleton";
 import { TranslationEditor } from "./TranslationEditor";
 import { t, useLocale, formatDate } from "@/lib/i18n";
 
@@ -13,8 +15,8 @@ import { RecordHistory } from "./RecordHistory";
 import { GoalPracticeProgress } from "./GoalPracticeProgress";
 import type { PracticeGoal } from "@/lib/api";
 import { BrandLogo } from "@/components/BrandLogo";
-import { Users, ArrowRight, Menu, Search, LogOut, ClipboardList, MessageSquare, Clock, RefreshCw, Link2, Copy, Check } from "lucide-react";
-import { WorkspaceNavigation } from "./WorkspaceNavigation";
+import { Users, ArrowRight, Menu, X, Search, LogOut, ClipboardList, MessageSquare, Clock, RefreshCw, Link2, Copy, Check } from "lucide-react";
+import { WorkspaceNavigation, WorkspaceRailToggle } from "./WorkspaceNavigation";
 import { readWorkspacePage, workspaceHref, workspacePages, type WorkspacePage } from "@/lib/workspacePages";
 import { api, type Child, type Exercise, type User, type SpecialistAdvice, type AdaptivePlan } from "@/lib/api";
 
@@ -48,8 +50,10 @@ export function SpecialistWorkspace({ user, onLogout }: { user: User; onLogout: 
   const [error, setError] = useState("");
   const [query, setQuery] = useState("");
   const [menuOpen, setMenuOpen] = useState(false);
+  const [railCollapsed, setRailCollapsed] = useState(false);
   const main = useRef<HTMLElement>(null);
   const menu = useRef<HTMLButtonElement>(null);
+  const closeMenuButton = useRef<HTMLButtonElement>(null);
   const rosterRequest = useRef<AbortController | null>(null);
   const refreshChildren = useCallback(async () => {
     rosterRequest.current?.abort();
@@ -72,6 +76,29 @@ export function SpecialistWorkspace({ user, onLogout }: { user: User; onLogout: 
     window.addEventListener("popstate", sync);
     return () => window.removeEventListener("popstate", sync);
   }, []);
+  useEffect(() => {
+    if (!menuOpen) return;
+    const focus = requestAnimationFrame(() => closeMenuButton.current?.focus());
+    const escape = (event: KeyboardEvent) => {
+      if (event.key !== "Escape") return;
+      event.preventDefault();
+      setMenuOpen(false);
+      requestAnimationFrame(() => menu.current?.focus());
+    };
+    const desktop = window.matchMedia("(min-width: 1051px)");
+    const reset = () => { if (desktop.matches) setMenuOpen(false); };
+    document.addEventListener("keydown", escape);
+    desktop.addEventListener("change", reset);
+    return () => {
+      cancelAnimationFrame(focus);
+      document.removeEventListener("keydown", escape);
+      desktop.removeEventListener("change", reset);
+    };
+  }, [menuOpen]);
+  function closeMenu() {
+    setMenuOpen(false);
+    requestAnimationFrame(() => menu.current?.focus());
+  }
   const child = route.childId ? children?.find(item => item.id === route.childId) : children?.length === 1 ? children[0] : undefined;
   const section = route.page.slug;
   const isChildPage = section !== "children" && section !== "translations";
@@ -93,18 +120,34 @@ export function SpecialistWorkspace({ user, onLogout }: { user: User; onLogout: 
   };
   const open = (slug: string, id?: number) => go(deskPages.find(item => item.slug === slug)!, id);
   const visible = (children || []).filter(item => item.name.toLocaleLowerCase(locale).includes(query.trim().toLocaleLowerCase(locale)));
-  return <div className="clinician-desk">
-    <aside className="desk-rail" onKeyDown={e => { if (e.key === "Escape" && menuOpen) { setMenuOpen(false); menu.current?.focus(); } }}>
-      <div className="desk-brand"><a href={workspaceHref("specialist", deskPages[0])}><BrandLogo variant="compact" width={145} priority/></a>
-        <button type="button" className="desk-menu" ref={menu} aria-controls="desk-navigation" aria-expanded={menuOpen} onClick={() => setMenuOpen(!menuOpen)}><Menu size={18}/>{t("screen.AuthenticatedApp.ui48")}</button>
+  return <div className={`clinician-desk${railCollapsed && !menuOpen ? " workspace-rail-collapsed" : ""}`}>
+    <aside className={`desk-rail${menuOpen ? " open" : ""}`} id="desk-navigation" role={menuOpen ? "dialog" : undefined} aria-modal={menuOpen || undefined} aria-label={t("screen.AuthenticatedApp.ui49")} onKeyDown={e => {
+      if (!menuOpen || e.key !== "Tab") return;
+      const controls = [...e.currentTarget.querySelectorAll<HTMLElement>("a[href], button:not([disabled])")];
+      const destination = e.shiftKey ? controls.at(-1) : controls[0];
+      if (e.target === (e.shiftKey ? controls[0] : controls.at(-1))) { e.preventDefault(); destination?.focus(); }
+    }}>
+      <div className="desk-brand"><a href={workspaceHref("specialist", deskPages[0])}><BrandLogo variant={railCollapsed && !menuOpen ? "mark" : "full"} size={31} /></a>
+        <WorkspaceRailToggle collapsed={railCollapsed} onToggle={() => setRailCollapsed(value => !value)} controls="desk-navigation"/>
+        <button type="button" ref={closeMenuButton} className="desk-close" onClick={closeMenu} aria-label={t("landing.copy045")}><X size={20}/></button>
       </div>
-      <div id="desk-navigation" className={menuOpen ? "desk-menu-content open" : "desk-menu-content"}>
+      <div className="desk-menu-content">
         <WorkspaceNavigation role="specialist" current={route.page} childId={child?.id} onOpen={go}/>
-        <div className="desk-identity"><strong>{user.full_name}</strong><small>{t("nav.specialist")}</small><button type="button" onClick={onLogout}><LogOut size={16}/>{t("common.logoutAccount")}</button></div>
+        <div className="desk-identity">
+          <strong>{user.full_name}</strong>
+          <small>{t("nav.specialist")}</small>
+          <AccountLanguagePicker/>
+          <button type="button" onClick={onLogout} title={t("common.logoutAccount")}><LogOut size={16}/><span>{t("common.logoutAccount")}</span></button>
+        </div>
       </div>
     </aside>
-    <main className="desk-main" tabIndex={-1} ref={main}>
-      <div className="desk-topline"><span>{t("nav.specialist")}</span><AccountLanguagePicker/></div>
+    {menuOpen && <div className="desk-overlay" aria-hidden="true" onClick={closeMenu}/>}
+    <main className="desk-main" tabIndex={-1} ref={main} inert={menuOpen || undefined}>
+      <div className="desk-topline">
+        <button type="button" className="desk-menu" ref={menu} aria-controls="desk-navigation" aria-expanded={menuOpen} onClick={() => setMenuOpen(true)}><Menu size={18}/>{t("screen.AuthenticatedApp.ui48")}</button>
+        <span className="desk-mobile-logo"><BrandLogo variant="mark" size={25}/></span>
+        <SiteThemeChoice/>
+      </div>
       <header className={section === "children" ? "desk-heading desk-roster-heading" : "desk-heading"}>
         <div><h1>{section === "children" ? t("desk.rosterTitle") : section === "profile" && child ? child.name : t(route.page.label)}</h1>
           {section === "children" && <p>{t("desk.rosterHint")}</p>}
@@ -115,7 +158,7 @@ export function SpecialistWorkspace({ user, onLogout }: { user: User; onLogout: 
       </header>
       {section === "translations" ? <div className="desk-translations"><TranslationEditor specialist/><TranslationEditor resource="aac" specialist/></div>
       : error ? <div className="cabinet-notice error" role="alert">{error}<button onClick={() => void refreshChildren()}>{t("ux.retry")}</button></div>
-      : !children ? <p role="status">{t("specialist.copy025")}</p>
+      : !children ? <WorkspaceSkeleton/>
       : !children.length ? <section className="desk-empty"><Users size={32}/><h2>{t("specialist.copy026")}</h2><p>{t("specialist.copy027")}</p><p>{t("specialist.copy028")} <strong>{user.username}</strong></p><button className="secondary-button" onClick={() => void refreshChildren()}><RefreshCw size={16}/>{t("specialist.copy029")}</button></section>
       : section === "children" || needsSelection ? <section className="desk-roster">
         <div className="desk-list-heading"><h2>{t(needsSelection ? "desk.chooseChild" : "desk.roster")} <small>{children.length}</small></h2>

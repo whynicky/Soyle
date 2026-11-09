@@ -6,7 +6,6 @@
  .soyle-unified.child-shell.child-nav-collapsed .sidebar{width:112px;padding:16px 8px;transform:none;}
  .soyle-unified.child-shell.child-nav-collapsed .main{margin-inline-start:112px;margin-left:112px;}
  .soyle-unified.child-shell.child-nav-collapsed .sidebar>.brand{padding:0;max-width:none;justify-content:center;}
- .soyle-unified.child-shell.child-nav-collapsed .brand>.soyle-logo{width:72px!important;}
  .soyle-unified.child-shell.child-nav-collapsed .sidebar nav{margin-top:24px;gap:5px;}
  .soyle-unified.child-shell.child-nav-collapsed .sidebar nav button{flex-direction:column;justify-content:center;gap:5px;padding:8px 3px;min-height:62px;text-align:center;font-size:12px;line-height:1.2;}
  .soyle-unified.child-shell.child-nav-collapsed .sidebar nav button svg{width:24px;height:24px;}
@@ -135,7 +134,6 @@
  .room-today button:is(:hover,:focus-visible):not(:disabled) img{transform:scale(1.1) rotate(-3deg);}
  .room-today button:is(:hover,:focus-visible):not(:disabled)>svg{transform:translateX(3px);}
  .child-room-home :is(.star-vault,.room-profile,.room-settings,.room-greeting-audio):is(:hover,:focus-visible):not(:disabled){transform:translateY(-2px) scale(1.045);filter:brightness(1.06);box-shadow:0 7px 20px #34576830;}
- .soyle-unified.child-shell.child-nav-collapsed .brand:is(:hover,:focus-visible)>.soyle-logo{transform:scale(1.06);filter:drop-shadow(0 5px 6px #138b8b25);}
 }
 .child-room-home :is(.room-door,.room-start-button,.room-today button,.star-vault,.room-profile,.room-settings,.room-greeting-audio):active:not(:disabled){transform:translateY(2px) scale(.975);filter:brightness(.97);box-shadow:0 2px 4px #264d5420;transition-duration:70ms;}
 .child-room-home :is(.room-door,.room-today button,.room-start-button):active:not(:disabled)>:is(img,svg){transform:scale(.97);}

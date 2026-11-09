@@ -12,13 +12,13 @@ export default function manifest(): MetadataRoute.Manifest {
     theme_color: "#078C91",
     icons: [
       {
-        src: "/branding/pwa-icon-192.png",
+        src: "/branding/pwa-icon-192.png?v=mark",
         sizes: "192x192",
         type: "image/png",
         purpose: "any",
       },
       {
-        src: "/branding/pwa-icon-512.png",
+        src: "/branding/pwa-icon-512.png?v=mark",
         sizes: "512x512",
         type: "image/png",
         purpose: "any",
