@@ -11,6 +11,7 @@ import { usePetPreferences } from "./pet/usePetPreferences";
 import { PetSettings } from "./pet/PetSettings";
 import { useRefreshOnReturn } from "@/lib/hooks/useRefreshOnReturn";
 import { ChildSettingToggle } from "./ChildSettingToggle";
+import { ChildDataControls } from "./ChildDataControls";
 import { ChildRoomHome } from "./ChildRoomHome";
 import { StarReward, StarVault } from "./StarReward";
 import { savedReward } from "@/lib/rewards";
@@ -2141,12 +2142,6 @@ function ParentScreen({ page, navigate, exercises, child, childProfiles, onSelec
       setStudent(result); setStudentForm((current) => ({ ...current, pin: "" })); setAccountMessage(t("screen.ParentScreen.ui3"));
     } catch (cause) { setAccountMessage(cause instanceof Error ? cause.message : t("screen.ParentScreen.ui4")); }
   };
-  const exportData = async () => {
-    if (!child) return;
-    const data = await api<Record<string, unknown>>(`/api/children/${child.id}/export`);
-    const url = URL.createObjectURL(new Blob([JSON.stringify(data, null, 2)], { type: "application/json" }));
-    const link = document.createElement("a"); link.href = url; link.download = `soyle-${child.name}.json`; link.click(); URL.revokeObjectURL(url);
-  };
   const saveConsent = async () => {
     if (!child || !consentReady || consentSaving) return;
     setConsentSaving(true); setDataMessage("");
@@ -2209,7 +2204,8 @@ function ParentScreen({ page, navigate, exercises, child, childProfiles, onSelec
       <section className="admin-card privacy-control"><div className="admin-card-head"><div><span className="kicker">{t("screen.ParentScreen.ui86")}</span><h3>{t("screen.ParentScreen.ui87")}</h3><p>{t("screen.ParentScreen.ui88")}</p></div></div><div className="consent-options"><label><input type="checkbox" disabled={!consentReady || consentSaving} checked={consent.privacy_accepted} onChange={(e)=>setConsent(e.target.checked ? {...consent,privacy_accepted:true} : {...consent,privacy_accepted:false,camera_processing:false,ai_processing:false,analytics_processing:false,specialist_sharing:false})}/><span><b>{t("screen.ParentScreen.ui89")}</b><small>{t("screen.ParentScreen.ui90")}</small></span></label><label className={!consent.privacy_accepted ? "disabled" : ""}><input type="checkbox" disabled={!consentReady || consentSaving || !consent.privacy_accepted} checked={consent.camera_processing} onChange={(e)=>setConsent({...consent,camera_processing:e.target.checked})}/><span><b>{t("screen.ParentScreen.ui91")}</b><small>{t("screen.ParentScreen.ui92")}</small></span></label><label className={!consent.privacy_accepted ? "disabled" : ""}><input type="checkbox" disabled={!consentReady || consentSaving || !consent.privacy_accepted} checked={consent.analytics_processing} onChange={(e)=>setConsent({...consent,analytics_processing:e.target.checked})}/><span><b>{t("screen.ParentScreen.ui93")}</b><small>{t("screen.ParentScreen.ui94")}</small></span></label><label className={!consent.privacy_accepted ? "disabled" : ""}><input type="checkbox" disabled={!consentReady || consentSaving || !consent.privacy_accepted} checked={Boolean(consent.specialist_sharing)} onChange={(e)=>setConsent({...consent,specialist_sharing:e.target.checked})}/><span><b>{t("screen.ParentScreen.ui95")}</b><small>{t("screen.ParentScreen.ui96")}</small></span></label></div><div className="privacy-actions"><button className="primary-button" disabled={!consentReady || consentSaving} onClick={saveConsent}>{t("screen.ParentScreen.ui97")}</button>{consent.updated_at && <small className="consent-updated">{t("screen.ParentScreen.ui98")} {formatDate(consent.updated_at, {dateStyle: "short", timeStyle: "short"})}</small>}</div></section>
     </div>
 
-    <section className="data-control"><div><ShieldCheck/><span><strong>{t("screen.ParentScreen.ui99")}</strong><small>{t("screen.ParentScreen.ui100")}</small></span></div><div className="data-actions"><button className="secondary-button" onClick={exportData}>{t("screen.ParentScreen.ui101")}</button><button className="small-button danger-button" onClick={() => setDeleteOpen(!deleteOpen)}>{t("screen.ParentScreen.ui102")}</button></div></section>{deleteOpen && <form className="delete-data-form" onSubmit={deleteData}><div><strong>{t("screen.ParentScreen.ui103")}</strong><p>{t("screen.ParentScreen.ui104")}</p></div><input type="password" value={deletePassword} onChange={(e)=>setDeletePassword(e.target.value)} placeholder={t("screen.ParentScreen.ui105")} required/><button className="small-button danger-button">{t("screen.ParentScreen.ui106")}</button></form>}{dataMessage && <div className="usage-note"><Check size={18}/><p>{dataMessage}</p></div>}
+    <ChildDataControls childId={child?.id} exercises={exercises} onDelete={() => setDeleteOpen(open => !open)}/>
+    {deleteOpen && <form className="delete-data-form" onSubmit={deleteData}><div><strong>{t("screen.ParentScreen.ui103")}</strong><p>{t("screen.ParentScreen.ui104")}</p></div><input type="password" value={deletePassword} onChange={(e)=>setDeletePassword(e.target.value)} placeholder={t("screen.ParentScreen.ui105")} required/><button className="small-button danger-button">{t("screen.ParentScreen.ui106")}</button></form>}{dataMessage && <div className="usage-note"><Check size={18}/><p>{dataMessage}</p></div>}
     </div>}
     {section === "specialist" && child && <FamilySpecialistAccess key={child.id} childId={child.id} enabled={consentReady && Boolean(consent.specialist_sharing)} onManagePermissions={() => navigate("access")} onStartPlan={onStartPlan}/>}
     {section !== "overview" && <div className="medical-note"><ShieldCheck size={25}/><div><strong>{t("screen.ParentScreen.ui107")}</strong><p>{t("screen.ParentScreen.ui108")}</p></div></div>}

@@ -102,6 +102,16 @@ body:has(> .site-theme-surface) { background: transparent; }
 .adult-workspace :is(.app-shell, .clinician-desk) p { font-size: 15px; line-height: 1.55; }
 .adult-workspace :is(.app-shell, .clinician-desk) .kicker { font-weight: 600; letter-spacing: .04em; }
 .adult-workspace :is(.app-shell, .clinician-desk) svg:not(.soyle-logo) { stroke-width: 1.7; }
+.adult-workspace .data-export-control { flex-wrap: wrap; }
+.adult-workspace .data-export-control .data-export-intro { flex: 1 1 17rem; }
+.adult-workspace .data-export-intro > svg { flex: none; }
+.adult-workspace .data-export-control .data-actions { flex-wrap: wrap; }
+.adult-workspace .data-export-control .data-actions > button { min-height: 44px; }
+.adult-workspace .data-export-control [aria-disabled="true"] { opacity: .65; cursor: wait; }
+.adult-workspace .data-export-control .data-export-error { color: var(--site-error); }
+@media (max-width: 640px) {
+  .adult-workspace .data-export-control .data-export-intro { flex-basis: auto; }
+}
 .adult-workspace :is(.sidebar, .desk-rail) {
   width: 252px;
   padding: 20px 14px 16px;
