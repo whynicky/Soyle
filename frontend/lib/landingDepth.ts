@@ -1,24 +1,7 @@
-const sampleWidth = 384;
-const sampleHeight = 256;
-const entranceNames = new Set(["sl-appear", "sl-hero-copy-rise", "sl-foreground-arrive"]);
-
-function samplePlantEdge(image: HTMLImageElement): Float32Array | null {
-  if (!image.complete || !image.naturalWidth) return null;
-  const canvas = document.createElement("canvas");
-  canvas.width = sampleWidth;
-  canvas.height = sampleHeight;
-  const context = canvas.getContext("2d");
-  if (!context) return null;
-  context.drawImage(image, 0, 0, sampleWidth, sampleHeight);
-  const pixels = context.getImageData(0, 0, sampleWidth, sampleHeight).data;
-  const edge = Float32Array.from({ length: sampleWidth }, (_, x) => {
-    for (let y = 0; y < sampleHeight; y++) {
-      if (pixels[(y * sampleWidth + x) * 4 + 3] >= 16) return y / sampleHeight;
-    }
-    return 1;
-  });
-  return edge.some(y => y < .98) ? edge : null;
-}
+// Highest opaque point in each of 24 equal columns, as a percentage of
+// image height. These envelopes cover every size and both tones of each crop.
+const widePlantEdge = [74, 75, 78, 78, 79, 81, 83, 85, 87, 87, 88, 87, 86, 85, 83, 82, 82, 81, 80, 78, 77, 75, 74, 72];
+const mobilePlantEdge = [84, 85, 86, 86, 87, 87, 88, 88, 89, 87, 87, 87, 86, 86, 85, 85, 84, 83, 83, 83, 82, 82, 82, 81];
 
 // Offset coordinates exclude the entrance and scroll transforms.
 function layoutOrigin(element: HTMLElement) {
@@ -31,7 +14,7 @@ function layoutOrigin(element: HTMLElement) {
   return { x, y };
 }
 
-function plantClearance(hero: HTMLElement, image: HTMLImageElement, edge: Float32Array, content: Iterable<HTMLElement>) {
+function plantClearance(hero: HTMLElement, image: HTMLImageElement, edge: readonly number[], content: Iterable<HTMLElement>) {
   const width = image.offsetWidth;
   const height = image.offsetHeight;
   if (!width || !height) return 0;
@@ -41,9 +24,9 @@ function plantClearance(hero: HTMLElement, image: HTMLImageElement, edge: Float3
   for (const element of content) {
     const { x, y } = layoutOrigin(element);
     const first = Math.max(0, Math.floor((x - left) / width * edge.length));
-    const last = Math.min(edge.length - 1, Math.ceil((x + element.offsetWidth - left) / width * edge.length));
+    const last = Math.min(edge.length - 1, Math.floor((x + element.offsetWidth - left) / width * edge.length));
     for (let i = first; i <= last; i++) {
-      clearance = Math.min(clearance, top + edge[i] * height - y - element.offsetHeight);
+      clearance = Math.min(clearance, top + edge[i] / 100 * height - y - element.offsetHeight);
     }
   }
   // Leave room for thin stems and rounding around the wordmarks.
@@ -75,8 +58,8 @@ const scaleY = (value: number) => `1 ${value}`;
 export function observeHeroDepth(hero: HTMLElement) {
   const plants = hero.querySelector<HTMLImageElement>(".sl-hero-plants img");
   const elements = [
-    hero.querySelector<HTMLElement>(".sl-hero-photo img"),
-    hero.querySelector<HTMLElement>(".sl-hero-hills img"),
+    hero.querySelector<HTMLElement>(".sl-hero-photo"),
+    hero.querySelector<HTMLElement>(".sl-hero-hills"),
     hero.querySelector<HTMLElement>(".sl-hero-foreground-track"),
     hero.querySelector<HTMLElement>(".sl-hero-foreground-extension img"),
     hero.querySelector<HTMLElement>(".sl-hero-platform"),
@@ -93,15 +76,11 @@ export function observeHeroDepth(hero: HTMLElement) {
   let animations: Animation[] = [];
   let geometry: Geometry | undefined;
   let lastPaint: { phase: number; geometry: Geometry } | undefined;
-  let edgeSource = "";
-  let decoding = "";
-  let edge: Float32Array | null = null;
   let frame = 0;
   let measurement = 0;
   let tracking = false;
   let listening = false;
   let disposed = false;
-  let waitingForFirstScroll = true;
   const initial = hero.getBoundingClientRect();
   let inView = initial.bottom > 0 && initial.top < window.innerHeight;
 
@@ -121,29 +100,12 @@ export function observeHeroDepth(hero: HTMLElement) {
     if (tracking && !frame) frame = requestAnimationFrame(paint);
   }
 
-  function onScroll() {
-    if (waitingForFirstScroll && window.scrollY > 12) {
-      waitingForFirstScroll = false;
-      if (typeof CSSAnimation !== "undefined") {
-        for (const animation of hero.getAnimations({ subtree: true })) {
-          if (animation instanceof CSSAnimation && entranceNames.has(animation.animationName) && animation.playState === "running") {
-            animation.updatePlaybackRate(4);
-          }
-        }
-      }
-      readPlants();
-      requestMeasurement();
-      syncScrollListener();
-    }
-    if (!timeline) schedulePaint();
-  }
-
   function syncScrollListener() {
-    const needed = tracking && (!timeline || waitingForFirstScroll);
+    const needed = tracking && !timeline;
     if (needed === listening) return;
     listening = needed;
-    if (needed) window.addEventListener("scroll", onScroll, { passive: true });
-    else window.removeEventListener("scroll", onScroll);
+    if (needed) window.addEventListener("scroll", schedulePaint, { passive: true });
+    else window.removeEventListener("scroll", schedulePaint);
   }
 
   function stopAnimations() {
@@ -161,7 +123,8 @@ export function observeHeroDepth(hero: HTMLElement) {
       travel: Math.max(1, Math.min(hero.offsetHeight * .58, 650)),
       scale: Number(style.getPropertyValue("--sl-hero-depth-scale")),
       plantBase: Number.parseFloat(style.getPropertyValue("--sl-hero-plants-base")),
-      clearance: edge && plants!.currentSrc === edgeSource ? plantClearance(hero, plants!, edge, brand) : 0,
+      clearance: plantClearance(hero, plants!, style.getPropertyValue("--sl-hero-crop").trim() === "mobile"
+        ? mobilePlantEdge : widePlantEdge, brand),
     };
     const changed = !geometry || next.travel !== geometry.travel || next.scale !== geometry.scale
       || next.plantBase !== geometry.plantBase || Math.abs(next.clearance - geometry.clearance) > .25;
@@ -191,28 +154,9 @@ export function observeHeroDepth(hero: HTMLElement) {
     if (!disposed && tracking && !measurement) measurement = requestAnimationFrame(measure);
   }
 
-  function readPlants() {
-    const source = plants!.currentSrc;
-    if (!source || source === edgeSource || source === decoding) return;
-    decoding = source;
-    void plants!.decode().then(() => {
-      if (disposed || plants!.currentSrc !== source) return;
-      const sampled = samplePlantEdge(plants!);
-      if (!sampled) return;
-      edgeSource = source;
-      edge = sampled;
-      requestMeasurement();
-    }).catch(() => {
-      // The load event will retry if the responsive source changed while decoding.
-    }).finally(() => {
-      if (decoding === source) decoding = "";
-    });
-  }
-
   function sync() {
     if (motion.matches) {
       hero.setAttribute("data-entry-skipped", "");
-      waitingForFirstScroll = false;
       stopAnimations();
       geometry = undefined;
     }
@@ -222,9 +166,7 @@ export function observeHeroDepth(hero: HTMLElement) {
     hero.toggleAttribute("data-depth-active", active);
     syncScrollListener();
     if (active) {
-      readPlants();
       requestMeasurement();
-      if (window.scrollY > 12) onScroll();
     } else {
       cancelAnimationFrame(frame);
       cancelAnimationFrame(measurement);
@@ -244,7 +186,6 @@ export function observeHeroDepth(hero: HTMLElement) {
   brand.forEach(element => resize?.observe(element));
   void document.fonts.ready.then(requestMeasurement);
   if (!resize) window.addEventListener("resize", requestMeasurement, { passive: true });
-  plants.addEventListener("load", readPlants);
   motion.addEventListener("change", sync);
   document.addEventListener("visibilitychange", sync);
   sync();
@@ -256,9 +197,8 @@ export function observeHeroDepth(hero: HTMLElement) {
     cancelAnimationFrame(measurement);
     stopAnimations();
     hero.removeAttribute("data-depth-active");
-    window.removeEventListener("scroll", onScroll);
+    window.removeEventListener("scroll", schedulePaint);
     window.removeEventListener("resize", requestMeasurement);
-    plants.removeEventListener("load", readPlants);
     motion.removeEventListener("change", sync);
     document.removeEventListener("visibilitychange", sync);
   };

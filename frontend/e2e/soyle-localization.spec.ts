@@ -121,7 +121,7 @@ test('landing copy and AAC demonstration follow the selected language', async ({
   await panel.getByRole('button', { name: 'Шолуға оралу' }).click();
   await expect(panel.getByRole('heading', { name: 'Үйдегі жаттығу' })).toBeVisible();
   await expect(panel.locator('.sl-object-choice')).toHaveCount(0);
-  await page.locator('.sl-footer').getByRole('button',{name:'Русский',exact:true}).click();
+  await page.locator('.sl-header').getByRole('button',{name:'Русский',exact:true}).click();
   await expect(page.getByRole('heading',{name:'Больше способов сказать важное'})).toBeVisible();
   const family = page.locator('#family');
   await expect(family.getByRole('heading', { name: 'Наблюдения под рукой' })).toBeVisible();
@@ -152,7 +152,13 @@ test('landing island stays compact and reloading from the demo returns to the he
   await expect(header.locator('.public-theme-toggle')).toBeVisible();
   await expect(header.getByRole('navigation')).toHaveCount(0);
   await expect(page.locator('.sl-hero-actions').getByRole('link')).toHaveCount(1);
-  await page.locator('.sl-footer').getByRole('link', { name: 'Қалай жұмыс істейді' }).click();
+  const footer = page.locator('.sl-footer');
+  await expect(footer.locator('.sl-footer-brand')).toHaveText('2026');
+  await expect(footer.locator('.sl-footer-brand .soyle-logo')).toBeVisible();
+  await expect(footer.locator('button, input, select')).toHaveCount(0);
+  expect(await footer.locator('nav a').evaluateAll(links => links.map(link => link.getAttribute('href'))))
+    .toEqual(['/privacy', '/terms', 'mailto:a6003233@gmail.com']);
+  await page.evaluate(() => { location.hash = 'journey'; });
   await expect(page).toHaveURL(/#journey$/);
   await expect.poll(async () => {
     const target = await page.locator('#journey').boundingBox();
@@ -175,14 +181,14 @@ test('landing follows the system theme and serves a saved theme without JavaScri
   const heroPhoto = page.locator('.sl-hero-photo img');
   const demoTitle = page.locator('#sl-journey-title');
   const selectedTab = page.getByRole('tab', { selected: true });
-  await expect(page.getByRole('radio', { name: 'Системная' })).toBeChecked();
+  await expect(landing).toHaveAttribute('data-landing-theme', 'system');
   await expect(landing).toHaveCSS('background-color', 'rgb(0, 0, 0)');
   await expect(heroPhoto).toHaveJSProperty('fetchPriority', 'high');
   await expect.poll(() => heroPhoto.evaluate(image => (image as HTMLImageElement).currentSrc)).toContain('/scenery/hero-night-');
   await expect(page.locator('.sl-end-photo img')).toHaveAttribute('loading', 'lazy');
   await expect(demoTitle).toHaveCSS('font-weight', '400');
   await expect(selectedTab).toHaveCSS('background-color', 'rgba(0, 0, 0, 0)');
-  await page.getByText('Светлая', { exact: true }).click();
+  await page.getByRole('button', { name: 'Включить светлую тему' }).click();
   await expect(landing).toHaveCSS('background-color', 'rgb(250, 248, 245)');
   await expect.poll(() => heroPhoto.evaluate(image => (image as HTMLImageElement).currentSrc)).toContain('/scenery/hero-day-');
   await expect(demoTitle).toHaveCSS('font-weight', '400');
@@ -203,7 +209,8 @@ test('landing follows the system theme and serves a saved theme without JavaScri
   } finally {
     await withoutJavaScript.close();
   }
-  await page.getByText('Системная', { exact: true }).click();
+  await page.context().clearCookies({ name: 'soyle-landing-theme' });
+  await page.reload();
   await expect(landing).toHaveCSS('background-color', 'rgb(0, 0, 0)');
   await page.emulateMedia({ colorScheme: 'light' });
   await expect(landing).toHaveCSS('background-color', 'rgb(250, 248, 245)');
@@ -247,6 +254,67 @@ test('landing theme reveal keeps the active demo and scroll and follows through 
   await page.getByRole('button', { name: 'Создать аккаунт', exact: true }).click();
   await expect(page.getByLabel('Ваше имя')).toHaveAccessibleDescription('Заполните это поле.');
   await expect(page.getByLabel('Ваше имя')).toBeFocused();
+});
+
+test('landing depth stays aligned while photos load and theme changes remain interruptible', async ({ page }) => {
+  await page.emulateMedia({ colorScheme: 'light', reducedMotion: 'no-preference' });
+  let releasePhotos!: () => void;
+  const photos = new Promise<void>(resolve => { releasePhotos = resolve; });
+  await page.route(/\/landing\/scenery\/(hero|foreground)-(day|night)-.*\.webp$/, async route => {
+    await photos;
+    await route.continue().catch(() => {});
+  });
+  try {
+    await page.goto('/', { waitUntil: 'domcontentloaded' });
+    const hero = page.locator('.sl-hero');
+    const landing = page.locator('.sl-page');
+    const toggle = page.locator('.public-theme-toggle');
+    await expect(hero).toHaveAttribute('data-depth-active', '');
+    await expect(hero.locator('.sl-hero-photo')).toHaveCSS('background-image', /data:image\/webp/);
+    await expect(hero.locator('.sl-hero-photo')).toHaveCSS('mask-image', /data:image\/svg\+xml/);
+    await expect(hero.locator('.sl-hero-photo img')).toHaveJSProperty('naturalWidth', 0);
+    await page.evaluate(() => window.scrollTo({ top: 240, behavior: 'instant' }));
+    const offsets = () => hero.locator('.sl-hero-photo, .sl-hero-hills, .sl-hero-platform, .sl-hero-foreground-track')
+      .evaluateAll(layers => layers.map(layer => Number.parseFloat(getComputedStyle(layer).translate.split(' ').at(-1) || '0')));
+    await expect.poll(async () => {
+      const [far, hills, window, plants] = await offsets();
+      return far > hills && hills > window && window > 0 && plants < 0;
+    }).toBe(true);
+    await page.evaluate(() => document.fonts.ready);
+    const before = await offsets();
+
+    const dark = await toggle.evaluate(async button => {
+      const landing = document.querySelector('.sl-page')!;
+      const start = performance.now();
+      return await new Promise<number>(resolve => {
+        const observer = new MutationObserver(() => {
+          if (landing.getAttribute('data-landing-theme') !== 'dark') return;
+          observer.disconnect();
+          resolve(performance.now() - start);
+        });
+        observer.observe(landing, { attributes: true, attributeFilter: ['data-landing-theme'] });
+        (button as HTMLButtonElement).click();
+      });
+    });
+    expect(dark).toBeLessThan(350);
+    await toggle.evaluate(button => (button as HTMLButtonElement).click());
+    await expect(landing).toHaveAttribute('data-landing-theme', 'light');
+    await page.evaluate(() => window.scrollTo({ top: 280, behavior: 'instant' }));
+    await expect(page.locator('html')).not.toHaveAttribute('data-public-theme-transition', /.+/, { timeout: 350 });
+    await page.evaluate(() => window.scrollTo({ top: 240, behavior: 'instant' }));
+
+    releasePhotos();
+    await expect.poll(async () => hero.locator('.sl-hero-photo img, .sl-hero-plants img')
+      .evaluateAll(images => images.every(image => (image as HTMLImageElement).complete && (image as HTMLImageElement).naturalWidth > 0))).toBe(true);
+    const after = await offsets();
+    after.forEach((offset, index) => expect(offset).toBeCloseTo(before[index], 0));
+    await page.evaluate(() => window.scrollTo({ top: 0, behavior: 'instant' }));
+    await expect.poll(offsets).toEqual([0, 0, 0, 0]);
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    await expect(hero).not.toHaveAttribute('data-depth-active', '');
+  } finally {
+    releasePhotos();
+  }
 });
 
 
@@ -401,7 +469,7 @@ test('landing previews remain visible when switching languages with motion enabl
 
   await page.locator('#sl-tab-history').click();
   for (const [language, locale] of [['Қазақша', 'kk-KZ'], ['Русский', 'ru-RU']] as const) {
-    await page.locator('.sl-footer').getByRole('button', { name: language, exact: true }).click();
+    await page.locator('.sl-header').getByRole('button', { name: language, exact: true }).click();
     await expect(page.locator('html')).toHaveAttribute('lang', locale);
     await expect(elements).toHaveCount(count);
     await expect(page.locator('[data-reveal]:not(.sl-visible)')).toHaveCount(0);

@@ -10,11 +10,12 @@ import {
 } from "lucide-react";
 import { t, useLocale, type Locale } from "@/lib/i18n";
 import { observeHeroDepth } from "@/lib/landingDepth";
-import { landingThemes, type LandingTheme } from "@/lib/landingTheme";
+import type { LandingTheme } from "@/lib/landingTheme";
 import { LanguagePicker } from "./LanguagePicker";
 import { BrandLogo } from "./BrandLogo";
 import { preloadThemeImage, PublicThemeToggle, usePublicTheme } from "./PublicTheme";
 import "@/app/landing.css";
+import "@/app/landing-preview.css";
 
 const heroSizes = "(max-width: 760px) 1040px, (max-width: 1200px) 1200px, 100vw";
 const mobileScenery = "(max-width: 480px)";
@@ -72,10 +73,11 @@ function ScenePhoto({ scene, theme, className = "" }: {
       )}
       {mobile && <source media={mobileScenery} srcSet={mobile.srcSet} sizes={mobile.sizes} />}
       <img
+        key={scene === "hero" ? theme : undefined}
         {...image}
         alt=""
         loading={heroLayer ? "eager" : "lazy"}
-        fetchPriority={scene === "hero" ? "high" : heroLayer ? "auto" : "low"}
+        fetchPriority={heroLayer ? "high" : "low"}
         decoding="async"
       />
     </picture>
@@ -118,28 +120,6 @@ function LandingHeader({ theme, onChange }: { theme: LandingTheme; onChange: (va
         </div>
       </div>
     </header>
-  );
-}
-
-function ThemePicker({ theme, onChange }: { theme: LandingTheme; onChange: (value: LandingTheme, origin: HTMLElement) => void }) {
-  return (
-    <fieldset className="sl-theme-picker">
-      <legend>{t("landing.theme.label")}</legend>
-      <div className="sl-theme-options">
-        {landingThemes.map((mode) => (
-          <label key={mode}>
-            <input
-              className="sr-only"
-              type="radio"
-              name="soyle-landing-theme"
-              checked={theme === mode}
-              onChange={(event) => onChange(mode, event.currentTarget)}
-            />
-            <span>{t(`landing.theme.${mode}`)}</span>
-          </label>
-        ))}
-      </div>
-    </fieldset>
   );
 }
 
@@ -710,6 +690,7 @@ export function LandingPage({ initialTheme }: { initialTheme: LandingTheme }) {
     const tone = scheme === "dark" ? "night" : "day";
     const visibleScenes = Array.from(root.current?.querySelectorAll<HTMLPictureElement>("[data-scene]") ?? [])
       .filter((picture) => {
+        if (!picture.querySelector("img")?.naturalWidth) return false;
         const rect = picture.getBoundingClientRect();
         return rect.bottom > -120 && rect.top < window.innerHeight + 120;
       });
@@ -719,7 +700,7 @@ export function LandingPage({ initialTheme }: { initialTheme: LandingTheme }) {
       return preloadThemeImage(src, srcSet, sizes);
     }));
   }, []);
-  const { theme, changeTheme } = usePublicTheme(initialTheme, prepareTheme);
+  const { theme, changeTheme } = usePublicTheme(initialTheme);
 
   const openDemo = useCallback((id: DemoScreen) => {
     stopSpeech();
@@ -758,13 +739,33 @@ export function LandingPage({ initialTheme }: { initialTheme: LandingTheme }) {
   useEffect(() => {
     const page = root.current;
     if (!page || !("IntersectionObserver" in window)) return;
-    const observer = new IntersectionObserver((entries) => {
-      if (!entries.some((entry) => entry.isIntersecting)) return;
+    let idle: number | undefined;
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const warm = () => {
+      idle = undefined;
+      timer = undefined;
       const dark = theme === "dark" || (theme === "system" && window.matchMedia("(prefers-color-scheme: dark)").matches);
       void prepareTheme(dark ? "light" : "dark");
+    };
+    const scheduleWarm = () => {
+      if (idle !== undefined || timer !== undefined) return;
+      if ("requestIdleCallback" in window) idle = window.requestIdleCallback(warm);
+      else timer = setTimeout(warm, 180);
+    };
+    const observer = new IntersectionObserver(entries => {
+      if (entries.some(entry => entry.isIntersecting)) scheduleWarm();
     }, { rootMargin: "120px 0px" });
+    const onLoad = (event: Event) => {
+      if (event.target instanceof HTMLImageElement && event.target.closest("[data-scene]")) scheduleWarm();
+    };
     page.querySelectorAll("[data-scene]").forEach((picture) => observer.observe(picture));
-    return () => observer.disconnect();
+    page.addEventListener("load", onLoad, true);
+    return () => {
+      observer.disconnect();
+      page.removeEventListener("load", onLoad, true);
+      if (idle !== undefined) window.cancelIdleCallback(idle);
+      clearTimeout(timer);
+    };
   }, [prepareTheme, theme]);
 
   useEffect(() => {
@@ -803,11 +804,6 @@ export function LandingPage({ initialTheme }: { initialTheme: LandingTheme }) {
     openDemo(id);
     root.current?.querySelector<HTMLButtonElement>(previewFragment(id))?.focus();
   }
-
-  const links = [
-    { href: "#journey", label: t("landing.showcase.navJourney") },
-    { href: "#family", label: t("landing.showcase.navFamily") },
-  ];
 
   return (
     <div className="sl-page" data-landing-theme={theme} ref={root}>
@@ -943,33 +939,16 @@ export function LandingPage({ initialTheme }: { initialTheme: LandingTheme }) {
         </section>
 
         <div className="sl-footer">
-          <div className="sl-container">
-            <div className="sl-footer-main">
-              <div className="sl-footer-brand">
-                <Wordmark />
-                <p className="sl-caption">{t("landing.showcase.footer")}</p>
-              </div>
-              <div>
-                <strong>{t("landing.copy038")}</strong>
-                {links.map(({ href, label }) => <a key={href} href={href}>{label}</a>)}
-              </div>
-              <div>
-                <strong>{t("landing.copy142")}</strong>
-                <Link href="/privacy">{t("landing.copy143")}</Link>
-                <Link href="/terms">{t("landing.copy144")}</Link>
-                <a href="mailto:hello@soyle.app">hello@soyle.app</a>
-              </div>
+          <div className="sl-container sl-footer-bottom">
+            <div className="sl-footer-brand">
+              <Wordmark />
+              <span>2026</span>
             </div>
-            <div className="sl-footer-bottom">
-              <span>© {new Date().getFullYear()} Söyle</span>
-              <div className="sl-footer-settings">
-                <fieldset className="sl-footer-language">
-                  <legend>{t("landing.theme.language")}</legend>
-                  <LanguagePicker />
-                </fieldset>
-                <ThemePicker theme={theme} onChange={changeTheme} />
-              </div>
-            </div>
+            <nav className="sl-footer-links" aria-label={t("landing.showcase.footerNavigation")}>
+              <Link href="/privacy">{t("landing.copy143")}</Link>
+              <Link href="/terms">{t("landing.copy144")}</Link>
+              <a href="mailto:a6003233@gmail.com">a6003233@gmail.com</a>
+            </nav>
           </div>
         </div>
       </footer>

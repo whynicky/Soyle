@@ -11,7 +11,7 @@ type ColorScheme = "light" | "dark";
 type PrepareTheme = (scheme: ColorScheme) => Promise<unknown>;
 const themeChange = "soyle-public-theme";
 const systemQuery = "(prefers-color-scheme: dark)";
-let switching = false;
+let activeChange: { theme: LandingTheme; cancel: () => void } | undefined;
 let sessionTheme: LandingTheme | undefined;
 const preparedImages = new Map<string, Promise<void>>();
 
@@ -76,53 +76,61 @@ export function usePublicTheme(initialTheme: LandingTheme, prepare?: PrepareThem
     return () => clearTimeout(timer);
   }, [prepare, theme]);
 
-  async function changeTheme(next: LandingTheme, origin: HTMLElement) {
+  function changeTheme(next: LandingTheme, origin: HTMLElement) {
     const current = readTheme();
-    if (switching || next === current) return;
+    if (next === (activeChange?.theme ?? current)) return;
+    activeChange?.cancel();
+    if (next === current) return;
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches || colorScheme(current) === colorScheme(next)) {
       saveTheme(next);
       return;
     }
 
-    switching = true;
     const root = document.documentElement;
-    try {
-      if (prepare) {
-        let timeout: ReturnType<typeof setTimeout> | undefined;
-        try {
-          await Promise.race([prepare(colorScheme(next)), new Promise<void>((resolve) => { timeout = setTimeout(resolve, 450); })]);
-        } finally {
-          clearTimeout(timeout);
-        }
-      }
-      if (!origin.isConnected) return;
-
-      if (motion === "fade" || typeof document.startViewTransition !== "function") {
-        root.dataset.publicThemeTransition = "fade";
-        saveTheme(next);
-        await new Promise<void>((resolve) => setTimeout(resolve, motion === "fade" ? 240 : 200));
-        return;
-      }
-
-      const control = origin.closest("label") ?? origin;
-      const rect = control.getBoundingClientRect();
-      const x = rect.left + rect.width / 2;
-      const y = rect.top + rect.height / 2;
-      const radius = Math.hypot(Math.max(x, window.innerWidth - x), Math.max(y, window.innerHeight - y));
-      root.style.setProperty("--public-theme-x", `${x}px`);
-      root.style.setProperty("--public-theme-y", `${y}px`);
-      root.style.setProperty("--public-theme-radius", `${Math.ceil(radius)}px`);
-      root.dataset.publicThemeTransition = "circle";
-      const transition = document.startViewTransition(() => saveTheme(next));
-      void transition.ready.catch(() => {});
-      await transition.finished;
-    } finally {
+    let transition: ViewTransition | undefined;
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const skipOnScroll = () => transition?.skipTransition();
+    const change = {
+      theme: next,
+      cancel: () => {
+        transition?.skipTransition();
+        finish();
+      },
+    };
+    function finish() {
+      if (activeChange !== change) return;
+      activeChange = undefined;
+      clearTimeout(timer);
+      window.removeEventListener("scroll", skipOnScroll);
       delete root.dataset.publicThemeTransition;
       root.style.removeProperty("--public-theme-x");
       root.style.removeProperty("--public-theme-y");
       root.style.removeProperty("--public-theme-radius");
-      switching = false;
     }
+    activeChange = change;
+
+    if (motion === "fade" || typeof document.startViewTransition !== "function") {
+      root.dataset.publicThemeTransition = "fade";
+      saveTheme(next);
+      timer = setTimeout(finish, motion === "fade" ? 240 : 200);
+      return;
+    }
+
+    const control = origin.closest("label") ?? origin;
+    const rect = control.getBoundingClientRect();
+    const x = rect.left + rect.width / 2;
+    const y = rect.top + rect.height / 2;
+    const radius = Math.hypot(Math.max(x, window.innerWidth - x), Math.max(y, window.innerHeight - y));
+    root.style.setProperty("--public-theme-x", `${x}px`);
+    root.style.setProperty("--public-theme-y", `${y}px`);
+    root.style.setProperty("--public-theme-radius", `${Math.ceil(radius)}px`);
+    root.dataset.publicThemeTransition = "circle";
+    transition = document.startViewTransition(() => {
+      if (activeChange === change && origin.isConnected) saveTheme(next);
+    });
+    window.addEventListener("scroll", skipOnScroll, { passive: true, once: true });
+    void transition.ready.catch(() => {});
+    void transition.finished.then(finish, finish);
   }
 
   return { theme, changeTheme };
@@ -194,7 +202,7 @@ export function PublicThemeToggle({ theme, onChange }: {
       type="button"
       aria-label={t(`landing.theme.to-${next}`)}
       onMouseDown={(event) => event.preventDefault()}
-      onClick={(event) => onChange(colorScheme(theme) === "dark" ? "light" : "dark", event.currentTarget)}
+      onClick={(event) => onChange(colorScheme(activeChange?.theme ?? readTheme()) === "dark" ? "light" : "dark", event.currentTarget)}
     >
       <Sun size={17} className="public-theme-sun" aria-hidden="true" />
       <Moon size={17} className="public-theme-moon" aria-hidden="true" />
