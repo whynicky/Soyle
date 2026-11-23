@@ -11,7 +11,7 @@ import { CinematicStorybookExperience } from "./storybook/cinematic/CinematicSto
 import { speak, stopCurrentSpeech } from "@/lib/speech";
 import { InteractiveBook } from "./storybook/book/InteractiveBook";
 
-export function StoryExperience({ childId, calmMode = false, onGames }: { childId?: number; calmMode?: boolean; onGames: () => void }) {
+export function StoryExperience({ childId, calmMode = false, onGames, onFamily }: { childId?: number; calmMode?: boolean; onGames: () => void; onFamily?: () => void }) {
   const locale = useLocale();
   const [stories, setStories] = useState<Story[]>([]);
   const [activeKey, setActiveKey] = useState<string | null>(null);
@@ -94,7 +94,7 @@ export function StoryExperience({ childId, calmMode = false, onGames }: { childI
   const openStory = (story: Story) => { stopCurrentSpeech(); setActiveKey(story.key); window.scrollTo({top:0,behavior:"instant"}); setFeedback(""); setError(""); };
 
   return <div className="v2-screen v2-stories focused-stories playroom-catalog story-room-catalog page-enter">
-    <LessonLibraryHero section="stories" onOpen={section => { if (section === "games") onGames(); }}/>
+    <LessonLibraryHero section="stories" onOpen={section => { if (section === "games") onGames(); if (section === "family") onFamily?.(); }}/>
     {error && <div className="v2-inline-alert" role="alert"><p>{error}</p><button className="small-button" onClick={() => setRevision(value => value + 1)}>{t("ux.retry")}</button></div>}
     {featured && <section className="story-resume playroom-resume"><Image src={featured.cover} alt="" width={180} height={140}/><div><span>{t("storyList.copy022")}</span><h2>{shortDashes(featured.title)}</h2><div className="playroom-progress-row"><progress value={featured.scene_index} max={Math.max(1,featured.scene_count)} aria-label={t("library.readingStatus")}/><span>{featured.progress_label || t("storyList.progress", {done:featured.scene_index,total:featured.scene_count})}</span></div></div><button className="primary-button" onClick={() => openStory(featured)}><Play size={18}/>{t("storyList.copy027")}</button></section>}
     <section aria-labelledby="v2-all-stories" aria-busy={loading}><div className="library-results-heading"><h2 id="v2-all-stories">{t("library.catalog")}</h2><span role="status">{t("library.found",{count:stories.length})}</span></div>

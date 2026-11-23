@@ -335,12 +335,45 @@ class AACCardCreate(BaseModel):
     language: Literal["ru", "kk"] = "ru"
     pictogram: str | None = Field(default=None, max_length=200)
 
-class WorldPhotoRename(BaseModel):
-    name: str = Field(min_length=1, max_length=60)
+PersonalCardCategory = Literal["people", "animals", "toys", "food", "home", "clothing", "places", "custom", "family"]
+FamilyRelation = Literal["mama", "papa", "baba", "deda", "tetya", "dyadya"]
 
-class WorldPhotoCreate(WorldPhotoRename):
-    category: Literal["people", "toys", "food", "places"]
+
+class WorldPhotoCreate(BaseModel):
+    """One personal card: a parent photo with the word the child hears."""
+    kind: Literal["word", "family"] = "word"
+    name: str = Field(default="", max_length=60)
+    category: PersonalCardCategory = "people"
+    custom_category_id: int | None = Field(default=None, ge=1)
+    relation: FamilyRelation | None = None
+    language: Literal["ru", "kk"] = "ru"
+    speech: str | None = Field(default=None, max_length=80)
     image_data: str = Field(min_length=40, max_length=1_050_000)
+
+
+class WorldPhotoRename(BaseModel):
+    """Partial card update; a request with only ``name`` keeps the old rename contract."""
+    name: str | None = Field(default=None, max_length=60)
+    category: PersonalCardCategory | None = None
+    custom_category_id: int | None = Field(default=None, ge=1)
+    relation: FamilyRelation | None = None
+    language: Literal["ru", "kk"] | None = None
+    speech: str | None = Field(default=None, max_length=80)
+    image_data: str | None = Field(default=None, min_length=40, max_length=1_050_000)
+
+
+class PersonalCategoryCreate(BaseModel):
+    label: str = Field(min_length=1, max_length=30)
+
+
+class PersonalCardOutcome(BaseModel):
+    card_id: int = Field(ge=1)
+    outcome: Literal["independent", "prompted", "modelled"]
+    attempts: int = Field(ge=1, le=10)
+
+
+class PersonalPracticeCreate(BaseModel):
+    outcomes: list[PersonalCardOutcome] = Field(min_length=1, max_length=40)
 
 class StoryAnswer(BaseModel):
     scene_index: int = Field(ge=0, le=20)

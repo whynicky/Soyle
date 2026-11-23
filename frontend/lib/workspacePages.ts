@@ -1,7 +1,7 @@
 import type { MessageKey } from "./locale";
 
 export type WorkspaceRole = "parent" | "admin" | "specialist";
-type WorkspaceScreen = "specialist" | "parent" | "progress" | "goals" | "world" | "aac" | "ai" | "guides" | "admin" | "settings" | "profile";
+type WorkspaceScreen = "family" | "specialist" | "parent" | "progress" | "goals" | "world" | "aac" | "ai" | "guides" | "admin" | "settings" | "profile";
 export type WorkspacePage = {
   slug: string; screen: WorkspaceScreen; section?: string; label: MessageKey; group?: MessageKey;
 };
@@ -15,8 +15,9 @@ export const workspacePages: Record<WorkspaceRole, WorkspacePage[]> = {
     { slug: "specialist", screen: "parent", section: "specialist", label: "cabinet.specialist", group: "workspace.family" },
     { slug: "guides", screen: "guides", label: "nav.guides", group: "workspace.family" },
     { slug: "assistant", screen: "ai", label: "familyReview.assistant", group: "workspace.family" },
-    { slug: "photos", screen: "world", label: "workspace.photos", group: "cabinet.materials" },
-    { slug: "words", screen: "aac", label: "workspace.words", group: "cabinet.materials" },
+    { slug: "family", screen: "family", label: "personal.family.title", group: "personal.materials" },
+    { slug: "photos", screen: "world", label: "personal.words.title", group: "personal.materials" },
+    { slug: "words", screen: "aac", label: "workspace.words", group: "personal.materials" },
     { slug: "access", screen: "parent", section: "access", label: "screen.ParentScreen.ui74", group: "workspace.account" },
     { slug: "profile", screen: "profile", label: "nav.myProfile" },
     { slug: "preferences", screen: "settings", label: "nav.settings" },

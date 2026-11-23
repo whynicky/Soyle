@@ -1,0 +1,422 @@
+[
+ {
+  "frame": 8,
+  "time": 0.267,
+  "gain_db": -14,
+  "name": "line draws (centre-out)"
+ },
+ {
+  "frame": 30,
+  "time": 1.0,
+  "gain_db": -26,
+  "name": "breath travels along the line"
+ },
+ {
+  "frame": 44,
+  "time": 1.467,
+  "gain_db": -30,
+  "name": "word rises 0"
+ },
+ {
+  "frame": 53,
+  "time": 1.767,
+  "gain_db": -30,
+  "name": "word rises 1"
+ },
+ {
+  "frame": 62,
+  "time": 2.067,
+  "gain_db": -30,
+  "name": "word rises 2"
+ },
+ {
+  "frame": 71,
+  "time": 2.367,
+  "gain_db": -30,
+  "name": "word rises 3"
+ },
+ {
+  "frame": 97,
+  "time": 3.233,
+  "gain_db": -12,
+  "name": "«үні» — the voice lifts the line"
+ },
+ {
+  "frame": 148,
+  "time": 4.933,
+  "gain_db": -18,
+  "name": "line widens into a horizon"
+ },
+ {
+  "frame": 158,
+  "time": 5.267,
+  "gain_db": -11,
+  "name": "the world opens under the line"
+ },
+ {
+  "frame": 178,
+  "time": 5.933,
+  "gain_db": -24,
+  "name": "foreground grass rises"
+ },
+ {
+  "frame": 216,
+  "time": 7.2,
+  "gain_db": -27,
+  "name": "sky text 0"
+ },
+ {
+  "frame": 246,
+  "time": 8.2,
+  "gain_db": -27,
+  "name": "sky text 1"
+ },
+ {
+  "frame": 266,
+  "time": 8.867,
+  "gain_db": -16,
+  "name": "«Алма» card settles in the valley"
+ },
+ {
+  "frame": 296,
+  "time": 9.867,
+  "gain_db": -24,
+  "name": "text and card sink away"
+ },
+ {
+  "frame": 322,
+  "time": 10.733,
+  "gain_db": -22,
+  "name": "logo rises in the sky"
+ },
+ {
+  "frame": 326,
+  "time": 10.867,
+  "gain_db": -18,
+  "name": "line lifts from the horizon"
+ },
+ {
+  "frame": 338,
+  "time": 11.267,
+  "gain_db": -19,
+  "name": "outline draws left"
+ },
+ {
+  "frame": 338,
+  "time": 11.267,
+  "gain_db": -19,
+  "name": "outline draws right"
+ },
+ {
+  "frame": 364,
+  "time": 12.133,
+  "gain_db": -21,
+  "name": "window fills"
+ },
+ {
+  "frame": 404,
+  "time": 13.467,
+  "gain_db": -22,
+  "name": "logo flies into the window"
+ },
+ {
+  "frame": 439,
+  "time": 14.633,
+  "gain_db": -15,
+  "name": "logo lands in its place"
+ },
+ {
+  "frame": 444,
+  "time": 14.8,
+  "gain_db": -12,
+  "name": "camera pushes into the product"
+ },
+ {
+  "frame": 500,
+  "time": 16.667,
+  "gain_db": -20,
+  "name": "ground line draws"
+ },
+ {
+  "frame": 502,
+  "time": 16.733,
+  "gain_db": -26,
+  "name": "caption 0"
+ },
+ {
+  "frame": 566,
+  "time": 18.867,
+  "gain_db": -26,
+  "name": "caption 1"
+ },
+ {
+  "frame": 636,
+  "time": 21.2,
+  "gain_db": -26,
+  "name": "caption 2"
+ },
+ {
+  "frame": 498,
+  "time": 16.6,
+  "gain_db": -22,
+  "name": "lesson panel arrives"
+ },
+ {
+  "frame": 529,
+  "time": 17.633,
+  "gain_db": -13,
+  "name": "apple pressed"
+ },
+ {
+  "frame": 534,
+  "time": 17.8,
+  "gain_db": -26,
+  "name": "answer confirmed"
+ },
+ {
+  "frame": 548,
+  "time": 18.267,
+  "gain_db": -23,
+  "name": "lesson leaves"
+ },
+ {
+  "frame": 558,
+  "time": 18.6,
+  "gain_db": -23,
+  "name": "plan panel arrives"
+ },
+ {
+  "frame": 568,
+  "time": 18.933,
+  "gain_db": -22,
+  "name": "task row 0"
+ },
+ {
+  "frame": 576,
+  "time": 19.2,
+  "gain_db": -22,
+  "name": "task row 1"
+ },
+ {
+  "frame": 584,
+  "time": 19.467,
+  "gain_db": -22,
+  "name": "task row 2"
+ },
+ {
+  "frame": 590,
+  "time": 19.667,
+  "gain_db": -24,
+  "name": "task detail slides in"
+ },
+ {
+  "frame": 616,
+  "time": 20.533,
+  "gain_db": -23,
+  "name": "plan leaves"
+ },
+ {
+  "frame": 630,
+  "time": 21.0,
+  "gain_db": -23,
+  "name": "story panel 0 reveals"
+ },
+ {
+  "frame": 638,
+  "time": 21.267,
+  "gain_db": -23,
+  "name": "story panel 1 reveals"
+ },
+ {
+  "frame": 646,
+  "time": 21.533,
+  "gain_db": -23,
+  "name": "story panel 2 reveals"
+ },
+ {
+  "frame": 672,
+  "time": 22.4,
+  "gain_db": -24,
+  "name": "story panels leave"
+ },
+ {
+  "frame": 694,
+  "time": 23.133,
+  "gain_db": -17,
+  "name": "communication card 0 lands"
+ },
+ {
+  "frame": 700,
+  "time": 23.333,
+  "gain_db": -17,
+  "name": "communication card 1 lands"
+ },
+ {
+  "frame": 706,
+  "time": 23.533,
+  "gain_db": -17,
+  "name": "communication card 2 lands"
+ },
+ {
+  "frame": 722,
+  "time": 24.067,
+  "gain_db": -10,
+  "name": "«Алма» card pressed"
+ },
+ {
+  "frame": 731,
+  "time": 24.367,
+  "gain_db": -23,
+  "name": "check mark"
+ },
+ {
+  "frame": 738,
+  "time": 24.6,
+  "gain_db": -20,
+  "name": "«Алма» lifts out of the card"
+ },
+ {
+  "frame": 759,
+  "time": 25.3,
+  "gain_db": -21,
+  "name": "«Алма» lands in the phrase"
+ },
+ {
+  "frame": 752,
+  "time": 25.067,
+  "gain_db": -27,
+  "name": "phrase word 0"
+ },
+ {
+  "frame": 760,
+  "time": 25.333,
+  "gain_db": -27,
+  "name": "phrase word 1"
+ },
+ {
+  "frame": 764,
+  "time": 25.467,
+  "gain_db": -24,
+  "name": "speak button appears"
+ },
+ {
+  "frame": 774,
+  "time": 25.8,
+  "gain_db": -12,
+  "name": "«Дыбыстау» pressed"
+ },
+ {
+  "frame": 796,
+  "time": 26.533,
+  "gain_db": -24,
+  "name": "board lifts away"
+ },
+ {
+  "frame": 800,
+  "time": 26.667,
+  "gain_db": -19,
+  "name": "line becomes the spine"
+ },
+ {
+  "frame": 812,
+  "time": 27.067,
+  "gain_db": -21,
+  "name": "parent cabinet arrives"
+ },
+ {
+  "frame": 820,
+  "time": 27.333,
+  "gain_db": -26,
+  "name": "headline"
+ },
+ {
+  "frame": 850,
+  "time": 28.333,
+  "gain_db": -21,
+  "name": "specialist advice lifts out"
+ },
+ {
+  "frame": 886,
+  "time": 29.533,
+  "gain_db": -21,
+  "name": "advice settles"
+ },
+ {
+  "frame": 874,
+  "time": 29.133,
+  "gain_db": -27,
+  "name": "node «Маманға»"
+ },
+ {
+  "frame": 892,
+  "time": 29.733,
+  "gain_db": -21,
+  "name": "parent note lifts out"
+ },
+ {
+  "frame": 928,
+  "time": 30.933,
+  "gain_db": -21,
+  "name": "note settles"
+ },
+ {
+  "frame": 916,
+  "time": 30.533,
+  "gain_db": -27,
+  "name": "node «Ата-анаға»"
+ },
+ {
+  "frame": 982,
+  "time": 32.733,
+  "gain_db": -23,
+  "name": "product sinks into the valley"
+ },
+ {
+  "frame": 998,
+  "time": 33.267,
+  "gain_db": -15,
+  "name": "the hills return"
+ },
+ {
+  "frame": 1028,
+  "time": 34.267,
+  "gain_db": -18,
+  "name": "camera tilts to the sky"
+ },
+ {
+  "frame": 1040,
+  "time": 34.667,
+  "gain_db": -21,
+  "name": "line calms"
+ },
+ {
+  "frame": 1070,
+  "time": 35.667,
+  "gain_db": -16,
+  "name": "line curls into the S"
+ },
+ {
+  "frame": 1099,
+  "time": 36.633,
+  "gain_db": -11,
+  "name": "the S fills — signature"
+ },
+ {
+  "frame": 1106,
+  "time": 36.867,
+  "gain_db": -24,
+  "name": "wordmark reveals"
+ },
+ {
+  "frame": 1122,
+  "time": 37.4,
+  "gain_db": -27,
+  "name": "final headline"
+ },
+ {
+  "frame": 1142,
+  "time": 38.067,
+  "gain_db": -30,
+  "name": "supporting line"
+ }
+]

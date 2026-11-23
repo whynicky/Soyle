@@ -1,23 +1,5 @@
 [
   {
-    "file": "frontend/components/BrandLogo.tsx",
-    "line": 52,
-    "text": "Söyle — қарым-қатынас пен жаттығу",
-    "kind": "StringLiteral"
-  },
-  {
-    "file": "frontend/components/BrandLogo.tsx",
-    "line": 54,
-    "text": "ҚАРЫМ-ҚАТЫНАС ПЕН ЖАТТЫҒУ",
-    "kind": "JsxText"
-  },
-  {
-    "file": "frontend/components/BrandLogo.tsx",
-    "line": 66,
-    "text": "Söyle — общение и практика",
-    "kind": "StringLiteral"
-  },
-  {
     "file": "frontend/components/LanguagePicker.tsx",
     "line": 10,
     "text": "Русский",
@@ -40,12 +22,6 @@
     "line": 10,
     "text": "ҚАЗ",
     "kind": "StringLiteral"
-  },
-  {
-    "file": "frontend/components/LanguagePicker.tsx",
-    "line": 27,
-    "text": "Выберите язык / Тілді таңдаңыз",
-    "kind": "JsxText"
   },
   {
     "file": "frontend/components/ObservationExercise.tsx",
@@ -97,1585 +73,1591 @@
   },
   {
     "file": "frontend/components/SoyleApp.tsx",
-    "line": 1616,
+    "line": 1603,
     "text": "Жарайсың!",
     "kind": "StringLiteral"
   },
   {
     "file": "frontend/components/SoyleApp.tsx",
-    "line": 1649,
+    "line": 1636,
     "text": "Тағы бір рет көр.",
     "kind": "StringLiteral"
   },
   {
     "file": "frontend/components/SoyleApp.tsx",
-    "line": 1660,
+    "line": 1647,
     "text": "Екі суреттің бірін таңда.",
     "kind": "StringLiteral"
   },
   {
     "file": "frontend/components/SoyleApp.tsx",
-    "line": 1660,
+    "line": 1647,
     "text": "Теперь выбери из двух картинок.",
     "kind": "StringLiteral"
   },
   {
     "file": "frontend/components/SoyleApp.tsx",
-    "line": 1682,
+    "line": 1671,
     "text": "Ребёнок",
     "kind": "TemplateHead"
   },
   {
     "file": "frontend/components/SoyleApp.tsx",
-    "line": 1682,
+    "line": 1671,
     "text": "Это",
     "kind": "TemplateHead"
   },
   {
     "file": "frontend/components/SoyleApp.tsx",
-    "line": 1778,
+    "line": 1671,
+    "text": "Это",
+    "kind": "TemplateHead"
+  },
+  {
+    "file": "frontend/components/SoyleApp.tsx",
+    "line": 1767,
     "text": "Помоги",
     "kind": "StringLiteral"
   },
   {
     "file": "frontend/components/SoyleApp.tsx",
-    "line": 1778,
+    "line": 1767,
     "text": "Больно",
     "kind": "StringLiteral"
   },
   {
     "file": "frontend/components/SoyleApp.tsx",
-    "line": 1778,
+    "line": 1767,
     "text": "Перерыв",
     "kind": "StringLiteral"
   },
   {
     "file": "frontend/components/SoyleApp.tsx",
-    "line": 1778,
+    "line": 1767,
     "text": "Стоп",
     "kind": "StringLiteral"
   },
   {
     "file": "frontend/components/SoyleApp.tsx",
-    "line": 1778,
+    "line": 1767,
     "text": "Не хочу",
     "kind": "StringLiteral"
   },
   {
     "file": "frontend/components/SoyleApp.tsx",
-    "line": 1779,
+    "line": 1768,
     "text": "Ещё",
     "kind": "StringLiteral"
   },
   {
     "file": "frontend/components/SoyleApp.tsx",
-    "line": 1779,
+    "line": 1768,
     "text": "Хочу",
     "kind": "StringLiteral"
   },
   {
     "file": "frontend/components/SoyleApp.tsx",
-    "line": 1779,
+    "line": 1768,
     "text": "Пить",
     "kind": "StringLiteral"
   },
   {
     "file": "frontend/components/SoyleApp.tsx",
-    "line": 1779,
+    "line": 1768,
     "text": "Есть",
     "kind": "StringLiteral"
   },
   {
     "file": "frontend/components/SoyleApp.tsx",
-    "line": 1779,
+    "line": 1768,
     "text": "Туалет",
     "kind": "StringLiteral"
   },
   {
     "file": "frontend/components/SoyleApp.tsx",
-    "line": 1779,
+    "line": 1768,
     "text": "Отдых",
     "kind": "StringLiteral"
   },
   {
     "file": "frontend/components/SoyleApp.tsx",
-    "line": 1780,
+    "line": 1769,
     "text": "Я",
     "kind": "StringLiteral"
   },
   {
     "file": "frontend/components/SoyleApp.tsx",
-    "line": 1780,
+    "line": 1769,
     "text": "Мама",
     "kind": "StringLiteral"
   },
   {
     "file": "frontend/components/SoyleApp.tsx",
-    "line": 1780,
+    "line": 1769,
     "text": "Папа",
     "kind": "StringLiteral"
   },
   {
     "file": "frontend/components/SoyleApp.tsx",
-    "line": 1780,
+    "line": 1769,
     "text": "Бабушка",
     "kind": "StringLiteral"
   },
   {
     "file": "frontend/components/SoyleApp.tsx",
-    "line": 1780,
+    "line": 1769,
     "text": "Дедушка",
     "kind": "StringLiteral"
   },
   {
     "file": "frontend/components/SoyleApp.tsx",
-    "line": 1781,
+    "line": 1770,
     "text": "Брат",
     "kind": "StringLiteral"
   },
   {
     "file": "frontend/components/SoyleApp.tsx",
-    "line": 1781,
+    "line": 1770,
     "text": "Сестра",
     "kind": "StringLiteral"
   },
   {
     "file": "frontend/components/SoyleApp.tsx",
-    "line": 1781,
+    "line": 1770,
     "text": "Сок",
     "kind": "StringLiteral"
   },
   {
     "file": "frontend/components/SoyleApp.tsx",
-    "line": 1781,
+    "line": 1770,
     "text": "Вода",
     "kind": "StringLiteral"
   },
   {
     "file": "frontend/components/SoyleApp.tsx",
-    "line": 1781,
+    "line": 1770,
     "text": "Чай",
     "kind": "StringLiteral"
   },
   {
     "file": "frontend/components/SoyleApp.tsx",
-    "line": 1782,
+    "line": 1771,
     "text": "Яблоко",
     "kind": "StringLiteral"
   },
   {
     "file": "frontend/components/SoyleApp.tsx",
-    "line": 1782,
+    "line": 1771,
     "text": "Банан",
     "kind": "StringLiteral"
   },
   {
     "file": "frontend/components/SoyleApp.tsx",
-    "line": 1782,
+    "line": 1771,
     "text": "Хлеб",
     "kind": "StringLiteral"
   },
   {
     "file": "frontend/components/SoyleApp.tsx",
-    "line": 1782,
+    "line": 1771,
     "text": "Суп",
     "kind": "StringLiteral"
   },
   {
     "file": "frontend/components/SoyleApp.tsx",
-    "line": 1782,
+    "line": 1771,
     "text": "Каша",
     "kind": "StringLiteral"
   },
   {
     "file": "frontend/components/SoyleApp.tsx",
-    "line": 1783,
+    "line": 1772,
     "text": "Мяч",
     "kind": "StringLiteral"
   },
   {
     "file": "frontend/components/SoyleApp.tsx",
-    "line": 1783,
+    "line": 1772,
     "text": "Машинка",
     "kind": "StringLiteral"
   },
   {
     "file": "frontend/components/SoyleApp.tsx",
-    "line": 1783,
+    "line": 1772,
     "text": "Кукла",
     "kind": "StringLiteral"
   },
   {
     "file": "frontend/components/SoyleApp.tsx",
-    "line": 1783,
+    "line": 1772,
     "text": "Книга",
     "kind": "StringLiteral"
   },
   {
     "file": "frontend/components/SoyleApp.tsx",
-    "line": 1783,
+    "line": 1772,
     "text": "Пазл",
     "kind": "StringLiteral"
   },
   {
     "file": "frontend/components/SoyleApp.tsx",
-    "line": 1783,
+    "line": 1772,
     "text": "Кот",
     "kind": "StringLiteral"
   },
   {
     "file": "frontend/components/SoyleApp.tsx",
-    "line": 1784,
+    "line": 1773,
     "text": "Люблю",
     "kind": "StringLiteral"
   },
   {
     "file": "frontend/components/SoyleApp.tsx",
-    "line": 1784,
+    "line": 1773,
     "text": "Вижу",
     "kind": "StringLiteral"
   },
   {
     "file": "frontend/components/SoyleApp.tsx",
-    "line": 1784,
+    "line": 1773,
     "text": "Иду",
     "kind": "StringLiteral"
   },
   {
     "file": "frontend/components/SoyleApp.tsx",
-    "line": 1784,
+    "line": 1773,
     "text": "Играю",
     "kind": "StringLiteral"
   },
   {
     "file": "frontend/components/SoyleApp.tsx",
-    "line": 1784,
+    "line": 1773,
     "text": "Рисовать",
     "kind": "StringLiteral"
   },
   {
     "file": "frontend/components/SoyleApp.tsx",
-    "line": 1785,
+    "line": 1774,
     "text": "Читать",
     "kind": "StringLiteral"
   },
   {
     "file": "frontend/components/SoyleApp.tsx",
-    "line": 1785,
+    "line": 1774,
     "text": "Спать",
     "kind": "StringLiteral"
   },
   {
     "file": "frontend/components/SoyleApp.tsx",
-    "line": 1785,
+    "line": 1774,
     "text": "Гулять",
     "kind": "StringLiteral"
   },
   {
     "file": "frontend/components/SoyleApp.tsx",
-    "line": 1785,
+    "line": 1774,
     "text": "Играл",
     "kind": "StringLiteral"
   },
   {
     "file": "frontend/components/SoyleApp.tsx",
-    "line": 1785,
+    "line": 1774,
     "text": "Гулял",
     "kind": "StringLiteral"
   },
   {
     "file": "frontend/components/SoyleApp.tsx",
-    "line": 1786,
+    "line": 1775,
     "text": "Да",
     "kind": "StringLiteral"
   },
   {
     "file": "frontend/components/SoyleApp.tsx",
-    "line": 1786,
+    "line": 1775,
     "text": "Нет",
     "kind": "StringLiteral"
   },
   {
     "file": "frontend/components/SoyleApp.tsx",
-    "line": 1786,
+    "line": 1775,
     "text": "Весело",
     "kind": "StringLiteral"
   },
   {
     "file": "frontend/components/SoyleApp.tsx",
-    "line": 1786,
+    "line": 1775,
     "text": "Грустно",
     "kind": "StringLiteral"
   },
   {
     "file": "frontend/components/SoyleApp.tsx",
-    "line": 1786,
+    "line": 1775,
     "text": "Устал",
     "kind": "StringLiteral"
   },
   {
     "file": "frontend/components/SoyleApp.tsx",
-    "line": 1786,
+    "line": 1775,
     "text": "Спокойно",
     "kind": "StringLiteral"
   },
   {
     "file": "frontend/components/SoyleApp.tsx",
-    "line": 1787,
+    "line": 1776,
     "text": "Злюсь",
     "kind": "StringLiteral"
   },
   {
     "file": "frontend/components/SoyleApp.tsx",
-    "line": 1787,
+    "line": 1776,
     "text": "Страшно",
     "kind": "StringLiteral"
   },
   {
     "file": "frontend/components/SoyleApp.tsx",
-    "line": 1787,
+    "line": 1776,
     "text": "Жарко",
     "kind": "StringLiteral"
   },
   {
     "file": "frontend/components/SoyleApp.tsx",
-    "line": 1787,
+    "line": 1776,
     "text": "Холодно",
     "kind": "StringLiteral"
   },
   {
     "file": "frontend/components/SoyleApp.tsx",
-    "line": 1788,
+    "line": 1777,
     "text": "Домой",
     "kind": "StringLiteral"
   },
   {
     "file": "frontend/components/SoyleApp.tsx",
-    "line": 1788,
+    "line": 1777,
     "text": "Школа",
     "kind": "StringLiteral"
   },
   {
     "file": "frontend/components/SoyleApp.tsx",
-    "line": 1788,
+    "line": 1777,
     "text": "Площадка",
     "kind": "StringLiteral"
   },
   {
     "file": "frontend/components/SoyleApp.tsx",
-    "line": 1788,
+    "line": 1777,
     "text": "Магазин",
     "kind": "StringLiteral"
   },
   {
     "file": "frontend/components/SoyleApp.tsx",
-    "line": 1788,
+    "line": 1777,
     "text": "Детский сад",
     "kind": "StringLiteral"
   },
   {
     "file": "frontend/components/SoyleApp.tsx",
-    "line": 1789,
+    "line": 1778,
     "text": "Привет",
     "kind": "StringLiteral"
   },
   {
     "file": "frontend/components/SoyleApp.tsx",
-    "line": 1789,
+    "line": 1778,
     "text": "Где?",
     "kind": "StringLiteral"
   },
   {
     "file": "frontend/components/SoyleApp.tsx",
-    "line": 1789,
+    "line": 1778,
     "text": "Что это?",
     "kind": "StringLiteral"
   },
   {
     "file": "frontend/components/SoyleApp.tsx",
-    "line": 1789,
+    "line": 1778,
     "text": "На столе",
     "kind": "StringLiteral"
   },
   {
     "file": "frontend/components/SoyleApp.tsx",
-    "line": 1790,
+    "line": 1779,
     "text": "В коробке",
     "kind": "StringLiteral"
   },
   {
     "file": "frontend/components/SoyleApp.tsx",
-    "line": 1790,
+    "line": 1779,
     "text": "Под стулом",
     "kind": "StringLiteral"
   },
   {
     "file": "frontend/components/SoyleApp.tsx",
-    "line": 1790,
+    "line": 1779,
     "text": "Вчера",
     "kind": "StringLiteral"
   },
   {
     "file": "frontend/components/SoyleApp.tsx",
-    "line": 1799,
+    "line": 1788,
     "text": "Помоги",
     "kind": "StringLiteral"
   },
   {
     "file": "frontend/components/SoyleApp.tsx",
-    "line": 1799,
+    "line": 1788,
     "text": "Больно",
     "kind": "StringLiteral"
   },
   {
     "file": "frontend/components/SoyleApp.tsx",
-    "line": 1799,
+    "line": 1788,
     "text": "Перерыв",
     "kind": "StringLiteral"
   },
   {
     "file": "frontend/components/SoyleApp.tsx",
-    "line": 1799,
+    "line": 1788,
     "text": "Не хочу",
     "kind": "StringLiteral"
   },
   {
     "file": "frontend/components/SoyleApp.tsx",
-    "line": 1800,
+    "line": 1789,
     "text": "Ещё",
     "kind": "StringLiteral"
   },
   {
     "file": "frontend/components/SoyleApp.tsx",
-    "line": 1800,
+    "line": 1789,
     "text": "Хочу",
     "kind": "StringLiteral"
   },
   {
     "file": "frontend/components/SoyleApp.tsx",
-    "line": 1800,
+    "line": 1789,
     "text": "Пить",
     "kind": "StringLiteral"
   },
   {
     "file": "frontend/components/SoyleApp.tsx",
-    "line": 1800,
+    "line": 1789,
     "text": "Есть",
     "kind": "StringLiteral"
   },
   {
     "file": "frontend/components/SoyleApp.tsx",
-    "line": 1800,
+    "line": 1789,
     "text": "Туалет",
     "kind": "StringLiteral"
   },
   {
     "file": "frontend/components/SoyleApp.tsx",
-    "line": 1800,
+    "line": 1789,
     "text": "Отдых",
     "kind": "StringLiteral"
   },
   {
     "file": "frontend/components/SoyleApp.tsx",
-    "line": 1801,
+    "line": 1790,
     "text": "Я",
     "kind": "StringLiteral"
   },
   {
     "file": "frontend/components/SoyleApp.tsx",
-    "line": 1801,
+    "line": 1790,
     "text": "Мама",
     "kind": "StringLiteral"
   },
   {
     "file": "frontend/components/SoyleApp.tsx",
-    "line": 1801,
+    "line": 1790,
     "text": "Папа",
     "kind": "StringLiteral"
   },
   {
     "file": "frontend/components/SoyleApp.tsx",
-    "line": 1801,
+    "line": 1790,
     "text": "Бабушка",
     "kind": "StringLiteral"
   },
   {
     "file": "frontend/components/SoyleApp.tsx",
-    "line": 1801,
+    "line": 1790,
     "text": "Дедушка",
     "kind": "StringLiteral"
   },
   {
     "file": "frontend/components/SoyleApp.tsx",
-    "line": 1802,
+    "line": 1791,
     "text": "Брат",
     "kind": "StringLiteral"
   },
   {
     "file": "frontend/components/SoyleApp.tsx",
-    "line": 1802,
+    "line": 1791,
     "text": "Сестра",
     "kind": "StringLiteral"
   },
   {
     "file": "frontend/components/SoyleApp.tsx",
-    "line": 1802,
+    "line": 1791,
     "text": "Привет",
     "kind": "StringLiteral"
   },
   {
     "file": "frontend/components/SoyleApp.tsx",
-    "line": 1803,
+    "line": 1792,
     "text": "Сок",
     "kind": "StringLiteral"
   },
   {
     "file": "frontend/components/SoyleApp.tsx",
-    "line": 1803,
+    "line": 1792,
     "text": "Вода",
     "kind": "StringLiteral"
   },
   {
     "file": "frontend/components/SoyleApp.tsx",
-    "line": 1803,
+    "line": 1792,
     "text": "Чай",
     "kind": "StringLiteral"
   },
   {
     "file": "frontend/components/SoyleApp.tsx",
-    "line": 1803,
+    "line": 1792,
     "text": "Яблоко",
     "kind": "StringLiteral"
   },
   {
     "file": "frontend/components/SoyleApp.tsx",
-    "line": 1803,
+    "line": 1792,
     "text": "Банан",
     "kind": "StringLiteral"
   },
   {
     "file": "frontend/components/SoyleApp.tsx",
-    "line": 1804,
+    "line": 1793,
     "text": "Хлеб",
     "kind": "StringLiteral"
   },
   {
     "file": "frontend/components/SoyleApp.tsx",
-    "line": 1804,
+    "line": 1793,
     "text": "Суп",
     "kind": "StringLiteral"
   },
   {
     "file": "frontend/components/SoyleApp.tsx",
-    "line": 1804,
+    "line": 1793,
     "text": "Каша",
     "kind": "StringLiteral"
   },
   {
     "file": "frontend/components/SoyleApp.tsx",
-    "line": 1805,
+    "line": 1794,
     "text": "Мяч",
     "kind": "StringLiteral"
   },
   {
     "file": "frontend/components/SoyleApp.tsx",
-    "line": 1805,
+    "line": 1794,
     "text": "Машинка",
     "kind": "StringLiteral"
   },
   {
     "file": "frontend/components/SoyleApp.tsx",
-    "line": 1805,
+    "line": 1794,
     "text": "Кукла",
     "kind": "StringLiteral"
   },
   {
     "file": "frontend/components/SoyleApp.tsx",
-    "line": 1805,
+    "line": 1794,
     "text": "Книга",
     "kind": "StringLiteral"
   },
   {
     "file": "frontend/components/SoyleApp.tsx",
-    "line": 1805,
+    "line": 1794,
     "text": "Пазл",
     "kind": "StringLiteral"
   },
   {
     "file": "frontend/components/SoyleApp.tsx",
-    "line": 1805,
+    "line": 1794,
     "text": "Кот",
     "kind": "StringLiteral"
   },
   {
     "file": "frontend/components/SoyleApp.tsx",
-    "line": 1806,
+    "line": 1795,
     "text": "Да",
     "kind": "StringLiteral"
   },
   {
     "file": "frontend/components/SoyleApp.tsx",
-    "line": 1806,
+    "line": 1795,
     "text": "Нет",
     "kind": "StringLiteral"
   },
   {
     "file": "frontend/components/SoyleApp.tsx",
-    "line": 1806,
+    "line": 1795,
     "text": "Весело",
     "kind": "StringLiteral"
   },
   {
     "file": "frontend/components/SoyleApp.tsx",
-    "line": 1806,
+    "line": 1795,
     "text": "Грустно",
     "kind": "StringLiteral"
   },
   {
     "file": "frontend/components/SoyleApp.tsx",
-    "line": 1806,
+    "line": 1795,
     "text": "Устал",
     "kind": "StringLiteral"
   },
   {
     "file": "frontend/components/SoyleApp.tsx",
-    "line": 1806,
+    "line": 1795,
     "text": "Спокойно",
     "kind": "StringLiteral"
   },
   {
     "file": "frontend/components/SoyleApp.tsx",
-    "line": 1807,
+    "line": 1796,
     "text": "Злюсь",
     "kind": "StringLiteral"
   },
   {
     "file": "frontend/components/SoyleApp.tsx",
-    "line": 1807,
+    "line": 1796,
     "text": "Страшно",
     "kind": "StringLiteral"
   },
   {
     "file": "frontend/components/SoyleApp.tsx",
-    "line": 1807,
+    "line": 1796,
     "text": "Жарко",
     "kind": "StringLiteral"
   },
   {
     "file": "frontend/components/SoyleApp.tsx",
-    "line": 1807,
+    "line": 1796,
     "text": "Холодно",
     "kind": "StringLiteral"
   },
   {
     "file": "frontend/components/SoyleApp.tsx",
-    "line": 1808,
+    "line": 1797,
     "text": "Люблю",
     "kind": "StringLiteral"
   },
   {
     "file": "frontend/components/SoyleApp.tsx",
-    "line": 1808,
+    "line": 1797,
     "text": "Вижу",
     "kind": "StringLiteral"
   },
   {
     "file": "frontend/components/SoyleApp.tsx",
-    "line": 1808,
+    "line": 1797,
     "text": "Иду",
     "kind": "StringLiteral"
   },
   {
     "file": "frontend/components/SoyleApp.tsx",
-    "line": 1808,
+    "line": 1797,
     "text": "Играю",
     "kind": "StringLiteral"
   },
   {
     "file": "frontend/components/SoyleApp.tsx",
-    "line": 1808,
+    "line": 1797,
     "text": "Рисовать",
     "kind": "StringLiteral"
   },
   {
     "file": "frontend/components/SoyleApp.tsx",
-    "line": 1808,
+    "line": 1797,
     "text": "Читать",
     "kind": "StringLiteral"
   },
   {
     "file": "frontend/components/SoyleApp.tsx",
-    "line": 1809,
+    "line": 1798,
     "text": "Спать",
     "kind": "StringLiteral"
   },
   {
     "file": "frontend/components/SoyleApp.tsx",
-    "line": 1809,
+    "line": 1798,
     "text": "Гулять",
     "kind": "StringLiteral"
   },
   {
     "file": "frontend/components/SoyleApp.tsx",
-    "line": 1809,
+    "line": 1798,
     "text": "Что это?",
     "kind": "StringLiteral"
   },
   {
     "file": "frontend/components/SoyleApp.tsx",
-    "line": 1809,
+    "line": 1798,
     "text": "Вчера",
     "kind": "StringLiteral"
   },
   {
     "file": "frontend/components/SoyleApp.tsx",
-    "line": 1809,
+    "line": 1798,
     "text": "Играл",
     "kind": "StringLiteral"
   },
   {
     "file": "frontend/components/SoyleApp.tsx",
-    "line": 1809,
+    "line": 1798,
     "text": "Гулял",
     "kind": "StringLiteral"
   },
   {
     "file": "frontend/components/SoyleApp.tsx",
-    "line": 1810,
+    "line": 1799,
     "text": "Домой",
     "kind": "StringLiteral"
   },
   {
     "file": "frontend/components/SoyleApp.tsx",
-    "line": 1810,
+    "line": 1799,
     "text": "Школа",
     "kind": "StringLiteral"
   },
   {
     "file": "frontend/components/SoyleApp.tsx",
-    "line": 1810,
+    "line": 1799,
     "text": "Площадка",
     "kind": "StringLiteral"
   },
   {
     "file": "frontend/components/SoyleApp.tsx",
-    "line": 1810,
+    "line": 1799,
     "text": "Где?",
     "kind": "StringLiteral"
   },
   {
     "file": "frontend/components/SoyleApp.tsx",
-    "line": 1810,
+    "line": 1799,
     "text": "На столе",
     "kind": "StringLiteral"
   },
   {
     "file": "frontend/components/SoyleApp.tsx",
-    "line": 1811,
+    "line": 1800,
     "text": "В коробке",
     "kind": "StringLiteral"
   },
   {
     "file": "frontend/components/SoyleApp.tsx",
-    "line": 1811,
+    "line": 1800,
     "text": "Под стулом",
     "kind": "StringLiteral"
   },
   {
     "file": "frontend/components/SoyleApp.tsx",
-    "line": 1811,
+    "line": 1800,
     "text": "Магазин",
     "kind": "StringLiteral"
   },
   {
     "file": "frontend/components/SoyleApp.tsx",
-    "line": 1811,
+    "line": 1800,
     "text": "Детский сад",
     "kind": "StringLiteral"
   },
   {
     "file": "frontend/components/SoyleApp.tsx",
-    "line": 1818,
+    "line": 1807,
     "text": "Вода",
     "kind": "StringLiteral"
   },
   {
     "file": "frontend/components/SoyleApp.tsx",
-    "line": 1818,
+    "line": 1807,
     "text": "Помоги",
     "kind": "StringLiteral"
   },
   {
     "file": "frontend/components/SoyleApp.tsx",
-    "line": 1818,
+    "line": 1807,
     "text": "Стоп",
     "kind": "StringLiteral"
   },
   {
     "file": "frontend/components/SoyleApp.tsx",
-    "line": 1818,
+    "line": 1807,
     "text": "Перерыв",
     "kind": "StringLiteral"
   },
   {
     "file": "frontend/components/SoyleApp.tsx",
-    "line": 1819,
+    "line": 1808,
     "text": "Яблоко",
     "kind": "StringLiteral"
   },
   {
     "file": "frontend/components/SoyleApp.tsx",
-    "line": 1819,
+    "line": 1808,
     "text": "Банан",
     "kind": "StringLiteral"
   },
   {
     "file": "frontend/components/SoyleApp.tsx",
-    "line": 1819,
+    "line": 1808,
     "text": "Мишка",
     "kind": "StringLiteral"
   },
   {
     "file": "frontend/components/SoyleApp.tsx",
-    "line": 1819,
+    "line": 1808,
     "text": "Поезд",
     "kind": "StringLiteral"
   },
   {
     "file": "frontend/components/SoyleApp.tsx",
-    "line": 1820,
+    "line": 1809,
     "text": "Что это?",
     "kind": "StringLiteral"
   },
   {
     "file": "frontend/components/SoyleApp.tsx",
-    "line": 1820,
+    "line": 1809,
     "text": "Устал",
     "kind": "StringLiteral"
   },
   {
     "file": "frontend/components/SoyleApp.tsx",
-    "line": 1820,
+    "line": 1809,
     "text": "Страшно",
     "kind": "StringLiteral"
   },
   {
     "file": "frontend/components/SoyleApp.tsx",
-    "line": 1820,
+    "line": 1809,
     "text": "Больно",
     "kind": "StringLiteral"
   },
   {
     "file": "frontend/components/SoyleApp.tsx",
-    "line": 1821,
+    "line": 1810,
     "text": "Не хочу",
     "kind": "StringLiteral"
   },
   {
     "file": "frontend/components/SoyleApp.tsx",
-    "line": 1821,
+    "line": 1810,
     "text": "Пить",
     "kind": "StringLiteral"
   },
   {
     "file": "frontend/components/SoyleApp.tsx",
-    "line": 1821,
+    "line": 1810,
     "text": "Есть",
     "kind": "StringLiteral"
   },
   {
     "file": "frontend/components/SoyleApp.tsx",
-    "line": 1821,
+    "line": 1810,
     "text": "Туалет",
     "kind": "StringLiteral"
   },
   {
     "file": "frontend/components/SoyleApp.tsx",
-    "line": 1822,
+    "line": 1811,
     "text": "Отдых",
     "kind": "StringLiteral"
   },
   {
     "file": "frontend/components/SoyleApp.tsx",
-    "line": 1822,
+    "line": 1811,
     "text": "Ещё",
     "kind": "StringLiteral"
   },
   {
     "file": "frontend/components/SoyleApp.tsx",
-    "line": 1822,
+    "line": 1811,
     "text": "Хочу",
     "kind": "StringLiteral"
   },
   {
     "file": "frontend/components/SoyleApp.tsx",
-    "line": 1822,
+    "line": 1811,
     "text": "Я",
     "kind": "StringLiteral"
   },
   {
     "file": "frontend/components/SoyleApp.tsx",
-    "line": 1823,
+    "line": 1812,
     "text": "Мама",
     "kind": "StringLiteral"
   },
   {
     "file": "frontend/components/SoyleApp.tsx",
-    "line": 1823,
+    "line": 1812,
     "text": "Папа",
     "kind": "StringLiteral"
   },
   {
     "file": "frontend/components/SoyleApp.tsx",
-    "line": 1823,
+    "line": 1812,
     "text": "Сок",
     "kind": "StringLiteral"
   },
   {
     "file": "frontend/components/SoyleApp.tsx",
-    "line": 1823,
+    "line": 1812,
     "text": "Мяч",
     "kind": "StringLiteral"
   },
   {
     "file": "frontend/components/SoyleApp.tsx",
-    "line": 1824,
+    "line": 1813,
     "text": "Кот",
     "kind": "StringLiteral"
   },
   {
     "file": "frontend/components/SoyleApp.tsx",
-    "line": 1824,
+    "line": 1813,
     "text": "Люблю",
     "kind": "StringLiteral"
   },
   {
     "file": "frontend/components/SoyleApp.tsx",
-    "line": 1824,
+    "line": 1813,
     "text": "Вижу",
     "kind": "StringLiteral"
   },
   {
     "file": "frontend/components/SoyleApp.tsx",
-    "line": 1824,
+    "line": 1813,
     "text": "Да",
     "kind": "StringLiteral"
   },
   {
     "file": "frontend/components/SoyleApp.tsx",
-    "line": 1825,
+    "line": 1814,
     "text": "Нет",
     "kind": "StringLiteral"
   },
   {
     "file": "frontend/components/SoyleApp.tsx",
-    "line": 1825,
+    "line": 1814,
     "text": "Весело",
     "kind": "StringLiteral"
   },
   {
     "file": "frontend/components/SoyleApp.tsx",
-    "line": 1825,
+    "line": 1814,
     "text": "Грустно",
     "kind": "StringLiteral"
   },
   {
     "file": "frontend/components/SoyleApp.tsx",
-    "line": 1825,
+    "line": 1814,
     "text": "Домой",
     "kind": "StringLiteral"
   },
   {
     "file": "frontend/components/SoyleApp.tsx",
-    "line": 1826,
+    "line": 1815,
     "text": "Привет",
     "kind": "StringLiteral"
   },
   {
     "file": "frontend/components/SoyleApp.tsx",
-    "line": 1826,
+    "line": 1815,
     "text": "Бабушка",
     "kind": "StringLiteral"
   },
   {
     "file": "frontend/components/SoyleApp.tsx",
-    "line": 1826,
+    "line": 1815,
     "text": "Машинка",
     "kind": "StringLiteral"
   },
   {
     "file": "frontend/components/SoyleApp.tsx",
-    "line": 1826,
+    "line": 1815,
     "text": "Кукла",
     "kind": "StringLiteral"
   },
   {
     "file": "frontend/components/SoyleApp.tsx",
-    "line": 1827,
+    "line": 1816,
     "text": "Иду",
     "kind": "StringLiteral"
   },
   {
     "file": "frontend/components/SoyleApp.tsx",
-    "line": 1827,
+    "line": 1816,
     "text": "Играю",
     "kind": "StringLiteral"
   },
   {
     "file": "frontend/components/SoyleApp.tsx",
-    "line": 1827,
+    "line": 1816,
     "text": "Спокойно",
     "kind": "StringLiteral"
   },
   {
     "file": "frontend/components/SoyleApp.tsx",
-    "line": 1827,
+    "line": 1816,
     "text": "Школа",
     "kind": "StringLiteral"
   },
   {
     "file": "frontend/components/SoyleApp.tsx",
-    "line": 1828,
+    "line": 1817,
     "text": "Площадка",
     "kind": "StringLiteral"
   },
   {
     "file": "frontend/components/SoyleApp.tsx",
-    "line": 1828,
+    "line": 1817,
     "text": "Где?",
     "kind": "StringLiteral"
   },
   {
     "file": "frontend/components/SoyleApp.tsx",
-    "line": 1828,
+    "line": 1817,
     "text": "На столе",
     "kind": "StringLiteral"
   },
   {
     "file": "frontend/components/SoyleApp.tsx",
-    "line": 1828,
+    "line": 1817,
     "text": "В коробке",
     "kind": "StringLiteral"
   },
   {
     "file": "frontend/components/SoyleApp.tsx",
-    "line": 1829,
+    "line": 1818,
     "text": "Под стулом",
     "kind": "StringLiteral"
   },
   {
     "file": "frontend/components/SoyleApp.tsx",
-    "line": 1829,
+    "line": 1818,
     "text": "Вчера",
     "kind": "StringLiteral"
   },
   {
     "file": "frontend/components/SoyleApp.tsx",
-    "line": 1829,
+    "line": 1818,
     "text": "Играл",
     "kind": "StringLiteral"
   },
   {
     "file": "frontend/components/SoyleApp.tsx",
-    "line": 1829,
+    "line": 1818,
     "text": "Гулял",
     "kind": "StringLiteral"
   },
   {
     "file": "frontend/components/SoyleApp.tsx",
-    "line": 1830,
+    "line": 1819,
     "text": "Хлеб",
     "kind": "StringLiteral"
   },
   {
     "file": "frontend/components/SoyleApp.tsx",
-    "line": 1830,
+    "line": 1819,
     "text": "Суп",
     "kind": "StringLiteral"
   },
   {
     "file": "frontend/components/SoyleApp.tsx",
-    "line": 1830,
+    "line": 1819,
     "text": "Каша",
     "kind": "StringLiteral"
   },
   {
     "file": "frontend/components/SoyleApp.tsx",
-    "line": 1830,
+    "line": 1819,
     "text": "Чай",
     "kind": "StringLiteral"
   },
   {
     "file": "frontend/components/SoyleApp.tsx",
-    "line": 1831,
+    "line": 1820,
     "text": "Книга",
     "kind": "StringLiteral"
   },
   {
     "file": "frontend/components/SoyleApp.tsx",
-    "line": 1831,
+    "line": 1820,
     "text": "Пазл",
     "kind": "StringLiteral"
   },
   {
     "file": "frontend/components/SoyleApp.tsx",
-    "line": 1831,
+    "line": 1820,
     "text": "Рисовать",
     "kind": "StringLiteral"
   },
   {
     "file": "frontend/components/SoyleApp.tsx",
-    "line": 1831,
+    "line": 1820,
     "text": "Читать",
     "kind": "StringLiteral"
   },
   {
     "file": "frontend/components/SoyleApp.tsx",
-    "line": 1832,
+    "line": 1821,
     "text": "Спать",
     "kind": "StringLiteral"
   },
   {
     "file": "frontend/components/SoyleApp.tsx",
-    "line": 1832,
+    "line": 1821,
     "text": "Гулять",
     "kind": "StringLiteral"
   },
   {
     "file": "frontend/components/SoyleApp.tsx",
-    "line": 1832,
+    "line": 1821,
     "text": "Злюсь",
     "kind": "StringLiteral"
   },
   {
     "file": "frontend/components/SoyleApp.tsx",
-    "line": 1832,
+    "line": 1821,
     "text": "Жарко",
     "kind": "StringLiteral"
   },
   {
     "file": "frontend/components/SoyleApp.tsx",
-    "line": 1833,
+    "line": 1822,
     "text": "Холодно",
     "kind": "StringLiteral"
   },
   {
     "file": "frontend/components/SoyleApp.tsx",
-    "line": 1833,
+    "line": 1822,
     "text": "Магазин",
     "kind": "StringLiteral"
   },
   {
     "file": "frontend/components/SoyleApp.tsx",
-    "line": 1833,
+    "line": 1822,
     "text": "Детский сад",
     "kind": "StringLiteral"
   },
   {
     "file": "frontend/components/SoyleApp.tsx",
-    "line": 1834,
+    "line": 1823,
     "text": "Дедушка",
     "kind": "StringLiteral"
   },
   {
     "file": "frontend/components/SoyleApp.tsx",
-    "line": 1834,
+    "line": 1823,
     "text": "Брат",
     "kind": "StringLiteral"
   },
   {
     "file": "frontend/components/SoyleApp.tsx",
-    "line": 1834,
+    "line": 1823,
     "text": "Сестра",
     "kind": "StringLiteral"
   },
   {
     "file": "frontend/components/SoyleApp.tsx",
-    "line": 1838,
+    "line": 1827,
     "text": "На столе",
     "kind": "StringLiteral"
   },
   {
     "file": "frontend/components/SoyleApp.tsx",
-    "line": 1838,
+    "line": 1827,
     "text": "В коробке",
     "kind": "StringLiteral"
   },
   {
     "file": "frontend/components/SoyleApp.tsx",
-    "line": 1838,
+    "line": 1827,
     "text": "Под стулом",
     "kind": "StringLiteral"
   },
   {
     "file": "frontend/components/SoyleApp.tsx",
-    "line": 1839,
+    "line": 1828,
     "text": "Вчера",
     "kind": "StringLiteral"
   },
   {
     "file": "frontend/components/SoyleApp.tsx",
-    "line": 1839,
+    "line": 1828,
     "text": "Играл",
     "kind": "StringLiteral"
   },
   {
     "file": "frontend/components/SoyleApp.tsx",
-    "line": 1839,
+    "line": 1828,
     "text": "Гулял",
     "kind": "StringLiteral"
   },
   {
     "file": "frontend/components/SoyleApp.tsx",
-    "line": 1843,
+    "line": 1832,
     "text": "Помоги",
     "kind": "StringLiteral"
   },
   {
     "file": "frontend/components/SoyleApp.tsx",
-    "line": 1843,
+    "line": 1832,
     "text": "Больно",
     "kind": "StringLiteral"
   },
   {
     "file": "frontend/components/SoyleApp.tsx",
-    "line": 1843,
+    "line": 1832,
     "text": "Перерыв",
     "kind": "StringLiteral"
   },
   {
     "file": "frontend/components/SoyleApp.tsx",
-    "line": 1843,
+    "line": 1832,
     "text": "Стоп",
     "kind": "StringLiteral"
   },
   {
     "file": "frontend/components/SoyleApp.tsx",
-    "line": 1843,
+    "line": 1832,
     "text": "Не хочу",
     "kind": "StringLiteral"
   },
   {
     "file": "frontend/components/SoyleApp.tsx",
-    "line": 1843,
+    "line": 1832,
     "text": "Да",
     "kind": "StringLiteral"
   },
   {
     "file": "frontend/components/SoyleApp.tsx",
-    "line": 1843,
+    "line": 1832,
     "text": "Нет",
     "kind": "StringLiteral"
   },
   {
     "file": "frontend/components/SoyleApp.tsx",
-    "line": 1907,
+    "line": 1896,
     "text": "Помоги",
     "kind": "StringLiteral"
   },
   {
     "file": "frontend/components/SoyleApp.tsx",
-    "line": 1907,
+    "line": 1896,
     "text": "Перерыв",
     "kind": "StringLiteral"
   },
   {
     "file": "frontend/components/SoyleApp.tsx",
-    "line": 1907,
+    "line": 1896,
     "text": "Стоп",
     "kind": "StringLiteral"
   },
   {
     "file": "frontend/components/SoyleApp.tsx",
-    "line": 1907,
+    "line": 1896,
     "text": "Не хочу",
     "kind": "StringLiteral"
   },
   {
     "file": "frontend/components/SoyleApp.tsx",
-    "line": 1960,
+    "line": 1949,
     "text": "Не хочу",
     "kind": "StringLiteral"
   },
   {
     "file": "frontend/components/SoyleApp.tsx",
-    "line": 1960,
+    "line": 1949,
     "text": "Стоп",
     "kind": "StringLiteral"
   },
   {
     "file": "frontend/components/SoyleApp.tsx",
-    "line": 1960,
+    "line": 1949,
     "text": "Нет",
     "kind": "StringLiteral"
   },
   {
     "file": "frontend/components/SoyleApp.tsx",
-    "line": 1961,
+    "line": 1950,
     "text": "Перерыв",
     "kind": "StringLiteral"
   },
   {
     "file": "frontend/components/SoyleApp.tsx",
-    "line": 1984,
+    "line": 1973,
     "text": "Перерыв",
     "kind": "StringLiteral"
   },
   {
     "file": "frontend/components/SoyleApp.tsx",
-    "line": 1984,
+    "line": 1973,
     "text": "Нет",
     "kind": "StringLiteral"
   },
   {
     "file": "frontend/components/SoyleApp.tsx",
-    "line": 1984,
+    "line": 1973,
     "text": "Стоп",
     "kind": "StringLiteral"
   },
   {
     "file": "frontend/components/SoyleApp.tsx",
-    "line": 1984,
+    "line": 1973,
     "text": "Не хочу",
     "kind": "StringLiteral"
   },
   {
     "file": "frontend/components/SoyleApp.tsx",
-    "line": 1985,
+    "line": 1974,
     "text": "Перерыв",
     "kind": "StringLiteral"
   },
   {
     "file": "frontend/components/SoyleApp.tsx",
-    "line": 1985,
+    "line": 1974,
     "text": "Стоп",
     "kind": "StringLiteral"
   },
   {
     "file": "frontend/components/SoyleApp.tsx",
-    "line": 1985,
+    "line": 1974,
     "text": "Не хочу",
     "kind": "StringLiteral"
   },
   {
     "file": "frontend/components/SoyleApp.tsx",
-    "line": 1986,
+    "line": 1975,
     "text": "Перерыв",
     "kind": "StringLiteral"
   },
   {
     "file": "frontend/components/SoyleApp.tsx",
-    "line": 2016,
+    "line": 2005,
     "text": "Помоги",
     "kind": "StringLiteral"
   },
   {
     "file": "frontend/components/SoyleApp.tsx",
-    "line": 2016,
+    "line": 2005,
     "text": "Больно",
     "kind": "StringLiteral"
   },
   {
     "file": "frontend/components/SoyleApp.tsx",
-    "line": 2016,
+    "line": 2005,
     "text": "Стоп",
     "kind": "StringLiteral"
   },
   {
     "file": "frontend/components/SoyleApp.tsx",
-    "line": 2016,
+    "line": 2005,
     "text": "Перерыв",
     "kind": "StringLiteral"
   },
   {
     "file": "frontend/components/SoyleApp.tsx",
-    "line": 2016,
+    "line": 2005,
     "text": "Не хочу",
     "kind": "StringLiteral"
   },
   {
     "file": "frontend/components/SoyleApp.tsx",
-    "line": 2016,
+    "line": 2005,
     "text": "Да",
     "kind": "StringLiteral"
   },
   {
     "file": "frontend/components/SoyleApp.tsx",
-    "line": 2023,
+    "line": 2012,
     "text": "Перерыв",
     "kind": "StringLiteral"
   },
   {
     "file": "frontend/components/SoyleApp.tsx",
-    "line": 2024,
+    "line": 2013,
     "text": "Перерыв",
     "kind": "StringLiteral"
   },
   {
     "file": "frontend/components/SoyleApp.tsx",
-    "line": 2318,
+    "line": 2329,
     "text": "понимание предметов",
     "kind": "StringLiteral"
   },
   {
     "file": "frontend/components/SoyleApp.tsx",
-    "line": 2318,
+    "line": 2329,
     "text": "словарное понимание",
     "kind": "StringLiteral"
   },
   {
     "file": "frontend/components/SoyleApp.tsx",
-    "line": 2319,
+    "line": 2330,
     "text": "Дети, которым нужна практика понимания знакомых слов",
     "kind": "StringLiteral"
   },
   {
     "file": "frontend/components/SoyleApp.tsx",
-    "line": 2320,
+    "line": 2331,
     "text": "Целевая группа описана через наблюдаемый навык, а не диагноз.",
     "kind": "StringLiteral"
   },
   {
     "file": "frontend/components/SoyleApp.tsx",
-    "line": 2321,
+    "line": 2332,
     "text": "Может рассмотреть два изображения",
     "kind": "StringLiteral"
   },
   {
     "file": "frontend/components/SoyleApp.tsx",
-    "line": 2321,
+    "line": 2332,
     "text": "Может ответить касанием или доступным альтернативным способом",
     "kind": "StringLiteral"
   },
   {
     "file": "frontend/components/SoyleApp.tsx",
-    "line": 2322,
-    "text": "Структурированные изображения; ответ — одно нажатие после аудиоинструкции.",
+    "line": 2333,
+    "text": "Структурированные изображения; ответ - одно нажатие после аудиоинструкции.",
     "kind": "StringLiteral"
   },
   {
     "file": "frontend/components/SoyleApp.tsx",
-    "line": 2324,
+    "line": 2335,
     "text": "Дать не меньше пяти секунд",
     "kind": "StringLiteral"
   },
   {
     "file": "frontend/components/SoyleApp.tsx",
-    "line": 2324,
+    "line": 2335,
     "text": "Не требовать речевого ответа",
     "kind": "StringLiteral"
   },
   {
     "file": "frontend/components/SoyleApp.tsx",
-    "line": 2324,
+    "line": 2335,
     "text": "Отмечать использованную подсказку",
     "kind": "StringLiteral"
   },
   {
     "file": "frontend/components/SoyleApp.tsx",
-    "line": 2325,
+    "line": 2336,
     "text": "Самостоятельное нажатие",
     "kind": "StringLiteral"
   },
   {
     "file": "frontend/components/SoyleApp.tsx",
-    "line": 2325,
+    "line": 2336,
     "text": "Нажатие с отмеченной подсказкой",
     "kind": "StringLiteral"
   },
   {
     "file": "frontend/components/SoyleApp.tsx",
-    "line": 2325,
+    "line": 2336,
     "text": "Отказ, перерыв или просьба о помощи",
     "kind": "StringLiteral"
   },
   {
     "file": "frontend/components/SoyleApp.tsx",
-    "line": 2326,
+    "line": 2337,
     "text": "Два варианта",
     "kind": "StringLiteral"
   },
   {
     "file": "frontend/components/SoyleApp.tsx",
-    "line": 2326,
+    "line": 2337,
     "text": "Три варианта",
     "kind": "StringLiteral"
   },
   {
     "file": "frontend/components/SoyleApp.tsx",
-    "line": 2326,
+    "line": 2337,
     "text": "Четыре варианта",
     "kind": "StringLiteral"
   },
   {
     "file": "frontend/components/SoyleApp.tsx",
-    "line": 2327,
+    "line": 2338,
     "text": "Повтор аудио",
     "kind": "StringLiteral"
   },
   {
     "file": "frontend/components/SoyleApp.tsx",
-    "line": 2327,
+    "line": 2338,
     "text": "Смысловая подсказка",
     "kind": "StringLiteral"
   },
   {
     "file": "frontend/components/SoyleApp.tsx",
-    "line": 2327,
+    "line": 2338,
     "text": "Сокращение выбора",
     "kind": "StringLiteral"
   },
   {
     "file": "frontend/components/SoyleApp.tsx",
-    "line": 2327,
+    "line": 2338,
     "text": "Модель ответа",
     "kind": "StringLiteral"
   },
   {
     "file": "frontend/components/SoyleApp.tsx",
-    "line": 2328,
+    "line": 2339,
     "text": "Однозначность изображений и отвлекающих вариантов требует ручной проверки",
     "kind": "StringLiteral"
   },
   {
     "file": "frontend/components/SoyleApp.tsx",
-    "line": 2329,
+    "line": 2340,
     "text": "Отказ",
     "kind": "StringLiteral"
   },
   {
     "file": "frontend/components/SoyleApp.tsx",
-    "line": 2329,
+    "line": 2340,
     "text": "Перерыв",
     "kind": "StringLiteral"
   },
   {
     "file": "frontend/components/SoyleApp.tsx",
-    "line": 2329,
+    "line": 2340,
     "text": "Дискомфорт",
     "kind": "StringLiteral"
   },
   {
     "file": "frontend/components/SoyleApp.tsx",
-    "line": 2329,
+    "line": 2340,
     "text": "Техническая ошибка",
     "kind": "StringLiteral"
   },
   {
     "file": "frontend/components/SoyleApp.tsx",
-    "line": 2330,
+    "line": 2341,
     "text": "Разделять самостоятельный ответ, подсказку, отказ, перерыв и техническую ошибку",
     "kind": "StringLiteral"
   },
   {
     "file": "frontend/components/SoyleApp.tsx",
-    "line": 2331,
+    "line": 2342,
     "text": "Проверить перенос со знакомыми безопасными предметами дома",
     "kind": "StringLiteral"
   },
   {
     "file": "frontend/components/SoyleApp.tsx",
-    "line": 2333,
+    "line": 2344,
     "text": "Источники не заявлены; материал требует независимой русскоязычной методической проверки.",
     "kind": "StringLiteral"
   },
@@ -1688,7 +1670,7 @@
   {
     "file": "frontend/components/storybook/cinematic/CinematicStorybookExperience.tsx",
     "line": 15,
-    "text": "На полке — любимый мишка",
+    "text": "На полке - любимый мишка",
     "kind": "StringLiteral"
   },
   {
@@ -1736,7 +1718,7 @@
   {
     "file": "frontend/components/storybook/cinematic/CinematicStorybookExperience.tsx",
     "line": 15,
-    "text": "Мишка — для Миши",
+    "text": "Мишка - для Миши",
     "kind": "StringLiteral"
   },
   {
@@ -2473,20 +2455,20 @@
   },
   {
     "file": "frontend/app/layout.tsx",
-    "line": 16,
+    "line": 44,
     "text": "Söyle - общение и практика",
     "kind": "StringLiteral"
   },
   {
     "file": "frontend/app/layout.tsx",
-    "line": 17,
+    "line": 45,
     "text": "Поддерживаемая коммуникация, игровые задания и локальные адаптивные планы Söyle",
     "kind": "StringLiteral"
   },
   {
     "file": "frontend/app/manifest.ts",
     "line": 5,
-    "text": "Söyle — общение и практика",
+    "text": "Söyle - общение и практика",
     "kind": "StringLiteral"
   },
   {

@@ -4,7 +4,7 @@ import { useEffect, useId, useRef, useState } from "react";
 import { BarChart3, Gamepad2, Home, ImageIcon, ChevronUp, LogOut, MessageCircle, Settings, UserRound } from "lucide-react";
 import { t, useLocale } from "@/lib/i18n";
 
-type Destination = "home" | "games" | "stories" | "guides" | "aac" | "world" | "progress" | "achievements" | "skills" | "goals" | "parent" | "ai";
+type Destination = "home" | "family" | "games" | "stories" | "guides" | "aac" | "world" | "progress" | "achievements" | "skills" | "goals" | "parent" | "ai";
 export function familyNavigation() {
   return [
     { id: "home" as const, label: t("nav.home"), icon: Home, pages: [
@@ -13,6 +13,7 @@ export function familyNavigation() {
     { id: "games" as const, label: t("nav.lessons"), icon: Gamepad2, pages: [
       { id: "games" as Destination, label: t("navigation.exercises") },
       { id: "stories" as Destination, label: t("nav.stories") },
+      { id: "family" as Destination, label: t("personal.family.title") },
     ] },
     { id: "aac" as const, label: t("navigation.communication"), icon: MessageCircle, pages: [
       { id: "aac" as Destination, label: t("nav.words") }, { id: "world" as Destination, label: t("nav.world") },
@@ -29,7 +30,7 @@ export function navigationPage(screen: string) {
   return screen;
 }
 export function familySection(screen: string) {
-  if (["session", "exercise-complete", "motor", "sensory", "mixed"].includes(screen)) return "games";
+  if (["session", "exercise-complete", "motor", "sensory", "mixed", "personal-practice"].includes(screen)) return "games";
   return familyNavigation().find(section => section.pages.some(page => page.id === navigationPage(screen)))?.id;
 }
 export function SectionNavigation({ screen, onOpen, className = "" }: { screen: string; onOpen: (screen: Destination) => void; className?: string }) {

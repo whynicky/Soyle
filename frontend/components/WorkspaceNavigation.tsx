@@ -1,10 +1,10 @@
 "use client";
 
-import { BarChart3, BookOpen, ClipboardList, FileClock, FileText, FolderOpen, House, Images, KeyRound, MessageCircle, MessageSquareText, PanelLeftClose, PanelLeftOpen, ShieldCheck, Target, UserRound, Users } from "lucide-react";
+import { BarChart3, BookOpen, HeartHandshake, ClipboardList, FileClock, FileText, FolderOpen, House, Images, KeyRound, MessageCircle, MessageSquareText, PanelLeftClose, PanelLeftOpen, ShieldCheck, Target, UserRound, Users } from "lucide-react";
 import { t } from "@/lib/i18n";
 import { workspaceHref, workspacePages, type WorkspacePage, type WorkspaceRole } from "@/lib/workspacePages";
 
-const icons = { children: Users, profile: UserRound, history: Target, recommendations: MessageCircle, translations: BookOpen, overview: House, observations: ClipboardList, progress: BarChart3, goals: Target, specialist: UserRound, guides: BookOpen, assistant: MessageCircle, photos: Images, words: MessageSquareText, access: KeyRound, exercises: ClipboardList, library: FolderOpen, users: Users, audit: ShieldCheck, usage: FileClock };
+const icons = { family: HeartHandshake, children: Users, profile: UserRound, history: Target, recommendations: MessageCircle, translations: BookOpen, overview: House, observations: ClipboardList, progress: BarChart3, goals: Target, specialist: UserRound, guides: BookOpen, assistant: MessageCircle, photos: Images, words: MessageSquareText, access: KeyRound, exercises: ClipboardList, library: FolderOpen, users: Users, audit: ShieldCheck, usage: FileClock };
 
 export function WorkspaceRailToggle({ collapsed, onToggle, controls }: { collapsed: boolean; onToggle: () => void; controls: string }) {
   const label = t(collapsed ? "screen.AuthenticatedApp.ui50" : "screen.AuthenticatedApp.ui53");

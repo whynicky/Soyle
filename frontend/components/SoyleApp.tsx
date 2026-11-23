@@ -164,6 +164,8 @@ import { LibraryScene } from "./LibraryScene";
 import { InteractiveBook } from "./storybook/book/InteractiveBook";
 import { StoryExperience } from "@/components/StoryExperience";
 import { WorldExperience } from "@/components/WorldExperience";
+import { FamilyExperience } from "@/components/FamilyExperience";
+import { personalOutcomes } from "@/lib/personalCards";
 import {
   GuidesExperience,
 } from "@/components/ProductExperience";
@@ -175,7 +177,7 @@ import { AccountMenu, SectionNavigation, FamilyMobileNavigation, familyNavigatio
 import { ParentProgress } from "./ParentProgress";
 import { ParentCabinetOverview } from "./ParentCabinetOverview";
 
-type Screen = "specialist" | "learn" | "my-world" | "success" | "comic-preview" | "story-preview" | "home" | "stories" | "world" | "skills" | "achievements" | "guides" | "games" | "session" | "exercise-complete" | "motor" | "sensory" | "mixed" | "aac" | "ai" | "progress" | "goals" | "parent" | "profile" | "settings" | "more" | "admin";
+type Screen = "family" | "personal-practice" | "specialist" | "learn" | "my-world" | "success" | "comic-preview" | "story-preview" | "home" | "stories" | "world" | "skills" | "achievements" | "guides" | "games" | "session" | "exercise-complete" | "motor" | "sensory" | "mixed" | "aac" | "ai" | "progress" | "goals" | "parent" | "profile" | "settings" | "more" | "admin";
 type ModuleName = "motor" | "sensory" | "mixed";
 type GameMeasurement = { attempts_count?: number; correct_answers?: number; prompts_used?: number; gameplay_choices?: number; independent_completions?: number; prompted_completions?: number; attempt_status?: "completed" | "participated" | "refused" | "break" | "technical_error"; independence?: number; prompt_level?: "independent" | "minimal" | "full"; response_ms?: number; communication_initiatives?: number };
 type ExerciseCompletion = { refused?: boolean; title: string; message: string; nextExercise: Exercise | null; sessionMode: boolean; sessionFinished: boolean };
@@ -340,6 +342,7 @@ function AuthenticatedApp({ user, onLogout, externalError, onDismissExternalErro
   const [sessionLoading, setSessionLoading] = useState(false);
   const [sessionError, setSessionError] = useState("");
   const [exerciseCompletion, setExerciseCompletion] = useState<ExerciseCompletion | null>(null);
+  const [personalPractice, setPersonalPractice] = useState<{ exercise: Exercise; returnTo: Screen; nonce: number } | null>(null);
   const [dailyMinutes, setDailyMinutes] = useState<3 | 5 | 10>(5);
   const [dashboard, setDashboard] = useState<Dashboard | null>(null);
   const [notifications, setNotifications] = useState<NotificationsData>({ unread: 0, items: [] });
@@ -800,7 +803,7 @@ function AuthenticatedApp({ user, onLogout, externalError, onDismissExternalErro
       setScreen(next);
       setSidebarOpen(false);
     };
-    const libraryTransition = ["games", "learn", "stories"].includes(screen) && ["games", "stories"].includes(next);
+    const libraryTransition = ["games", "learn", "stories", "family"].includes(screen) && ["games", "stories", "family"].includes(next);
     if (libraryTransition && document.startViewTransition && !window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
       document.startViewTransition(() => {
         flushSync(changeScreen);
@@ -810,6 +813,25 @@ function AuthenticatedApp({ user, onLogout, externalError, onDismissExternalErro
       changeScreen();
       window.scrollTo({ top: 0, behavior: "instant" });
     }
+  };
+
+  const openPersonalPractice = (exercise: Exercise, returnTo: Screen) => {
+    stopCurrentSpeech();
+    setPersonalPractice({ exercise, returnTo, nonce: Date.now() });
+    setScreen("personal-practice");
+    setSidebarOpen(false);
+    window.scrollTo({ top: 0, behavior: "instant" });
+  };
+  const leavePersonalPractice = () => setScreen(personalPractice?.returnTo || "home");
+  // Personal cards have no published exercise row: results are kept per card for the parent.
+  const savePersonalPractice = async (_score: number, _exerciseId: number, measurement: GameMeasurement, details?: Record<string, unknown>) => {
+    const outcomes = personalOutcomes(details);
+    if (outcomes.length && child) {
+      try { await api(`/api/world/${child.id}/results`, { method: "POST", body: JSON.stringify({ outcomes }) }); }
+      catch { /* Practice stays available when the family turned off result history. */ }
+    }
+    if (["completed", "participated", "refused"].includes(String(measurement.attempt_status))) leavePersonalPractice();
+    return true;
   };
 
   const closeSidebar = () => {
@@ -972,13 +994,15 @@ function AuthenticatedApp({ user, onLogout, externalError, onDismissExternalErro
       {requestError && <div className="game-error global-request-error" role="alert"><ShieldAlert size={18}/><span>{requestError}</span><button type="button" className="small-button" onClick={() => setRequestError("")}>{t("common.close")}</button></div>}
 
         <div className="page">
-          {user.role === "student" && !["games", "learn", "stories", "aac", "world", "my-world"].includes(screen) && <SectionNavigation screen={screen} onOpen={openScreen}/>}
+          {user.role === "student" && !["games", "learn", "stories", "aac", "world", "my-world", "family", "personal-practice"].includes(screen) && <SectionNavigation screen={screen} onOpen={openScreen}/>}
 
           {user.role === "student" && screen === "home" && <ExercisePetProvider presentation="home" key={child?.id} preferences={{ ...petPreferences.value, visible: petPreferences.ready && petPreferences.value.visible }} soundEnabled={settings.sound_enabled} calmMode={settings.calm_mode}>
             <ChildHomeScreen onOpen={openScreen} onExercise={openExercise} onStartSession={startDailySession} onResume={resumeSession} soundEnabled={settings.sound_enabled} activeSession={activeSession} activeSessionLoading={activeSessionLoading} sessionLoading={sessionLoading} sessionError={sessionError} child={child} dashboard={dashboard} consent={consent} exercises={exercises}/>
           </ExercisePetProvider>}
-          {screen === "stories" && user.role === "student" && <StoryExperience childId={child?.id} calmMode={settings.calm_mode} onGames={() => openScreen("games")}/>}
-          {(screen === "world" || screen === "my-world") && ["student", "parent"].includes(user.role) && <WorldExperience key={child?.id} childId={child?.id} canManage={user.role === "parent"} navigation={user.role === "student" && <SectionNavigation screen="world" onOpen={openScreen} className="playroom-tabs"/>} onWords={() => openScreen("aac")} onSpeak={(text) => speak(text, .82, true)}/>}
+          {screen === "stories" && user.role === "student" && <StoryExperience childId={child?.id} calmMode={settings.calm_mode} onGames={() => openScreen("games")} onFamily={() => openScreen("family")}/>}
+          {(screen === "world" || screen === "my-world") && ["student", "parent"].includes(user.role) && <WorldExperience key={child?.id} childId={child?.id} canManage={user.role === "parent"} navigation={user.role === "student" && <SectionNavigation screen="world" onOpen={openScreen} className="playroom-tabs"/>} onWords={() => openScreen("aac")} onSpeak={(text, language) => speak(text, .82, true, language)} onPractice={(exercise) => openPersonalPractice(exercise, screen)}/>}
+          {screen === "family" && ["student", "parent"].includes(user.role) && <FamilyExperience key={child?.id} childId={child?.id} canManage={user.role === "parent"} soundEnabled={settings.sound_enabled} header={user.role === "student" && <LessonLibraryHero section="family" onOpen={openScreen}/>} onPractice={(exercise) => openPersonalPractice(exercise, "family")}/>}
+          {screen === "personal-practice" && personalPractice && <ExercisePetProvider key={`personal-${personalPractice.nonce}`} preferences={{ ...petPreferences.value, visible: petPreferences.ready && petPreferences.value.visible }} soundEnabled={settings.sound_enabled} calmMode={settings.calm_mode}><SensoryGame exercise={personalPractice.exercise} soundEnabled={settings.sound_enabled} onBack={leavePersonalPractice} onComplete={savePersonalPractice}/></ExercisePetProvider>}
 
           {["success", "achievements", "progress", "skills"].includes(screen) && user.role === "student" && <ChildProgressExperience childId={child?.id} dashboard={dashboard} onStories={() => openScreen("stories")} onGames={() => openScreen("games")}/>}
           {screen === "guides" && user.role === "parent" && <GuidesExperience child={child} dashboard={dashboard} exercises={exercises} onNavigate={openScreen} onExercise={openExercise}/>}
@@ -1002,7 +1026,7 @@ function AuthenticatedApp({ user, onLogout, externalError, onDismissExternalErro
           {screen === "settings" && <SettingsScreen petPreferences={petPreferences} role={user.role} settings={settings} saving={settingsSaving} onChange={changeSettings} onLogout={onLogout} onOpenParent={() => openScreen("parent")} />}
         </div>
       </main>
-      {user.role === "student" && !["session", "exercise-complete", "motor", "sensory", "mixed"].includes(screen) && <FamilyMobileNavigation screen={screen} onOpen={openScreen} inert={sidebarIsDialog && sidebarOpen}/>}
+      {user.role === "student" && !["session", "exercise-complete", "motor", "sensory", "mixed", "personal-practice"].includes(screen) && <FamilyMobileNavigation screen={screen} onOpen={openScreen} inert={sidebarIsDialog && sidebarOpen}/>}
       {reward && reward.childId === child?.id && <StarReward key={reward.nonce} stars={reward.stars} total={Math.max(reward.total, dashboard?.stars || 0)} calmMode={settings.calm_mode} onDone={dismissReward}/>}
     </AppRoleShell>
   );
@@ -1437,7 +1461,7 @@ const sensoryVisualTokens: Record<string, LucideIcon> = {
 
 function SensoryVisual({ item }: { item: SensoryItem }) {
   const Icon = item.icon;
-  return <span className={`sensory-visual ${item.visualClass || ""}`} aria-hidden="true">{item.image ? <Image src={item.image} alt="" width={item.isScene ? 960 : 640} height={item.isScene ? 720 : 640} sizes="(max-width:600px) 45vw, (max-width:1000px) 40vw, 360px"/> : Icon ? <Icon strokeWidth={1.65}/> : null}</span>;
+  return <span className={`sensory-visual ${item.visualClass || ""}`} aria-hidden="true">{item.image ? <Image src={item.image} alt="" unoptimized={item.image.startsWith("data:")} width={item.isScene ? 960 : 640} height={item.isScene ? 720 : 640} sizes="(max-width:600px) 45vw, (max-width:1000px) 40vw, 360px"/> : Icon ? <Icon strokeWidth={1.65}/> : null}</span>;
 }
 
 
@@ -1642,7 +1666,9 @@ function SensoryGame({ exercise, soundEnabled, onBack, onComplete }: { exercise?
         supports: evidenceRef.current.supports,
         first_response: evidenceRef.current.first_response,
       });
-      const modelText = exercise?.engine?.language === "kk" ? items[roundData.target].word : exercise?.engine?.mechanic === "action_choice" ? `Ребёнок ${items[roundData.target].word.toLowerCase()}.` : `Это ${items[roundData.target].word.toLowerCase()}.`;
+      // Personal cards keep their own spelling: names must not be lower-cased.
+      const personal = exercise?.engine?.content.bank_key?.startsWith("personal-");
+      const modelText = exercise?.engine?.language === "kk" ? items[roundData.target].word : exercise?.engine?.mechanic === "action_choice" ? `Ребёнок ${items[roundData.target].word.toLowerCase()}.` : personal ? `Это ${items[roundData.target].speech || items[roundData.target].word}.` : `Это ${items[roundData.target].word.toLowerCase()}.`;
       setFeedback(t("game.modelTogether", { text: modelText }));
       void speak(modelText, 0.75, soundEnabled, exercise?.engine?.language || "ru", "exercise", exercise?.engine?.version_id);
     }
@@ -1712,13 +1738,13 @@ function SensoryGame({ exercise, soundEnabled, onBack, onComplete }: { exercise?
     <div className={`page-enter game-page ${exercise?.engine?.mechanic === "action_choice" ? "action-choice" : ""}`}>
       <GameHeader title={exercise?.title || t("screen.SensoryGame.ui10")} subtitle={t("screen.SensoryGame.ui11")} step={phase === "demo" ? t("screen.SensoryGame.ui12") : t("shell.template23", { v0: round, v1: difficulty.rounds })} onBack={onBack} />
       <div className="listen-card">
-        {phase === "demo" ? <div className="sensory-demo"><SensoryVisual item={items[0]}/><span className="kicker">{t("screen.SensoryGame.ui13")}</span><h2>{t("screen.SensoryGame.ui14")}</h2><p>{t("screen.SensoryGame.ui15")}</p><fieldset className="sensory-access-mode"><legend>{t("screen.SensoryGame.ui16")}</legend><button type="button" className={!accessibleSupportMode ? "active" : ""} aria-pressed={!accessibleSupportMode} onClick={() => setAccessibleSupportMode(false)}><Eye size={17}/>  {t("screen.SensoryGame.ui17")}</button><button type="button" className={accessibleSupportMode ? "active" : ""} aria-pressed={accessibleSupportMode} onClick={() => setAccessibleSupportMode(true)}><Volume2 size={17}/>  {t("screen.SensoryGame.ui18")}</button></fieldset>{accessibleSupportMode && <p id="accessible-support-note" className="accessible-support-note"><ShieldAlert size={17}/>  {t("screen.SensoryGame.ui19")}</p>}{exercise?.adaptive ? <div className="adaptive-runner-setting"><Target size={18}/><span><strong>{difficulty.option_count}  {t("screen.SensoryGame.ui20")}</strong><small>{t("screen.SensoryGame.ui21")}</small></span></div> : <div className="runner-levels" aria-label={t("screen.SensoryGame.ui22")}><span>{t("screen.SensoryGame.ui23")}</span>{([1,2,3] as const).map((level) => { const value = resolveDifficulty(exercise?.engine?.content.difficulty_levels, level); return <button type="button" key={level} className={difficultyLevel === level ? "active" : ""} aria-pressed={difficultyLevel === level} onClick={() => setDifficultyLevel(level)}>{value.option_count}</button>; })}</div>}<>{exercise?.engine?.content.round_choices && <PracticeLength value={roundLimit} choices={exercise.engine.content.round_choices} bankSize={items.length} unit={exercise.engine.mechanic === "action_choice" ? t("screen.SensoryGame.ui24") : t("screen.SensoryGame.ui25")} onChange={setRoundLimit}/>}</><button className="primary-button" onClick={() => void beginRound()}>{t("screen.SensoryGame.ui26")} <ChevronRight size={17}/></button></div> : phase === "technical" ? <div className="sensory-demo technical"><Volume2 size={42}/><span className="kicker">{t("screen.SensoryGame.ui27")}</span><h2>{t("screen.SensoryGame.ui28")}</h2><p>{t("screen.SensoryGame.ui29")}</p><button className="primary-button" onClick={recordTechnicalIssue}>{t("screen.SensoryGame.ui30")}</button></div> : <>
+        {phase === "demo" ? <div className="sensory-demo"><SensoryVisual item={items[0]}/><span className="kicker">{t("screen.SensoryGame.ui13")}</span><h2>{t("screen.SensoryGame.ui14")}</h2><p>{t("screen.SensoryGame.ui15")}</p><fieldset className="sensory-access-mode"><legend>{t("screen.SensoryGame.ui16")}</legend><button type="button" className={!accessibleSupportMode ? "active" : ""} aria-pressed={!accessibleSupportMode} onClick={() => setAccessibleSupportMode(false)}><Eye size={17}/>  {t("screen.SensoryGame.ui17")}</button><button type="button" className={accessibleSupportMode ? "active" : ""} aria-pressed={accessibleSupportMode} onClick={() => setAccessibleSupportMode(true)}><Volume2 size={17}/>  {t("screen.SensoryGame.ui18")}</button></fieldset>{accessibleSupportMode && <p id="accessible-support-note" className="accessible-support-note"><ShieldAlert size={17}/>  {t("screen.SensoryGame.ui19")}</p>}{exercise?.adaptive ? <div className="adaptive-runner-setting"><Target size={18}/><span><strong>{difficulty.option_count}  {t("screen.SensoryGame.ui20")}</strong><small>{t("screen.SensoryGame.ui21")}</small></span></div> : <div className="runner-levels" aria-label={t("screen.SensoryGame.ui22")}><span>{t("screen.SensoryGame.ui23")}</span>{([1,2,3] as const).filter((level, index, levels) => { const count = resolveDifficulty(exercise?.engine?.content.difficulty_levels, level).option_count; return count <= items.length && levels.findIndex(other => resolveDifficulty(exercise?.engine?.content.difficulty_levels, other).option_count === count) === index; }).map((level) => { const value = resolveDifficulty(exercise?.engine?.content.difficulty_levels, level); return <button type="button" key={level} className={difficultyLevel === level ? "active" : ""} aria-pressed={difficultyLevel === level} onClick={() => setDifficultyLevel(level)}>{value.option_count}</button>; })}</div>}<>{exercise?.engine?.content.round_choices && <PracticeLength value={roundLimit} choices={exercise.engine.content.round_choices} bankSize={items.length} unit={exercise.engine.mechanic === "action_choice" ? t("screen.SensoryGame.ui24") : t("screen.SensoryGame.ui25")} onChange={setRoundLimit}/>}</><button className="primary-button" onClick={() => void beginRound()}>{t("screen.SensoryGame.ui26")} <ChevronRight size={17}/></button></div> : phase === "technical" ? <div className="sensory-demo technical"><Volume2 size={42}/><span className="kicker">{t("screen.SensoryGame.ui27")}</span><h2>{t("screen.SensoryGame.ui28")}</h2><p>{t("screen.SensoryGame.ui29")}</p><button className="primary-button" onClick={recordTechnicalIssue}>{t("screen.SensoryGame.ui30")}</button></div> : <>
           <div className="sound-zone"><button ref={soundButtonRef} className="sound-button" disabled={audioPending} onClick={() => void playWord()} aria-label={t("screen.SensoryGame.ui31")}><Volume2 size={34} strokeWidth={2} /></button><div><span className="kicker">{t("screen.SensoryGame.ui32")}</span><h2>{audioPending ? t("screen.SensoryGame.ui33") : audioPlayed ? t("screen.SensoryGame.ui34") : t("screen.SensoryGame.ui35")}</h2><div className="wave"><i /><i /><i /><i /><i /><i /><i /></div><div className="speech-rate" aria-label={t("screen.SensoryGame.ui36")}>{[{v:.65,l:t("screen.SensoryGame.ui37")},{v:.78,l:t("screen.SensoryGame.ui38")}].map((item)=><button key={item.v} className={speechRate===item.v?"active":""} aria-pressed={speechRate===item.v} onClick={()=>setSpeechRate(item.v)}>{item.l}</button>)}</div></div><button className="replay" disabled={audioPending} onClick={() => void playWord()}><RotateCcw size={17} />  {t("screen.SensoryGame.ui39")}</button></div>
           {accessibleSupportMode && <p id="accessible-support-note" className="accessible-support-note in-game"><ShieldAlert size={17}/>  {t("screen.SensoryGame.ui40")}</p>}
           <h3 className="choose-title">{t("screen.SensoryGame.ui41")}</h3>
           {exercise?.engine?.content.bank_key?.startsWith("scene-words-") && phase === "playing" && <button className="secondary-button" disabled={!audioPlayed || audioPending} onClick={()=>void meaningHint()}><Sparkles size={18}/>  {t("screen.SensoryGame.ui42")}</button>}
           <div className={`picture-options ${reducedOptions ? "reduced" : ""}`} data-option-count={visibleOptions.length}>
-            {visibleOptions.map((index) => { const item = items[index]; const isAnswer = roundData?.target === index; const revealed = phase === "resolved"; const optionNumber = visibleOptions.indexOf(index) + 1; return <button key={item.word} disabled={!audioPlayed || audioPending || phase === "resolved" || (!reducedOptions && wrongChoices.includes(index))} aria-label={revealed || accessibleSupportMode ? item.word : t("shell.template24", { v0: optionNumber })} aria-describedby={accessibleSupportMode ? "accessible-support-note" : undefined} onClick={() => choose(index)} className={`${wrongChoices.includes(index) ? "wrong" : ""} ${revealed && isAnswer ? "answer" : ""}`}><SensoryVisual item={item}/>{revealed && <strong>{item.word}</strong>}{revealed && isAnswer && <i><Check size={16}/></i>}</button>; })}
+            {visibleOptions.map((index) => { const item = items[index]; const isAnswer = roundData?.target === index; const revealed = phase === "resolved"; const optionNumber = visibleOptions.indexOf(index) + 1; return <button key={item.key} disabled={!audioPlayed || audioPending || phase === "resolved" || (!reducedOptions && wrongChoices.includes(index))} aria-label={revealed || accessibleSupportMode ? item.word : t("shell.template24", { v0: optionNumber })} aria-describedby={accessibleSupportMode ? "accessible-support-note" : undefined} onClick={() => choose(index)} className={`${wrongChoices.includes(index) ? "wrong" : ""} ${revealed && isAnswer ? "answer" : ""}`}><SensoryVisual item={item}/>{revealed && <strong>{item.word}</strong>}{revealed && isAnswer && <i><Check size={16}/></i>}</button>; })}
           </div>
           {feedback && <div className={`answer-panel ${phase === "resolved" && roundCorrect ? "good" : "try"}`} role="status" aria-live="polite"><div className="answer-emoji">{phase === "resolved" && roundCorrect ? <Star fill="currentColor"/> : <Sparkles/>}</div><div><strong>{phase === "resolved" ? (roundCorrect ? t("screen.SensoryGame.ui43") : t("screen.SensoryGame.ui44")) : t("screen.SensoryGame.ui45")}</strong><span>{feedback}</span></div>{phase === "resolved" && round >= difficulty.rounds && roundLimit < (exercise?.engine?.content.max_rounds || roundLimit) && <button className="secondary-button" onClick={() => { setRoundLimit(value => Math.min(value + 6, exercise?.engine?.content.max_rounds || value)); setRound(value => value + 1); void beginRound(); }}>{t("screen.SensoryGame.ui46")}</button>}{phase === "resolved" && <button className="primary-button" onClick={next}>{round === difficulty.rounds ? t("screen.SensoryGame.ui47") : t("screen.SensoryGame.ui48")}<ChevronRight size={17}/></button>}</div>}
           <div className="score-dots" role="progressbar" aria-label={t("screen.SensoryGame.ui49")} aria-valuemin={1} aria-valuemax={difficulty.rounds} aria-valuenow={round} aria-valuetext={t("shell.template25", { v0: round, v1: difficulty.rounds })}>{Array.from({length:difficulty.rounds},(_,index)=>index+1).map((value) => <span key={value} className={value < round || (value === round && phase === "resolved") ? "filled" : ""}/>)}</div>

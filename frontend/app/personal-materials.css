@@ -1,0 +1,121 @@
+/* «Мои материалы»: personal cards in the parent workspace and the child «Моя семья» module.
+   Built only from existing Söyle tokens (v2 workspace tokens for adults, child tokens for children). */
+
+/* ---------- Shared form: one card editor ---------- */
+.personal-editor { display: grid; gap: 16px; margin: 0 0 20px; padding: 20px; border: 1px solid var(--v2-line, var(--line)); border-radius: 20px; background: var(--paper, #fff); }
+.personal-editor > header { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.personal-editor h2 { margin: 0; font-size: 20px; line-height: 1.3; }
+.personal-icon-button { width: 44px; height: 44px; display: grid; place-items: center; border: 1px solid var(--v2-line, var(--line)); border-radius: 12px; background: transparent; color: inherit; cursor: pointer; }
+.personal-editor-body { display: grid; grid-template-columns: minmax(180px, 240px) minmax(0, 1fr); gap: 20px; align-items: start; }
+.personal-editor-photo { display: grid; gap: 8px; }
+.personal-editor-photo > button:first-child { position: relative; width: 100%; aspect-ratio: 1; overflow: hidden; display: grid; place-items: center; border: 1.5px dashed var(--v2-line, var(--line)); border-radius: 16px; background: var(--mint-soft, #f2f7f5); color: var(--v2-teal-dark, var(--forest)); font: inherit; font-weight: 750; cursor: pointer; }
+.personal-editor-photo > button:first-child.has-image { border-style: solid; }
+.personal-editor-photo > button:first-child span { display: grid; justify-items: center; gap: 8px; }
+.personal-editor-photo img { object-fit: cover; }
+.personal-editor-photo .small-button { display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-height: 40px; font-size: 14px; }
+.personal-editor-photo small, .personal-editor-fields small { color: var(--v2-copy, var(--muted)); font-size: 13px; line-height: 1.45; font-weight: 500; }
+.personal-editor-fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+.personal-editor-fields label, .personal-inline-field label { display: grid; gap: 6px; min-width: 0; font-weight: 700; }
+.personal-editor-fields label:nth-last-of-type(1), .personal-editor-listen, .personal-inline-field { grid-column: 1 / -1; }
+.personal-editor-fields :is(input, select), .personal-inline-field input { width: 100%; min-width: 0; min-height: 44px; padding: 8px 10px; border: 1px solid var(--v2-line, var(--line)); border-radius: 10px; font: inherit; font-weight: 500; color: inherit; background: var(--paper, #fff); }
+.personal-editor-listen { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; padding: 12px 14px; border-radius: 14px; background: var(--mint-soft, #f2f7f5); }
+.personal-editor-listen strong { overflow-wrap: anywhere; }
+.personal-editor-listen .small-button, .personal-inline-field .small-button { display: inline-flex; align-items: center; gap: 6px; min-height: 40px; font-size: 14px; }
+.personal-inline-field { display: flex; flex-wrap: wrap; align-items: end; gap: 8px; width: 100%; }
+.personal-inline-field label { flex: 1 1 220px; }
+.personal-editor > footer { display: flex; justify-content: flex-end; flex-wrap: wrap; gap: 10px; }
+.personal-editor > footer button { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; }
+
+/* ---------- Parent: «Моя семья» ---------- */
+.family-module { display: grid; gap: 20px; }
+.personal-page-header { display: flex; flex-wrap: wrap; align-items: end; justify-content: space-between; gap: 16px; }
+.personal-page-header h1 { margin: 0 0 8px; }
+.personal-page-header p { max-width: 640px; margin: 0; color: var(--v2-copy, var(--muted)); font-size: 16px; line-height: 1.5; }
+.personal-view-switch { display: inline-flex; gap: 4px; padding: 4px; border: 1px solid var(--v2-line, var(--line)); border-radius: 14px; }
+.personal-view-switch button { display: inline-flex; align-items: center; gap: 8px; min-height: 40px; padding: 8px 14px; border: 0; border-radius: 10px; background: transparent; color: inherit; font: inherit; font-weight: 700; cursor: pointer; }
+.personal-view-switch button[aria-pressed="true"] { background: var(--site-selected, var(--mint-soft)); color: var(--site-green, var(--forest)); }
+.personal-note { display: grid; gap: 4px; padding: 14px 16px; border-left: 3px solid var(--site-green, var(--forest)); border-radius: 0 14px 14px 0; background: var(--site-raised, var(--mint-soft)); }
+.personal-note span, .personal-hint { color: var(--v2-copy, var(--muted)); line-height: 1.5; }
+.personal-hint { margin: 0; }
+.family-relation-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
+.family-relation { display: grid; align-content: start; gap: 10px; padding: 16px; border: 1px solid var(--v2-line, var(--line)); border-radius: 18px; background: var(--paper, #fff); }
+.family-relation > header { display: flex; align-items: center; justify-content: space-between; }
+.family-relation h2 { margin: 0; font-size: 18px; }
+.family-relation > header span { min-width: 28px; padding: 2px 8px; border-radius: 999px; text-align: center; font-size: 13px; font-weight: 750; background: var(--site-raised, var(--mint-soft)); }
+.family-member { display: grid; grid-template-columns: 64px minmax(0, 1fr); gap: 4px 12px; align-items: center; padding-bottom: 10px; border-bottom: 1px solid var(--v2-line, var(--line)); }
+.family-member-photo { position: relative; grid-row: span 2; width: 64px; height: 64px; overflow: hidden; padding: 0; border: 0; border-radius: 14px; background: var(--site-raised, #f2f7f5); cursor: pointer; }
+.family-member-photo img { object-fit: cover; }
+.family-member-copy { display: grid; min-width: 0; }
+.family-member-copy strong { overflow-wrap: anywhere; }
+.family-member-copy small { color: var(--v2-copy, var(--muted)); font-size: 13px; overflow-wrap: anywhere; }
+.family-member-actions { display: flex; gap: 4px; }
+.family-member-actions button { width: 40px; height: 40px; display: grid; place-items: center; border: 1px solid var(--v2-line, var(--line)); border-radius: 10px; background: transparent; color: inherit; cursor: pointer; }
+.family-add { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 44px; border: 1.5px dashed var(--v2-line, var(--line)); border-radius: 12px; background: transparent; color: var(--site-green, var(--forest)); font: inherit; font-weight: 750; cursor: pointer; }
+.family-add:hover, .family-member-actions button:hover, .personal-icon-button:hover { background: var(--site-raised, var(--mint-soft)); }
+.family-child-preview { padding: 20px; border: 1px solid var(--v2-line, var(--line)); border-radius: 22px; }
+
+/* ---------- «Мои слова» additions ---------- */
+.personal-card-title { display: grid; min-width: 0; }
+.personal-card-title small { color: var(--v2-copy, var(--muted)); font-size: 13px; }
+.personal-practice-button { display: inline-flex; align-items: center; justify-content: center; gap: 8px; justify-self: start; min-height: 48px; border: 1px solid var(--line); border-radius: 14px; font: inherit; font-weight: 750; cursor: pointer; }
+.personal-practice-button:disabled { opacity: .6; cursor: default; }
+
+/* ---------- Child: «Моя семья» ---------- */
+.family-learning { display: grid; gap: 20px; }
+.family-actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+.family-action { min-height: 96px; display: flex; align-items: center; gap: 16px; padding: 16px 20px; border: 1px solid var(--line); border-radius: 22px; background: var(--paper); color: var(--ink); text-align: start; font: inherit; cursor: pointer; }
+.family-action > svg { flex: 0 0 auto; color: var(--forest); }
+.family-action strong, .family-action small { display: block; }
+.family-action strong { font-size: 20px; }
+.family-action small { margin-top: 4px; color: var(--muted); font-size: 15px; }
+.family-action:disabled { opacity: .55; cursor: default; }
+.family-gallery { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 16px; }
+.family-tile { position: relative; display: grid; align-content: start; gap: 2px; padding: 10px 10px 14px; border: 1px solid var(--line); border-radius: 22px; background: var(--paper); color: var(--ink); text-align: center; font: inherit; cursor: pointer; }
+.family-tile-photo { position: relative; aspect-ratio: 1; overflow: hidden; margin-bottom: 8px; border-radius: 16px; background: var(--cream); }
+.family-tile-photo img { object-fit: cover; }
+.family-tile strong { font-size: 22px; overflow-wrap: anywhere; }
+.family-tile small { color: var(--muted); font-size: 15px; overflow-wrap: anywhere; }
+.family-tile-sound { position: absolute; top: 18px; right: 18px; padding: 6px; width: 34px; height: 34px; border-radius: 50%; color: var(--forest); background: var(--paper); }
+.family-tile:active, .family-action:active { transform: scale(.98); }
+.family-meet { display: grid; justify-items: center; gap: 16px; max-width: 560px; margin: 0 auto; width: 100%; }
+.family-meet-photo { position: relative; width: min(100%, 380px, 46dvh); aspect-ratio: 1; overflow: hidden; padding: 0; border: 1px solid var(--line); border-radius: 28px; background: var(--cream); cursor: pointer; }
+.family-meet-photo img { object-fit: cover; }
+.family-meet-word { display: grid; justify-items: center; }
+.family-meet-word strong { font-size: 40px; line-height: 1.15; overflow-wrap: anywhere; }
+.family-meet-word span { color: var(--muted); font-size: 20px; }
+.family-meet-controls { display: flex; align-items: center; gap: 14px; }
+.family-round-button { width: 64px; height: 64px; display: grid; place-items: center; border: 1px solid var(--line); border-radius: 50%; background: var(--paper); color: var(--ink); cursor: pointer; }
+.family-round-button:disabled { opacity: .35; cursor: default; }
+.family-module .family-listen-button { min-height: 64px; display: inline-flex; align-items: center; gap: 10px; padding: 0 24px; border: 0; border-radius: 32px; background: var(--forest); color: var(--paper, #fff); font: inherit; font-size: 18px; font-weight: 800; cursor: pointer; }
+.family-meet-dots { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; }
+.family-meet-dots i { width: 10px; height: 10px; border-radius: 50%; background: var(--line); }
+.family-meet-dots i.active { background: var(--forest); }
+.family-meet-finish { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; }
+.family-meet-finish button { display: inline-flex; align-items: center; gap: 8px; min-height: 52px; }
+.family-empty img { object-fit: cover; border-radius: 24px; }
+
+@media (prefers-reduced-motion: reduce) { .family-tile:active, .family-action:active { transform: none; } }
+@media (max-width: 1100px) { .family-relation-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 760px) {
+  .personal-editor { padding: 16px; }
+  .personal-editor-body, .personal-editor-fields { grid-template-columns: minmax(0, 1fr); }
+  .personal-editor-photo > button:first-child { max-width: 260px; }
+  .family-relation-grid, .family-actions { grid-template-columns: minmax(0, 1fr); }
+  .family-gallery { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+  .family-tile strong { font-size: 18px; }
+  .family-meet-word strong { font-size: 32px; }
+  .family-child-preview { padding: 12px; }
+  .personal-view-switch { width: 100%; }
+  .personal-view-switch button { flex: 1; justify-content: center; }
+  .personal-editor > footer button { flex: 1; justify-content: center; }
+}
+/* The adult workspace hides the child scene; without it the reserved scene height is empty space. */
+.adult-workspace .soyle-unified .focused-world .family-library-header,
+.adult-workspace .soyle-unified .focused-world .family-library-header > div { min-height: 0; padding-bottom: 0; }
+/* Lesson tabs: «Игры», «Истории», «Моя семья» stay on one row. */
+.soyle-unified .playroom-tabs.section-navigation:has(> :nth-child(3)) { grid-template-columns: repeat(3, minmax(0, 1fr)); width: min(100%, 620px); max-width: none; }
+@media (max-width: 760px) {
+  .soyle-unified .family-library-header .playroom-tabs.section-navigation:has(> :nth-child(3)) button { flex-direction: column; gap: 4px; height: auto; min-height: 64px; padding: 8px 4px; font-size: 14px; line-height: 1.2; text-align: center; }
+}
+/* Child «Моя семья» is a lesson page: it reuses the playroom scene mechanics with the family-room picture. */
+.soyle-unified .main:has(.family-room-catalog) { --library-scene: url('/app-illustrations/communication-world-room-v1.webp'); --mobile-page-scene: url('/app-illustrations/communication-world-room-v1.webp'); }

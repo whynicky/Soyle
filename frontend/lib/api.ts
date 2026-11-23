@@ -385,13 +385,26 @@ export type AACCard = {
   favorite: number | boolean;
 };
 
-export type WorldPhoto = {
+export type FamilyRelation = "mama" | "papa" | "baba" | "deda" | "tetya" | "dyadya";
+export type PersonalWordCategory = "people" | "animals" | "toys" | "food" | "home" | "clothing" | "places" | "custom";
+/** One personal learning card: a private parent photo and the word the child hears. */
+export type PersonalCard = {
   id: number;
+  kind: "word" | "family";
   name: string;
-  category: "people" | "toys" | "food" | "places";
+  category: PersonalWordCategory | "family";
+  custom_category_id: number | null;
+  custom_category_label: string | null;
+  relation: FamilyRelation | null;
+  language: "ru" | "kk";
+  speech: string | null;
   image_data: string;
   created_at: string;
+  updated_at: string | null;
+  practice?: { rounds: number; independent: number; last_practiced: string | null };
 };
+export type PersonalCategory = { id: number; label: string; cards: number };
+export type WorldPhoto = PersonalCard;
 
 export type Story = {
   engine?: "interactive_book" | "storybook" | "cinematic_story";

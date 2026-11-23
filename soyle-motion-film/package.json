@@ -1,0 +1,27 @@
+{
+  "name": "soyle-motion-film",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Söyle — cinematic product launch film (Remotion)",
+  "scripts": {
+    "studio": "remotion studio",
+    "render": "remotion render SoyleFilm out/soyle-film.mp4 --codec=h264 --crf=16 --pixel-format=yuv420p --x264-preset=slow",
+    "render:preview": "remotion render SoyleFilm out/soyle-film-preview.mp4 --codec=h264 --crf=20 --pixel-format=yuv420p",
+    "still": "remotion still SoyleFilm",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@remotion/cli": "4.0.545",
+    "@remotion/fonts": "4.0.545",
+    "@remotion/paths": "4.0.545",
+    "react": "19.2.0",
+    "react-dom": "19.2.0",
+    "remotion": "4.0.545"
+  },
+  "devDependencies": {
+    "@remotion/bundler": "^4.0.545",
+    "@remotion/renderer": "^4.0.545",
+    "@types/react": "^19.0.0",
+    "typescript": "^5.7.0"
+  }
+}

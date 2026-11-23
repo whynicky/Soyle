@@ -47,3 +47,10 @@ frontend/.next-e2e/
 # Rive preview artifacts; retain the distributable character.
 /soyle-mascot-rive/build/*
 !/soyle-mascot-rive/build/soyle-mascot-rive.riv
+
+# Local AI-agent tooling: installed skills, lock files and launch configs.
+/.agents/
+/agent/
+/.claude/
+/skills-lock.json
+/skills-lock.json.lock*

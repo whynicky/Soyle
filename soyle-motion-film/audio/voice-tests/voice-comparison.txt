@@ -1,0 +1,11 @@
+ 1.   0.0 с — azure-aigul-calm
+ 2.  12.4 с — azure-aigul-warm
+ 3.  25.2 с — azure-aigul-bright
+ 4.  37.3 с — eleven-v3-alice
+ 5.  49.4 с — eleven-v3-jessica
+ 6.  61.8 с — eleven-v3-matilda
+ 7.  73.9 с — eleven-v3-lily
+ 8.  86.3 с — eleven-v4-alice
+ 9.  99.4 с — eleven-v4-jessica
+10. 112.7 с — eleven-v4-lily
+11. 126.0 с — eleven-v4-matilda

@@ -21,7 +21,8 @@ from .localization import LOCALE, normalize_locale, TranslationUpdate, Translati
 from .database import connect, init_db, now_iso
 from .data_lifecycle import delete_child_records, delete_parent_records
 from .privacy import privacy_profile
-from .schemas import AACCardCreate, AACComposeRequest, AACFavoriteUpdate, AACPhraseCreate, ActiveUpdate, AdaptivePlanRequest, AIAskRequest, AIPlanRequest, AssignedExerciseCreate, ChildCreate, ChildDeleteRequest, ChildGoalCreate, ConsentUpdate, ContentPublishCreate, ContentReviewCreate, ExerciseDraftCreate, GoalStatusUpdate, HomeActivityObservationCreate, HomeworkCreate, HomeworkResultUpdate, LearningSessionCreate, LearningSessionPauseRequest, LoginRequest, PracticeGoalCreate, PracticeGoalObservationCreate, PracticeGoalUpdate, PracticePreferencesUpdate, RecommendationReview, RegisterRequest, RoleUpdate, SessionCreate, SkillObservationUpdate, SpecialistAssignmentCreate, SpecialistRecommendationCreate, SpecialistAccessCreate, SpecialistObservationCreate, StoryAnswer, StudentAccountCreate, StudentLoginRequest, TTSRequest, UserSettingsUpdate, WorldPhotoCreate, WorldPhotoRename, StorybookEvent
+from . import personal_cards
+from .schemas import AACCardCreate, AACComposeRequest, AACFavoriteUpdate, AACPhraseCreate, ActiveUpdate, AdaptivePlanRequest, AIAskRequest, AIPlanRequest, AssignedExerciseCreate, ChildCreate, ChildDeleteRequest, ChildGoalCreate, ConsentUpdate, ContentPublishCreate, ContentReviewCreate, ExerciseDraftCreate, GoalStatusUpdate, HomeActivityObservationCreate, HomeworkCreate, HomeworkResultUpdate, LearningSessionCreate, LearningSessionPauseRequest, LoginRequest, PracticeGoalCreate, PracticeGoalObservationCreate, PracticeGoalUpdate, PracticePreferencesUpdate, RecommendationReview, RegisterRequest, RoleUpdate, SessionCreate, SkillObservationUpdate, SpecialistAssignmentCreate, SpecialistRecommendationCreate, SpecialistAccessCreate, SpecialistObservationCreate, StoryAnswer, StudentAccountCreate, StudentLoginRequest, TTSRequest, UserSettingsUpdate, WorldPhotoCreate, WorldPhotoRename, StorybookEvent, PersonalCategoryCreate, PersonalPracticeCreate
 from .tts_library import bundled_tts_path
 from .aac_grammar import compose_aac_phrase
 from .ai_assistant import DISCLAIMER as LOCAL_ASSISTANT_DISCLAIMER, answer_parent
@@ -772,60 +773,76 @@ def aac_cards(child_id: int, preview: bool = False, user: dict = Depends(require
 
 
 @app.get("/api/world/{child_id}")
-def world_photos(child_id: int, response: Response, user: dict = Depends(require_roles("admin", "parent", "student"))) -> list[dict]:
+def world_photos(child_id: int, response: Response, kind: Literal["word", "family"] | None = None,
+                 user: dict = Depends(require_roles("admin", "parent", "student"))) -> list[dict]:
+    """Personal cards of one child. Photos are returned only to that family, never cached."""
     ensure_child_access(child_id, user)
     response.headers["Cache-Control"] = "private, no-store"
     with connect() as db:
-        rows = db.execute(
-            "SELECT id,name,category,image_data,created_at FROM child_world_photos WHERE child_id=? ORDER BY id DESC",
-            (child_id,),
-        ).fetchall()
-    return [dict(row) for row in rows]
+        return personal_cards.list_cards(db, child_id, kind, with_practice=user["role"] in {"parent", "admin"})
 
 
 @app.post("/api/world/{child_id}", status_code=201)
 def add_world_photo(child_id: int, payload: WorldPhotoCreate, user: dict = Depends(require_roles("parent"))) -> dict:
     ensure_child_access(child_id, user)
     ensure_privacy_consent(child_id)
-    mime, separator, encoded = payload.image_data.partition(",")
-    if not separator or mime not in {"data:image/jpeg;base64", "data:image/png;base64", "data:image/webp;base64"}:
-        raise HTTPException(422, "Поддерживаются только фотографии JPEG, PNG и WebP")
-    try:
-        raw = base64.b64decode(encoded, validate=True)
-    except (ValueError, binascii.Error):
-        raise HTTPException(422, "Фотография повреждена") from None
-    signatures = {"data:image/jpeg;base64": raw.startswith(b"\xff\xd8\xff"), "data:image/png;base64": raw.startswith(b"\x89PNG\r\n\x1a\n"), "data:image/webp;base64": raw.startswith(b"RIFF") and raw[8:12] == b"WEBP"}
-    if not signatures[mime] or not 100 <= len(raw) <= 650_000:
-        raise HTTPException(422, "Фотография должна быть изображением размером до 650 КБ")
-    image_hash = hashlib.sha256(raw).hexdigest()
+    image_hash = personal_cards.image_hash(payload.image_data)
+    name = personal_cards.clean_text(payload.name)
+    speech = personal_cards.clean_text(payload.speech) or None
     with connect() as db:
+        category, relation, custom_category_id = personal_cards.resolve_card_fields(
+            db, child_id, payload.kind, payload.category, payload.relation, payload.custom_category_id, name)
         count = db.execute("SELECT COUNT(*) count FROM child_world_photos WHERE child_id=?", (child_id,)).fetchone()["count"]
-        if count >= 24:
-            raise HTTPException(409, "В библиотеке уже 24 фотографии. Удалите ненужную, чтобы добавить новую")
+        if count >= personal_cards.MAX_CARDS:
+            raise HTTPException(409, f"В материалах уже {personal_cards.MAX_CARDS} карточек. Удалите ненужную, чтобы добавить новую")
+        if payload.kind == "family" and db.execute(
+            "SELECT COUNT(*) count FROM child_world_photos WHERE child_id=? AND kind='family'", (child_id,)
+        ).fetchone()["count"] >= personal_cards.MAX_FAMILY_CARDS:
+            raise HTTPException(409, f"В разделе «Моя семья» уже {personal_cards.MAX_FAMILY_CARDS} карточек")
         if db.execute("SELECT 1 FROM child_world_photos WHERE child_id=? AND image_hash=?", (child_id, image_hash)).fetchone():
             raise HTTPException(409, "Эта фотография уже есть в библиотеке")
         cursor = db.execute(
-            "INSERT INTO child_world_photos(child_id,name,category,image_data,image_hash,created_by,created_at) VALUES(?,?,?,?,?,?,?) RETURNING id",
-            (child_id, payload.name.strip(), payload.category, payload.image_data, image_hash, user["id"], now_iso()),
+            """INSERT INTO child_world_photos(child_id,name,category,image_data,image_hash,created_by,created_at,
+                   kind,relation,language,speech,custom_category_id,updated_at)
+               VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?) RETURNING id""",
+            (child_id, name, category, payload.image_data, image_hash, user["id"], now_iso(),
+             payload.kind, relation, payload.language, speech, custom_category_id, now_iso()),
         )
-        row = db.execute("SELECT id,name,category,image_data,created_at FROM child_world_photos WHERE id=?", (cursor.fetchone()["id"],)).fetchone()
-    return dict(row)
+        card = personal_cards.get_card(db, child_id, cursor.fetchone()["id"])
+    audit(user, "personal_card.create", "child", child_id, {"child_id": child_id, "kind": payload.kind})
+    return card
 
 
 @app.patch("/api/world/{child_id}/{photo_id}")
 def rename_world_photo(child_id: int, photo_id: int, payload: WorldPhotoRename, user: dict = Depends(require_roles("parent"))) -> dict:
     ensure_child_access(child_id, user)
-    name = payload.name.strip()
-    if not name:
-        raise HTTPException(422, "Назовите фотографию")
+    changes = payload.model_dump(exclude_unset=True)
     with connect() as db:
-        row = db.execute(
-            "UPDATE child_world_photos SET name=? WHERE child_id=? AND id=? RETURNING id,name,category,image_data,created_at",
-            (name, child_id, photo_id),
-        ).fetchone()
-        if not row:
+        current = db.execute("SELECT * FROM child_world_photos WHERE child_id=? AND id=?", (child_id, photo_id)).fetchone()
+        if not current:
             raise HTTPException(404, "Фотография не найдена")
-    return dict(row)
+        name = personal_cards.clean_text(changes["name"]) if "name" in changes else current["name"]
+        if "name" in changes and not name and current["kind"] != "family":
+            raise HTTPException(422, "Назовите фотографию")
+        category, relation, custom_category_id = personal_cards.resolve_card_fields(
+            db, child_id, current["kind"], changes.get("category") or current["category"],
+            changes.get("relation") or current["relation"],
+            changes["custom_category_id"] if "custom_category_id" in changes else current["custom_category_id"], name)
+        values = {
+            "name": name, "category": category, "relation": relation, "custom_category_id": custom_category_id,
+            "language": changes.get("language") or current["language"],
+            "speech": (personal_cards.clean_text(changes["speech"]) or None) if "speech" in changes else current["speech"],
+            "updated_at": now_iso(),
+        }
+        if changes.get("image_data"):
+            values["image_hash"] = personal_cards.image_hash(changes["image_data"])
+            if db.execute("SELECT 1 FROM child_world_photos WHERE child_id=? AND image_hash=? AND id<>?",
+                          (child_id, values["image_hash"], photo_id)).fetchone():
+                raise HTTPException(409, "Эта фотография уже есть в библиотеке")
+            values["image_data"] = changes["image_data"]
+        assignments = ",".join(f"{column}=?" for column in values)
+        db.execute(f"UPDATE child_world_photos SET {assignments} WHERE child_id=? AND id=?", (*values.values(), child_id, photo_id))
+        return personal_cards.get_card(db, child_id, photo_id)
 
 
 @app.delete("/api/world/{child_id}/{photo_id}", status_code=204)
@@ -836,6 +853,74 @@ def delete_world_photo(child_id: int, photo_id: int, user: dict = Depends(requir
         if cursor.rowcount == 0:
             raise HTTPException(404, "Фотография не найдена")
     return Response(status_code=204)
+
+
+@app.get("/api/world/{child_id}/categories")
+def personal_categories(child_id: int, user: dict = Depends(require_roles("admin", "parent", "student"))) -> list[dict]:
+    ensure_child_access(child_id, user)
+    with connect() as db:
+        rows = db.execute(
+            """SELECT c.id,c.label,COUNT(p.id) cards FROM child_card_categories c
+               LEFT JOIN child_world_photos p ON p.custom_category_id=c.id
+               WHERE c.child_id=? GROUP BY c.id,c.label ORDER BY c.label""",
+            (child_id,),
+        ).fetchall()
+    return [dict(row) for row in rows]
+
+
+@app.post("/api/world/{child_id}/categories", status_code=201)
+def add_personal_category(child_id: int, payload: PersonalCategoryCreate, user: dict = Depends(require_roles("parent"))) -> dict:
+    ensure_child_access(child_id, user)
+    ensure_privacy_consent(child_id)
+    label = personal_cards.clean_text(payload.label)
+    if not label:
+        raise HTTPException(422, "Назовите категорию")
+    with connect() as db:
+        # SQLite lower() ignores Cyrillic, so compare case-insensitively in Python.
+        known = [dict(row) for row in db.execute("SELECT id,label FROM child_card_categories WHERE child_id=?", (child_id,)).fetchall()]
+        existing = next((item for item in known if item["label"].casefold() == label.casefold()), None)
+        if existing:
+            return {**existing, "cards": 0}
+        if len(known) >= personal_cards.MAX_CUSTOM_CATEGORIES:
+            raise HTTPException(409, f"Можно создать до {personal_cards.MAX_CUSTOM_CATEGORIES} своих категорий")
+        row = db.execute(
+            "INSERT INTO child_card_categories(child_id,label,created_by,created_at) VALUES(?,?,?,?) RETURNING id,label",
+            (child_id, label, user["id"], now_iso()),
+        ).fetchone()
+    return {**dict(row), "cards": 0}
+
+
+@app.delete("/api/world/{child_id}/categories/{category_id}", status_code=204)
+def delete_personal_category(child_id: int, category_id: int, user: dict = Depends(require_roles("parent"))) -> Response:
+    ensure_child_access(child_id, user)
+    with connect() as db:
+        # Cards stay; they move to «Люди и вещи» instead of disappearing with the category.
+        db.execute("UPDATE child_world_photos SET category='people',custom_category_id=NULL WHERE child_id=? AND custom_category_id=?", (child_id, category_id))
+        cursor = db.execute("DELETE FROM child_card_categories WHERE child_id=? AND id=?", (child_id, category_id))
+        if cursor.rowcount == 0:
+            raise HTTPException(404, "Категория не найдена")
+    return Response(status_code=204)
+
+
+@app.post("/api/world/{child_id}/results", status_code=201)
+def save_personal_practice(child_id: int, payload: PersonalPracticeCreate, user: dict = Depends(require_roles("parent", "student"))) -> dict:
+    """Per-card outcomes of practice with personal cards; shown to the parent next to each card."""
+    ensure_child_access(child_id, user)
+    ensure_analytics_consent(child_id)
+    ids = {item.card_id for item in payload.outcomes}
+    placeholders = ",".join("?" for _ in ids)
+    with connect() as db:
+        owned = {row["id"] for row in db.execute(
+            f"SELECT id FROM child_world_photos WHERE child_id=? AND id IN ({placeholders})", (child_id, *ids)).fetchall()}
+        if owned != ids:
+            raise HTTPException(404, "Карточка не найдена")
+        created_at = now_iso()
+        for item in payload.outcomes:
+            db.execute(
+                "INSERT INTO child_personal_card_results(child_id,card_id,outcome,attempts,created_at) VALUES(?,?,?,?,?)",
+                (child_id, item.card_id, item.outcome, item.attempts, created_at),
+            )
+    return {"saved": len(payload.outcomes)}
 
 
 @app.get("/api/stories/{child_id}")
@@ -2317,6 +2402,8 @@ def export_child_data(child_id: int, user: dict = Depends(require_roles("parent"
             "aac_favorites": [dict(row) for row in db.execute("SELECT * FROM aac_favorites WHERE child_id=? ORDER BY card_id", (child_id,)).fetchall()],
             "aac_history": history_rows,
             "world_photos": [dict(row) for row in db.execute("SELECT * FROM child_world_photos WHERE child_id=? ORDER BY id", (child_id,)).fetchall()],
+            "personal_card_categories": [dict(row) for row in db.execute("SELECT * FROM child_card_categories WHERE child_id=? ORDER BY id", (child_id,)).fetchall()],
+            "personal_card_results": [dict(row) for row in db.execute("SELECT * FROM child_personal_card_results WHERE child_id=? ORDER BY id", (child_id,)).fetchall()],
             "storybook_progress": [dict(row) for row in db.execute("SELECT * FROM storybook_progress WHERE child_id=? ORDER BY story_key,story_version,actor_key", (child_id,)).fetchall()],
             "exploration_runs": [dict(r) for r in db.execute('SELECT * FROM exploration_runs WHERE child_id=? ORDER BY created_at',(child_id,)).fetchall()],
             "exploration_events": [dict(r) for r in db.execute('SELECT e.* FROM exploration_events e JOIN exploration_runs r ON r.id=e.run_id WHERE r.child_id=? ORDER BY e.created_at',(child_id,)).fetchall()],
