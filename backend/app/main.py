@@ -623,8 +623,10 @@ def text_to_speech(payload: TTSRequest, user: dict = Depends(require_roles("admi
             "X-Soyle-Audio-Digest": recording["digest"],
         })
     retry = 60
+    with connect() as db:
+        personal = recording is None and personal_cards.personal_speech_allowed(db, user, text, payload.child_id)
     try:
-        audio = synthesize(text, payload.language, mode, profile=payload.profile)
+        audio = synthesize(text, payload.language, mode, profile=payload.profile, personal=personal)
         return Response(audio, media_type="audio/mpeg", headers={
             "Cache-Control": "no-store", "X-Soyle-TTS": "azure", "X-Soyle-TTS-Mode": mode,
         })
@@ -638,7 +640,7 @@ def text_to_speech(payload: TTSRequest, user: dict = Depends(require_roles("admi
     if bundled_path.exists():
         return FileResponse(bundled_path, media_type="audio/wav", filename="soyle-speech.wav",
                             headers={"Cache-Control": "no-store", "X-Soyle-TTS": "bundled"})
-    # Device voice handles private/custom text without sending it to Azure.
+    # Text outside the catalogue and the family cards falls back to the device voice.
     raise HTTPException(503, "Озвучивание временно недоступно", headers={"Retry-After": str(retry)})
 
 

@@ -133,3 +133,34 @@ def test_personal_practice_results_and_family_isolation(client, parent_headers, 
     assert client.delete(f"{url}/{baba['id']}", headers=parent_headers).status_code == 204
     exported = client.get(f"/api/children/{child}/export", headers=parent_headers).json()
     assert all(item["card_id"] != baba["id"] for item in exported["personal_card_results"])
+
+
+def test_family_card_words_use_the_azure_voice(client, parent_headers, student_headers, monkeypatch):
+    import app.azure_tts as azure
+    calls = []
+    def fake(text, language, mode, phrase_type=None, profile="exercise", personal=False):
+        calls.append((text, language, personal))
+        if not personal:
+            raise azure.TTSUnavailable()
+        return b"ID3-mp3"
+    monkeypatch.setattr(azure, "synthesize", fake)
+    monkeypatch.setattr(azure, "limit_user", lambda _: None)
+    child = first_child(client, parent_headers)
+    url = f"/api/world/{child}"
+    client.post(url, headers=parent_headers, json={"kind": "family", "relation": "dyadya", "name": "Нурлан", "language": "kk", "image_data": photo(40)})
+    client.post(url, headers=parent_headers, json={"name": "Барсик", "category": "animals", "speech": "Ба́рсик", "image_data": photo(41)})
+
+    def say(headers, text, language="ru", **extra):
+        return client.post("/api/tts", headers=headers, json={"text": text, "language": language, **extra})
+
+    assert say(student_headers, "Аға", "kk").headers.get("x-soyle-tts") == "azure"
+    assert say(student_headers, "Ба́рсик").headers.get("x-soyle-tts") == "azure"
+    assert say(student_headers, "Это Ба́рсик.").headers.get("x-soyle-tts") == "azure"
+    # Arbitrary text is not sent to the cloud voice for a child…
+    assert say(student_headers, "Случайный текст").status_code == 503
+    # …but a parent may preview an unsaved card for their own child, and nobody else's.
+    assert say(parent_headers, "Айгу́ль", child_id=child).headers.get("x-soyle-tts") == "azure"
+    stranger = other_parent(client)
+    assert say(stranger, "Айгу́ль", child_id=child).status_code == 503
+    assert say(stranger, "Ба́рсик").status_code == 503
+    assert ("Случайный текст", "ru", False) in calls

@@ -114,6 +114,8 @@
 .adult-workspace .soyle-unified .focused-world .family-library-header > div { min-height: 0; padding-bottom: 0; }
 /* Lesson tabs: «Игры», «Истории», «Моя семья» stay on one row. */
 .soyle-unified .playroom-tabs.section-navigation:has(> :nth-child(3)) { grid-template-columns: repeat(3, minmax(0, 1fr)); width: min(100%, 620px); max-width: none; }
+.soyle-unified .playroom-tabs.section-navigation:has(> :nth-child(3)) button { white-space: nowrap; padding-inline: 10px; gap: 8px; }
+@media (min-width: 761px) and (max-width: 1200px) { .soyle-unified .playroom-tabs.section-navigation:has(> :nth-child(3)) button { font-size: 18px; } }
 @media (max-width: 760px) {
   .soyle-unified .family-library-header .playroom-tabs.section-navigation:has(> :nth-child(3)) button { flex-direction: column; gap: 4px; height: auto; min-height: 64px; padding: 8px 4px; font-size: 14px; line-height: 1.2; text-align: center; }
 }

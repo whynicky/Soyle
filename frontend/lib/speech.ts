@@ -37,18 +37,55 @@ let speechController: AbortController | null = null;
 let currentSpeechCompletion: ((played: boolean) => void) | null = null;
 
 
+// Cutting a voice off mid-wave is heard as a loud knock. An interrupted clip fades out
+// on its own element instead, and the next phrase gets a fresh element.
+const fadingAudio = new WeakSet<HTMLAudioElement>();
+const FADE_OUT_MS = 80;
+function releaseAudio(audio: HTMLAudioElement) {
+  if (fadingAudio.has(audio)) return;
+  const playing = !audio.paused && !audio.ended && audio.currentTime > 0;
+  const start = audio.volume;
+  if (playing && start > 0) {
+    audio.volume = start * 0.98;
+    // iOS keeps volume read-only: there the clip can only be paused.
+    if (audio.volume !== start) {
+      fadingAudio.add(audio);
+      if (reusableAudio === audio) reusableAudio = null;
+      const began = performance.now();
+      const timer = setInterval(() => {
+        const progress = Math.min(1, (performance.now() - began) / FADE_OUT_MS);
+        audio.volume = start * (1 - progress) * (1 - progress);
+        if (progress < 1) return;
+        clearInterval(timer);
+        audio.pause();
+        audio.removeAttribute("src");
+        audio.load();
+        fadingAudio.delete(audio);
+      }, 10);
+      return;
+    }
+    audio.volume = start;
+  }
+  audio.pause();
+  audio.currentTime = 0;
+}
+/** Revoke a clip URL only once its element no longer reads it. */
+function revokeAfterRelease(audio: HTMLAudioElement, url: string) {
+  if (fadingAudio.has(audio)) setTimeout(() => URL.revokeObjectURL(url), FADE_OUT_MS + 100);
+  else URL.revokeObjectURL(url);
+}
+
 export function stopCurrentSpeech() {
   const completion = currentSpeechCompletion;
   currentSpeechCompletion = null;
+  // Start the fade before aborting: the abort handler would otherwise pause mid-wave.
+  if (currentSpeechAudio) releaseAudio(currentSpeechAudio);
   speechController?.abort();
   speechController = null;
-  if (currentSpeechAudio) {
-    currentSpeechAudio.pause();
-    currentSpeechAudio.currentTime = 0;
-  }
   if (typeof window !== "undefined") window.speechSynthesis?.cancel();
   completion?.(false);
-  if (currentSpeechUrl) URL.revokeObjectURL(currentSpeechUrl);
+  if (currentSpeechUrl && currentSpeechAudio) revokeAfterRelease(currentSpeechAudio, currentSpeechUrl);
+  else if (currentSpeechUrl) URL.revokeObjectURL(currentSpeechUrl);
   currentSpeechAudio = null;
   currentSpeechUrl = "";
   setSpeechState(false, false);
@@ -102,7 +139,7 @@ function speakWithBrowserVoice(text: string, rate: number, language: "ru" | "kk"
   });
 }
 
-export async function speak(text: string, rate = 0.78, enabled = true, language: "ru" | "kk" | "en" = "ru", owner: "exercise" | "pet" = "exercise", versionId?: number, profile: "exercise" | "pet" = owner): Promise<boolean> {
+export async function speak(text: string, rate = 0.78, enabled = true, language: "ru" | "kk" | "en" = "ru", owner: "exercise" | "pet" = "exercise", versionId?: number, profile: "exercise" | "pet" = owner, previewChildId?: number): Promise<boolean> {
   if (!enabled || typeof window === "undefined") return false;
   const cleaned = text.replace(/\s+/g, " ").trim();
   if (!cleaned) return false;
@@ -120,7 +157,7 @@ export async function speak(text: string, rate = 0.78, enabled = true, language:
       method: "POST",
       headers: { "Content-Type": "application/json", "X-CSRF-Token": getCsrfToken(), "Accept-Language": language === "kk" ? "kk-KZ" : "ru-RU" },
       credentials: "include",
-      body: JSON.stringify({ text: cleaned, rate, language, mode: rate < .75 ? "slow" : "normal", ...(profile === "pet" ? {profile} : {}), ...(versionId ? {version_id: versionId} : {}) }),
+      body: JSON.stringify({ text: cleaned, rate, language, mode: rate < .75 ? "slow" : "normal", ...(profile === "pet" ? {profile} : {}), ...(versionId ? {version_id: versionId} : {}), ...(previewChildId ? {child_id: previewChildId} : {}) }),
       signal: controller.signal,
     });
     if (!response.ok) {
@@ -147,14 +184,14 @@ export async function speak(text: string, rate = 0.78, enabled = true, language:
         settled = true;
         clearTimeout(watchdog);
         controller.signal.removeEventListener("abort", abort);
-        audio.pause();
+        if (!fadingAudio.has(audio)) audio.pause();
         audio.onended = null;
         audio.onerror = null;
         if (currentSpeechCompletion === finish) currentSpeechCompletion = null;
         if (currentSpeechAudio === audio) currentSpeechAudio = null;
         if (currentSpeechUrl === objectUrl) currentSpeechUrl = "";
         if (speechController === controller) { speechController = null; setSpeechState(false, false); }
-        URL.revokeObjectURL(objectUrl);
+        revokeAfterRelease(audio, objectUrl);
         resolve(played);
       };
       const abort = () => finish(false);
@@ -209,7 +246,7 @@ export async function playSpeechClip(url: string): Promise<boolean> {
     const finish = (ok: boolean) => {
       if (settled) return;
       settled = true; clearTimeout(timer);
-      audio.onended = null; audio.onerror = null; audio.pause();
+      audio.onended = null; audio.onerror = null; if (!fadingAudio.has(audio)) audio.pause();
       controller.signal.removeEventListener("abort", abort);
       if (speechController === controller) { speechController = null; currentSpeechAudio = null; setSpeechState(false, false); }
       if (currentSpeechCompletion === finish) currentSpeechCompletion = null;

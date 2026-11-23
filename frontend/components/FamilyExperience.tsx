@@ -88,7 +88,7 @@ export function FamilyExperience({ childId, canManage, soundEnabled, header, onP
     {status}
     {view === "child" ? <section className="family-child-preview" aria-label={t("personal.family.asChild")}><FamilyLearning cards={cards} onSpeak={say} onPractice={practice}/></section> : <>
       <aside className="personal-note"><strong>{t("personal.family.readyModule")}</strong><span>{t("personal.family.readyModuleText")}</span></aside>
-      {editing && <PersonalCardEditor key={editing.card?.id || editing.relation} childId={childId} kind="family" card={editing.card} initialRelation={editing.relation} onSaved={saved} onCancel={() => setEditing(null)} onSpeak={say}/>}
+      {editing && <PersonalCardEditor key={editing.card?.id || editing.relation} childId={childId} kind="family" card={editing.card} initialRelation={editing.relation} onSaved={saved} onCancel={() => setEditing(null)}/>}
       {loading ? <p className="v2-world-empty" role="status">{t("world.ui36")}</p> : <div className="family-relation-grid">
         {familyRelations.map(relation => {
           const members = cards.filter(card => card.relation === relation);

@@ -323,6 +323,8 @@ class TTSRequest(BaseModel):
     language: Literal["ru", "kk"] = "ru"
     mode: Literal["normal", "slow"] | None = None
     version_id: int | None = Field(default=None, ge=1)
+    # A parent previews an unsaved personal card for this child.
+    child_id: int | None = Field(default=None, ge=1)
 
 class AACCardCreate(BaseModel):
     child_id: int

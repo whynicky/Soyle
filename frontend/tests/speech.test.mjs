@@ -114,3 +114,31 @@ test("speech settles, cancels safely and retries the server after failures", asy
     assert.deepEqual(getSpeechState(), {isSpeaking:false, isLoading:false});
   });
 });
+
+test("interrupting a playing phrase fades it out instead of cutting it (no knock)", async (t) => {
+  // A separate module instance: the shared one already holds an element from the tests above.
+  const { speak, stopCurrentSpeech } = await import(`data:text/javascript;base64,${Buffer.from(compiled + "\n// fade").toString("base64")}`);
+  const originals = Object.fromEntries(["window", "Audio", "SpeechSynthesisUtterance", "fetch"].map(key => [key, globalThis[key]]));
+  const audios = [], revoked = [];
+  const createURL = URL.createObjectURL, revokeURL = URL.revokeObjectURL;
+  URL.createObjectURL = () => `blob:fade-${audios.length}`;
+  URL.revokeObjectURL = url => revoked.push(url);
+  globalThis.Audio = class { constructor() { audios.push(this); this.volume = 1; this.paused = true; this.currentTime = 0; this.pausedAt = []; } pause() { this.paused = true; this.pausedAt.push(this.volume); } play() { this.paused = false; return Promise.resolve(); } load() {} removeAttribute() {} };
+  globalThis.SpeechSynthesisUtterance = class {};
+  globalThis.window = { speechSynthesis: { getVoices: () => [], speak() {}, cancel() {} } };
+  globalThis.fetch = async () => ({ ok: true, headers: { get: () => "bundled" }, blob: async () => new Blob(["sound"]) });
+  const wait = ms => new Promise(resolve => setTimeout(resolve, ms));
+  t.after(() => { stopCurrentSpeech(); Object.assign(globalThis, originals); URL.createObjectURL = createURL; URL.revokeObjectURL = revokeURL; });
+
+  const first = speak("Молодец"); await wait(5);
+  const playing = audios.at(-1); assert.equal(playing.paused, false); playing.currentTime = .3;
+  const second = speak("Мама"); await wait(0);
+  assert.equal(await first, false);
+  assert.notEqual(audios.at(-1), playing, "the next phrase uses a fresh element");
+  assert.equal(revoked.includes("blob:fade-1"), false, "the clip URL stays readable while fading");
+  await wait(250);
+  assert.equal(playing.paused, true);
+  assert.ok(playing.pausedAt.at(-1) < .01, "paused only after the volume reached silence");
+  assert.ok(revoked.includes("blob:fade-1"));
+  audios.at(-1).onended(); assert.equal(await second, true);
+});

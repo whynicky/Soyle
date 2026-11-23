@@ -210,10 +210,13 @@ def speech_ssml(spoken: str, language: str, mode: str, phrase_type: str | None =
             f'<voice name="{voice}">{body}</voice></speak>')
 
 
-def synthesize(text: str, language: str, mode: str, phrase_type: str | None = None, profile: str = "exercise") -> bytes:
+def synthesize(text: str, language: str, mode: str, phrase_type: str | None = None, profile: str = "exercise", personal: bool = False) -> bytes:
+    """``personal`` marks words of the family's own cards, already checked by the caller."""
     if profile not in {"exercise", "pet"} or (profile == "pet" and normalize_tts_text(text) not in PET_PHRASES.get(language, ())):
         raise TTSUnavailable()
     spoken = catalogue().get((language, normalize_tts_text(text)))
+    if not spoken and personal and profile == "exercise":
+        spoken = normalize_tts_text(text)
     if not spoken and language == "kk":
         from .localization import approved_speech
         with connect() as db:

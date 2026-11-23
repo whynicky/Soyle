@@ -21,7 +21,7 @@ async function prepare(page: Page) {
       speak(voice: Voice) { state.__spoken?.push(voice.text); setTimeout(() => voice.onend?.(), 0); },
     } });
   });
-  // Private names never go to the cloud voice: the device voice speaks them.
+  // Tests run without the cloud voice: the device voice stands in for it.
   await page.route("http://localhost:8010/**", route => new URL(route.request().url()).pathname === "/api/tts"
     ? route.fulfill({ status: 503, contentType: "application/json", body: "{}" })
     : route.continue({ url: route.request().url().replace(":8010", ":8011") }));

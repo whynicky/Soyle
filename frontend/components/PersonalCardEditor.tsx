@@ -6,6 +6,7 @@ import { useEffect, useId, useRef, useState } from "react";
 import { api, type FamilyRelation, type PersonalCard, type PersonalCategory, type PersonalWordCategory } from "@/lib/api";
 import { getLocale, languageOf, t, useLocale } from "@/lib/i18n";
 import { compressPhoto } from "@/lib/imageUpload";
+import { speak } from "@/lib/speech";
 import { categoryKey, familyRelations, personalWordCategories, relationKey, relationWord } from "@/lib/personalCards";
 
 type Props = {
@@ -18,11 +19,10 @@ type Props = {
   onCategoryCreated?: (category: PersonalCategory) => void;
   onSaved: (card: PersonalCard) => void;
   onCancel: () => void;
-  onSpeak: (text: string, language: "ru" | "kk") => Promise<boolean>;
 };
 
 /** One form for creating and editing any personal card, family or word. */
-export function PersonalCardEditor({ childId, kind, card, initialRelation, initialCategory, categories = [], onCategoryCreated, onSaved, onCancel, onSpeak }: Props) {
+export function PersonalCardEditor({ childId, kind, card, initialRelation, initialCategory, categories = [], onCategoryCreated, onSaved, onCancel }: Props) {
   useLocale();
   const formId = useId();
   const fileInput = useRef<HTMLInputElement>(null);
@@ -111,7 +111,7 @@ export function PersonalCardEditor({ childId, kind, card, initialRelation, initi
         <label>{t(family ? "personal.editor.personName" : "personal.editor.word")}<input maxLength={60} required={!family} value={name} disabled={busy} onChange={event => setName(event.target.value)} placeholder={t(family ? "personal.editor.personNamePlaceholder" : "personal.editor.wordPlaceholder")}/></label>
         <label>{t("personal.editor.language")}<select value={language} disabled={busy} onChange={event => setLanguage(event.target.value as "ru" | "kk")}><option value="ru">{t("personal.language.ru")}</option><option value="kk">{t("personal.language.kk")}</option></select></label>
         <label>{t("personal.editor.speech")}<input maxLength={80} value={speech} disabled={busy} onChange={event => setSpeech(event.target.value)} placeholder={word || t("personal.editor.speechPlaceholder")}/><small>{t("personal.editor.speechHint")}</small></label>
-        <div className="personal-editor-listen"><span>{t("personal.editor.childHears")} <strong>{spoken || "—"}</strong></span><button type="button" className="small-button" disabled={!spoken} onClick={() => void onSpeak(spoken, language)}><Volume2 size={16}/>{t("personal.listen")}</button></div>
+        <div className="personal-editor-listen"><span>{t("personal.editor.childHears")} <strong>{spoken || "—"}</strong></span><button type="button" className="small-button" disabled={!spoken} onClick={() => void speak(spoken, .82, true, language, "exercise", undefined, "exercise", childId)}><Volume2 size={16}/>{t("personal.listen")}</button></div>
       </div>
     </div>
     {error && <p className="v2-inline-alert" role="alert">{error}</p>}

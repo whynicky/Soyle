@@ -105,3 +105,42 @@ def get_card(db, child_id: int, card_id: int) -> dict | None:
         (child_id, card_id),
     ).fetchone()
     return dict(row) if row else None
+
+
+# Must match frontend/locales «personal.relation.*» for each card language.
+RELATION_WORDS = {
+    "ru": {"mama": "Мама", "papa": "Папа", "baba": "Баба", "deda": "Деда", "tetya": "Тётя", "dyadya": "Дядя"},
+    "kk": {"mama": "Ана", "papa": "Әке", "baba": "Әже", "deda": "Ата", "tetya": "Тәте", "dyadya": "Аға"},
+}
+MAX_PREVIEW_SPEECH = 80
+
+
+def speakable_texts(db, child_ids: list[int]) -> set[str]:
+    """Every phrase the app says for these children's own cards (word, name, pronunciation, model answer)."""
+    if not child_ids:
+        return set()
+    placeholders = ",".join("?" for _ in child_ids)
+    rows = db.execute(
+        f"SELECT kind,name,relation,language,speech FROM child_world_photos WHERE child_id IN ({placeholders})", child_ids,
+    ).fetchall()
+    texts: set[str] = set()
+    for row in rows:
+        name = clean_text(row["name"])
+        word = RELATION_WORDS.get(row["language"], {}).get(row["relation"] or "", "") if row["kind"] == "family" else name
+        for value in {clean_text(row["speech"]), word, name, f"{word} {name}".strip() if name and word != name else ""}:
+            if value:
+                texts.update({value, f"Это {value}."})
+    return texts
+
+
+def personal_speech_allowed(db, user: dict, text: str, preview_child_id: int | None) -> bool:
+    """Azure voices only catalogue text, the family's saved card words, or a parent's own short preview."""
+    if user["role"] == "student":
+        child_ids = [user["child_id"]] if user.get("child_id") else []
+    elif user["role"] == "parent":
+        child_ids = [row["id"] for row in db.execute("SELECT id FROM children WHERE parent_id=?", (user["id"],)).fetchall()]
+        if preview_child_id in child_ids and len(text) <= MAX_PREVIEW_SPEECH:
+            return True
+    else:
+        return False
+    return clean_text(text) in speakable_texts(db, child_ids)
