@@ -471,12 +471,9 @@
   "landing.startGuide.task": "Қолжетімді тапсырманы таңдаңыз немесе маманның жоспарын ашыңыз.",
   "landing.startGuide.note": "Бірге жаттығып, бақылауыңызды сақтаңыз.",
   "landing.start.heading": "Қалай бастауға болады",
-  "landing.start.profile.title": "Бала профилін ашыңыз",
-  "landing.start.profile.text": "Оны ата-ана кабинетіне қосыңыз.",
-  "landing.start.practice.title": "Жаттығуды таңдаңыз",
-  "landing.start.practice.text": "Қолжетімді тапсырманы немесе маманның жоспарын ашыңыз.",
-  "landing.start.together.title": "Бірге байқап көріңіз",
-  "landing.start.together.text": "Тапсырманы ыңғайлы қарқынмен орындап, байқағаныңызды жазып сақтаңыз.",
+  "landing.start.profile.text": "Аты мен туған күні жеткілікті. Қалғанын кейін қосуға болады.",
+  "landing.start.practice.text": "Дайын жаттығу немесе маман құрған жоспар.",
+  "landing.start.together.text": "Өз қарқыныңызбен. Сабақтан кейін не шыққанын белгілеңіз.",
   "landing.theme.label": "Тақырып",
   "landing.theme.light": "Ашық",
   "landing.theme.dark": "Қараңғы",
@@ -3116,5 +3113,11 @@
   "personal.words.parentLead": "Өз карточкаларыңыз: заттың, үй жануарының немесе тамақтың фотосы және бала еститін сөз. Карточкаларды тақырыптық жаттығуларда қолдануға болады.",
   "personal.words.find": "Естіп тап",
   "personal.words.findLocked": "Ойын үшін екі фото керек",
-  "personal.words.findTitle": "Менің сөздерім: естіп тап"
+  "personal.words.findTitle": "Менің сөздерім: естіп тап",
+  "landing.start.profile.headingLead": "Бала профилін",
+  "landing.start.profile.headingEmphasis": "жасаңыз",
+  "landing.start.practice.headingLead": "Сабақты",
+  "landing.start.practice.headingEmphasis": "таңдаңыз",
+  "landing.start.together.headingLead": "Бірге",
+  "landing.start.together.headingEmphasis": "жаттығыңыз"
 }

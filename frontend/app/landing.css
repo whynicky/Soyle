@@ -1007,35 +1007,31 @@ html:has(> body > .sl-page[data-landing-theme="dark"]) { color-scheme: dark; }
   text-underline-offset: 4px;
 }
 
+/* «Как начать» continues the role cards: same surface, cards and two-tone headings.
+   A numeral replaces the icon because the content is a real sequence. */
 .sl-how-start {
-  display: grid;
-  grid-template: "heading action" auto "steps steps" auto / minmax(0, 1fr) auto;
-  align-items: center;
+  --sl-band: light-dark(#faf8f5, #101010);
+  padding-block: 32px 96px;
+  /* Same band as the role cards, easing into the page colour the closing scene starts from. */
+  background: linear-gradient(to bottom, var(--sl-band) calc(100% - 96px), var(--sl-paper));
+}
+.sl-how-start .sl-heading-3 { font-size: 1.875rem; }
+.sl-step-cards { margin-block: 24px 0; padding: 0; list-style: none; }
+.sl-step-card {
+  aspect-ratio: auto;
+  align-content: start;
   gap: 24px;
-  padding-block: 56px 48px;
+  padding-block: clamp(32px, 3.4vw, 48px);
 }
-.sl-how-start h2 { grid-area: heading; }
-.sl-how-start .sl-start { grid-area: action; justify-self: end; }
-.sl-start-steps {
-  grid-area: steps;
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  margin: 0;
-  padding: 0;
-  border-block: 1px solid var(--sl-line);
-  list-style: none;
+.sl-step-number {
+  color: var(--sl-panel-muted);
+  font-size: clamp(3.5rem, 5vw, 4.5rem);
+  font-weight: 300;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+  letter-spacing: -.04em;
 }
-.sl-start-steps li {
-  display: grid;
-  grid-template-columns: auto minmax(0, 1fr);
-  align-items: start;
-  gap: 14px;
-  padding: 20px clamp(12px, 2vw, 24px);
-}
-.sl-start-steps li + li { border-inline-start: 1px solid var(--sl-line); }
-.sl-step-number { color: var(--sl-muted); font-size: .875rem; font-variant-numeric: tabular-nums; line-height: 1.75rem; }
-.sl-start-steps h3 { font-size: 1.125rem; font-weight: 600; line-height: 1.4; }
-.sl-start-steps .sl-body { margin-top: 6px; }
+.sl-step-card .sl-role-description { font-size: 1rem; }
 
 .sl-closing {
   --sl-end-fade-height: 200px;
@@ -1322,15 +1318,8 @@ html:has(> body > .sl-page[data-landing-theme="dark"]) { color-scheme: dark; }
   .sl-feature-stack::after { inset: -8px 8px 8px; }
   .sl-roles { padding-block: 28px 36px; }
   .sl-role-cards { margin-block: 16px; }
-  .sl-how-start {
-    grid-template: "heading" auto "steps" auto "action" auto / minmax(0, 1fr);
-    gap: 20px;
-    padding-block: 40px 32px;
-  }
-  .sl-how-start .sl-start { justify-self: start; }
-  .sl-start-steps { grid-template-columns: minmax(0, 1fr); }
-  .sl-start-steps li { padding: 16px 0; }
-  .sl-start-steps li + li { border-inline-start: 0; border-block-start: 1px solid var(--sl-line); }
+  .sl-how-start { padding-block: 20px 72px; background: linear-gradient(to bottom, var(--sl-band) calc(100% - 72px), var(--sl-paper)); }
+  .sl-step-cards { margin-block: 16px 0; }
   .sl-closing { --sl-end-fade-height: 136px; --sl-end-night-fade-height: 368px; }
   .sl-end-layout { min-block-size: 392px; padding-block: 64px 96px; }
   .sl-end-copy h2 { font-size: 2.25rem; line-height: 1.11; }

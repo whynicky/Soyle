@@ -471,12 +471,9 @@
   "landing.startGuide.task": "Выберите доступное задание или откройте план специалиста.",
   "landing.startGuide.note": "Проведите практику вместе и сохраните наблюдение.",
   "landing.start.heading": "Как начать",
-  "landing.start.profile.title": "Создайте профиль ребёнка",
-  "landing.start.profile.text": "Добавьте его в кабинете родителя.",
-  "landing.start.practice.title": "Выберите практику",
-  "landing.start.practice.text": "Откройте доступное задание или план специалиста.",
-  "landing.start.together.title": "Попробуйте вместе",
-  "landing.start.together.text": "Выполните задание в удобном темпе и сохраните наблюдение.",
+  "landing.start.profile.text": "Достаточно имени и даты рождения. Остальное можно добавить позже.",
+  "landing.start.practice.text": "Готовое упражнение или план, который составил специалист.",
+  "landing.start.together.text": "В своём темпе. После занятия отметьте, что получилось.",
   "landing.theme.label": "Тема",
   "landing.theme.light": "Светлая",
   "landing.theme.dark": "Тёмная",
@@ -3116,5 +3113,11 @@
   "personal.words.parentLead": "Собственные карточки: фото вещи, питомца или еды и слово, которое услышит ребёнок. Карточки можно использовать в упражнениях по темам.",
   "personal.words.find": "Найди на слух",
   "personal.words.findLocked": "Для игры нужно два фото",
-  "personal.words.findTitle": "Мои слова: найди на слух"
+  "personal.words.findTitle": "Мои слова: найди на слух",
+  "landing.start.profile.headingLead": "Создайте",
+  "landing.start.profile.headingEmphasis": "профиль ребёнка",
+  "landing.start.practice.headingLead": "Выберите",
+  "landing.start.practice.headingEmphasis": "занятие",
+  "landing.start.together.headingLead": "Занимайтесь",
+  "landing.start.together.headingEmphasis": "вместе"
 }

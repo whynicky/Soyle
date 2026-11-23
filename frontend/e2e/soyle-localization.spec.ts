@@ -237,7 +237,7 @@ test('landing theme reveal keeps the active demo and scroll and follows through 
   await expect(page.locator('#sl-tab-history')).toHaveAttribute('aria-selected', 'true');
   expect(await page.evaluate(() => scrollY)).toBe(position);
 
-  await page.locator('#start').getByRole('link', { name: 'Создать аккаунт' }).click();
+  await page.locator('.sl-end').getByRole('link', { name: 'Создать аккаунт' }).click();
   await expect(page).toHaveURL(/\/app\?mode=register$/);
   await expect(page.locator('.sa-page')).toHaveAttribute('data-entry-theme', 'dark');
   await expect(page.getByRole('heading', { name: 'Регистрация родителя' })).toBeVisible();

@@ -658,20 +658,24 @@ const startSteps = ["profile", "practice", "together"] as const;
 
 function HowToStart() {
   return (
-    <section className="sl-how-start sl-container" id="start" aria-labelledby="sl-how-start-title">
-      <h2 className="sl-heading-3" id="sl-how-start-title">{t("landing.start.heading")}</h2>
-      <ol className="sl-start-steps" role="list">
-        {startSteps.map((step, index) => (
-          <li key={step}>
-            <span className="sl-step-number" aria-hidden="true">{index + 1}</span>
-            <div>
-              <h3>{t(`landing.start.${step}.title`)}</h3>
-              <p className="sl-body">{t(`landing.start.${step}.text`)}</p>
-            </div>
-          </li>
-        ))}
-      </ol>
-      <StartLink />
+    <section className="sl-how-start" id="start" aria-labelledby="sl-how-start-title">
+      <div className="sl-container">
+        <h2 className="sl-heading-3" id="sl-how-start-title">{t("landing.start.heading")}</h2>
+        <ol className="sl-role-cards sl-step-cards" role="list">
+          {startSteps.map((step, index) => (
+            <li className="sl-role-card sl-step-card" key={step} data-reveal>
+              <span className="sl-step-number" aria-hidden="true">{index + 1}</span>
+              <div className="sl-role-copy">
+                <h3 className="sl-heading-4">
+                  {t(`landing.start.${step}.headingLead`)}{" "}
+                  <span>{t(`landing.start.${step}.headingEmphasis`)}</span>
+                </h3>
+                <p className="sl-role-description">{t(`landing.start.${step}.text`)}</p>
+              </div>
+            </li>
+          ))}
+        </ol>
+      </div>
     </section>
   );
 }
