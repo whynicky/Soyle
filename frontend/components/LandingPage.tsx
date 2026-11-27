@@ -948,6 +948,7 @@ export function LandingPage({ initialTheme }: { initialTheme: LandingTheme }) {
               <span>2026</span>
             </div>
             <nav className="sl-footer-links" aria-label={t("landing.showcase.footerNavigation")}>
+              <Link href="/sources">{t("landing.sourcesLink")}</Link>
               <Link href="/privacy">{t("landing.copy143")}</Link>
               <Link href="/terms">{t("landing.copy144")}</Link>
               <a href="mailto:a6003233@gmail.com">a6003233@gmail.com</a>

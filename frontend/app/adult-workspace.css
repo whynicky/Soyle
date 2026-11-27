@@ -518,3 +518,71 @@ body:has(> .site-theme-surface) { background: transparent; }
   .adult-workspace .notification-panel { inset-inline-end: -120px; }
   .adult-workspace .soyle-unified .v2-guide-hero::after { background: linear-gradient(180deg, var(--site-surface) 42%, transparent 85%); }
 }
+
+/* Parent support chat: one clear writing surface, with optional prompts in the empty state. */
+.ai-parent-simple { max-width: 1060px; gap: 22px; }
+.ai-parent-simple .ai-page-heading { align-items: center; padding: 4px 0 0; }
+.ai-parent-simple .ai-page-title { align-items: center; }
+.ai-parent-simple .ai-page-heading h1 { margin: 2px 0 8px; }
+.ai-parent-simple .ai-page-heading p { max-width: 700px; font-size: 16px; line-height: 1.55; }
+.ai-parent-simple .ai-conversation-simple { min-width: 0; overflow: hidden; border-radius: 24px; }
+.ai-parent-simple .ai-conversation-head { min-height: 78px; padding: 16px 22px; background: var(--site-surface); }
+.ai-parent-simple .ai-conversation-tools { display: flex; align-items: center; gap: 10px; }
+.ai-parent-simple .ai-conversation-tools > a,
+.ai-parent-simple .ai-answer-sources { display: inline-flex; align-items: center; gap: 7px; min-height: 42px; padding: 0 12px; border-radius: 12px; color: var(--site-green); font-size: 14px; font-weight: 700; text-decoration: none; }
+.ai-parent-simple .ai-conversation-tools > a:hover,
+.ai-parent-simple .ai-answer-sources:hover { background: var(--site-selected); }
+.ai-parent-simple .ai-thread { min-height: 390px; padding: clamp(22px, 4vw, 42px); gap: 22px; background: var(--site-page); }
+.ai-parent-simple .ai-thread.empty { display: grid; place-items: center; }
+.ai-parent-simple .ai-welcome-simple { display: grid; grid-template-columns: 48px minmax(0,1fr); gap: 18px; width: min(100%, 790px); max-width: 790px; margin: 0; text-align: left; }
+.ai-parent-simple .ai-welcome-mark { display: grid; place-items: center; width: 46px; height: 46px; margin: 0; border-radius: 15px; background: var(--site-selected); color: var(--site-green); }
+.ai-parent-simple .ai-welcome-copy { display: block; width: auto; max-width: 100%; margin: 0; padding: 0; border-radius: 0; color: inherit; background: transparent; font-size: inherit; }
+.ai-parent-simple .ai-welcome-copy h2 { margin: 0 0 7px; font-size: 25px; line-height: 1.25; letter-spacing: -.025em; }
+.ai-parent-simple .ai-welcome-copy > p { max-width: 620px; margin: 0; color: var(--site-muted); font-size: 16px; line-height: 1.55; }
+.ai-parent-simple .ai-prompt-options { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 10px; margin-top: 22px; }
+.ai-parent-simple .ai-prompt-options button { display: grid; grid-template-columns: 30px minmax(0,1fr) 16px; align-items: center; gap: 9px; min-height: 66px; padding: 11px 12px; border: 1px solid var(--site-line); border-radius: 14px; background: var(--site-surface); color: var(--site-ink); text-align: left; cursor: pointer; }
+.ai-parent-simple .ai-prompt-options button > span { display: grid; place-items: center; width: 30px; height: 30px; border-radius: 10px; color: var(--site-green); background: var(--site-selected); }
+.ai-parent-simple .ai-prompt-options button strong { font-size: 14px; line-height: 1.35; }
+.ai-parent-simple .ai-prompt-options button > svg { color: var(--site-muted); }
+.ai-parent-simple .ai-prompt-options button:hover { border-color: var(--site-focus); background: var(--site-selected); }
+.ai-parent-simple .ai-welcome-safety { display: flex; align-items: center; gap: 7px; margin-top: 17px; color: var(--site-muted); font-size: 13px; }
+.ai-parent-simple .ai-welcome-safety svg { color: var(--site-green); flex: 0 0 auto; }
+.ai-parent-simple .ai-thread .user-message { max-width: 78%; align-self: flex-end; background: var(--site-selected); border-color: var(--site-line); box-shadow: none; }
+.ai-parent-simple .assistant-message { max-width: 82%; background: var(--site-surface); border-color: var(--site-line); box-shadow: none; }
+.ai-parent-simple .ai-thread .ai-answer-card { gap: 14px; }
+.ai-parent-simple .ai-answer-sources { justify-self: start; min-height: 36px; padding-inline: 0; }
+.ai-parent-simple .ai-answer-actions { padding-top: 5px; border-top: 1px solid var(--site-line); }
+.ai-parent-simple .ai-composer { padding: 16px 22px 18px; border-top: 1px solid var(--site-line); background: var(--site-surface); }
+.ai-parent-simple .ai-composer textarea { min-height: 92px; padding: 14px 15px; border: 1px solid var(--site-line); border-radius: 15px; background: var(--site-page); color: var(--site-ink); font-size: 16px; line-height: 1.5; }
+.ai-parent-simple .ai-composer textarea:focus-visible { outline: 2px solid var(--site-focus); outline-offset: 2px; border-color: var(--site-focus); }
+.ai-parent-simple .ai-composer-footer { align-items: center; padding-top: 10px; }
+.ai-parent-simple .ai-local-note { display: flex; align-items: center; gap: 9px; padding: 0 3px; color: var(--site-muted); font-size: 14px; line-height: 1.5; }
+.ai-parent-simple .ai-local-note > svg { flex: 0 0 auto; color: var(--site-green); }
+.ai-parent-simple .ai-local-note > span { flex: 1; }
+.ai-parent-simple .ai-local-note strong { color: var(--site-ink); }
+.ai-parent-simple .ai-local-note a { color: var(--site-green); font-weight: 700; text-decoration: none; white-space: nowrap; }
+.ai-parent-simple .ai-local-note a:hover { text-decoration: underline; text-underline-offset: 3px; }
+@media (prefers-reduced-motion: no-preference) {
+  .ai-parent-simple .ai-prompt-options button,
+  .ai-parent-simple .ai-conversation-tools > a,
+  .ai-parent-simple .ai-answer-sources { transition: background-color 200ms ease, border-color 200ms ease, transform 200ms cubic-bezier(.22,1,.36,1); }
+  .ai-parent-simple .ai-prompt-options button:hover { transform: translateY(-2px); }
+}
+@media (max-width: 760px) {
+  .ai-parent-simple .ai-page-heading { align-items: flex-start; flex-direction: column; gap: 14px; }
+  .ai-parent-simple .ai-prompt-options { grid-template-columns: 1fr; }
+  .ai-parent-simple .ai-thread { min-height: 360px; padding: 20px 16px; }
+  .ai-parent-simple .ai-welcome-simple { grid-template-columns: 1fr; gap: 12px; }
+  .ai-parent-simple .ai-welcome-mark { width: 42px; height: 42px; }
+  .ai-parent-simple .ai-conversation-head { padding: 12px 14px; }
+  .ai-parent-simple .ai-conversation-tools { gap: 3px; }
+  .ai-parent-simple .ai-conversation-tools > a { width: 42px; justify-content: center; padding: 0; font-size: 0; }
+  .ai-parent-simple .ai-conversation-tools > a svg { width: 18px; height: 18px; }
+  .ai-parent-simple .ai-composer { padding: 13px 14px 15px; }
+  .ai-parent-simple .ai-local-note { align-items: flex-start; flex-wrap: wrap; }
+  .ai-parent-simple .ai-local-note > span { flex-basis: calc(100% - 32px); }
+  .ai-parent-simple .ai-local-note a { margin-inline-start: 26px; }
+  .ai-parent-simple .ai-thread .user-message,
+  .ai-parent-simple .assistant-message,
+  .ai-parent-simple .ai-thread .ai-answer-card { max-width: 100%; }
+}

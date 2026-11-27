@@ -2064,25 +2064,17 @@ function AIParentScreen({ child }: { child?: Child }) {
     setError("");
     requestAnimationFrame(() => questionRef.current?.focus());
   };
-  return <div className="page-enter ai-parent-page redesigned-ai">
+  return <div className="page-enter ai-parent-page redesigned-ai ai-parent-simple">
     <header className="ai-page-heading">
       <div className="ai-page-title"><span className="ai-mark"><Bot size={24}/></span><div><span className="kicker">{t("screen.AIParentScreen.ui8")}</span><h1>{t("screen.AIParentScreen.ui9")}</h1><p>{t("screen.AIParentScreen.ui10")}</p></div></div>
       <span className="ai-status ready"><i/>{t("screen.AIParentScreen.ui11")}</span>
     </header>
 
-    <div className="ai-chat-layout">
-      <aside className="ai-prompt-panel" aria-label={t("screen.AIParentScreen.ui12")}>
-        <div><span className="kicker">{t("screen.AIParentScreen.ui13")}</span><h2>{t("screen.AIParentScreen.ui12")}</h2><p>{t("screen.AIParentScreen.ui14")}</p></div>
-        <div className="ai-quick-questions">{quickQuestions.map((item) => <button type="button" key={item.title} onClick={() => chooseQuestion(item.question)}><span><MessageCircle size={17}/></span><strong>{item.title}</strong><ChevronRight size={16}/></button>)}</div>
-        <div className="ai-privacy-note"><ShieldCheck size={18}/><div><strong>{t("screen.AIParentScreen.ui15")}</strong><span>{t("screen.AIParentScreen.ui16")}</span></div></div>
-        <div className="ai-limits"><strong>{t("screen.AIParentScreen.ui17")}</strong><ul><li>{t("screen.AIParentScreen.ui18")}</li><li>{t("screen.AIParentScreen.ui19")}</li><li>{t("screen.AIParentScreen.ui20")}</li></ul><small>{t("screen.AIParentScreen.ui21")}</small></div>
-      </aside>
-
-      <section className="ai-conversation" aria-label={t("screen.AIParentScreen.ui22")}>
-        <div className="ai-conversation-head"><div><span className="ai-mini-avatar"><Bot size={18}/></span><span><strong>{t("screen.AIParentScreen.ui23")}</strong><small>{t("screen.AIParentScreen.ui24")}</small></span></div>{(answer || submittedQuestion) && <button type="button" className="ai-new-chat" onClick={resetConversation} disabled={loading}><Plus size={16}/>{t("screen.AIParentScreen.ui25")}</button>}</div>
+    <section className="ai-conversation ai-conversation-simple" aria-label={t("screen.AIParentScreen.ui22")}>
+        <div className="ai-conversation-head"><div><span className="ai-mini-avatar"><Bot size={18}/></span><span><strong>{t("screen.AIParentScreen.ui23")}</strong><small>{t("screen.AIParentScreen.ui24")}</small></span></div><div className="ai-conversation-tools"><Link href="/sources" aria-label={t("screen.AIParentScreen.ui40")} title={t("screen.AIParentScreen.ui40")}><BookOpen size={16}/>{t("screen.AIParentScreen.ui40")}</Link>{(answer || submittedQuestion) && <button type="button" className="ai-new-chat" onClick={resetConversation} disabled={loading}><Plus size={16}/>{t("screen.AIParentScreen.ui25")}</button>}</div></div>
 
         <div className={`ai-thread ${!answer && !loading ? "empty" : ""}`} aria-live="polite" aria-busy={loading}>
-          {!answer && !loading && !submittedQuestion && <div className="ai-welcome"><span><Bot size={28}/></span><h2>{t("screen.AIParentScreen.ui26")}</h2><p>{t("screen.AIParentScreen.ui27")}</p><div><ShieldCheck size={16}/>  {t("screen.AIParentScreen.ui28")}</div></div>}
+          {!answer && !loading && !submittedQuestion && <div className="ai-welcome ai-welcome-simple"><span className="ai-welcome-mark"><Bot size={24}/></span><div className="ai-welcome-copy"><h2>{t("screen.AIParentScreen.ui26")}</h2><p>{t("screen.AIParentScreen.ui27")}</p><div className="ai-prompt-options" aria-label={t("screen.AIParentScreen.ui12")}>{quickQuestions.map((item) => <button type="button" key={item.title} onClick={() => chooseQuestion(item.question)}><span><MessageCircle size={17}/></span><strong>{item.title}</strong><ChevronRight size={17}/></button>)}</div><small className="ai-welcome-safety"><ShieldCheck size={16}/>{t("screen.AIParentScreen.ui28")}</small></div></div>}
 
           {submittedQuestion && <div className="ai-message user-message"><small>{t("screen.AIParentScreen.ui29")}</small><p>{submittedQuestion}</p></div>}
 
@@ -2095,6 +2087,7 @@ function AIParentScreen({ child }: { child?: Child }) {
             {answer.suggested_actions.length > 0 && <div className="ai-action-plan"><strong>{t("screen.AIParentScreen.ui32")}</strong><ol>{answer.suggested_actions.map((item, index) => <li key={item}><span>{index + 1}</span><p>{item}</p></li>)}</ol></div>}
             <div className={answer.needs_professional_help ? "ai-safety warning" : "ai-safety"}><ShieldCheck size={18} aria-hidden="true"/><span>{answer.safety_note}</span></div>
             <small className="ai-disclaimer">{answer.disclaimer}</small>
+            <Link className="ai-answer-sources" href="/sources">{t("screen.AIParentScreen.ui40")} <ChevronRight size={16}/></Link>
             <div className="ai-answer-actions"><button type="button" onClick={() => void ask(undefined, submittedQuestion)} disabled={loading}><RotateCcw size={15}/>{t("screen.AIParentScreen.ui33")}</button><button type="button" onClick={resetConversation}><Plus size={15}/>{t("screen.AIParentScreen.ui34")}</button></div>
           </article>}
         </div>
@@ -2105,8 +2098,8 @@ function AIParentScreen({ child }: { child?: Child }) {
           <textarea id="ai-parent-question" ref={questionRef} value={question} onChange={(event) => setQuestion(event.target.value)} minLength={3} maxLength={600} rows={2} placeholder={t("screen.AIParentScreen.ui36")}/>
           <div className="ai-composer-footer"><span>{question.length}{t("screen.AIParentScreen.ui37")}</span><button className="primary-button" aria-label={t("screen.AIParentScreen.ui38")} disabled={loading || question.trim().length < 3}><ArrowUp size={19}/><span>{t("screen.AIParentScreen.ui39")}</span></button></div>
         </form>
-      </section>
-    </div>
+    </section>
+    <div className="ai-local-note"><ShieldCheck size={17}/><span><strong>{t("screen.AIParentScreen.ui15")}</strong> {t("screen.AIParentScreen.ui16")}</span><Link href="/sources">{t("screen.AIParentScreen.ui40")}</Link></div>
   </div>;
 }
 
