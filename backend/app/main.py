@@ -1958,7 +1958,7 @@ def ai_plan(child_id: int, payload: AIPlanRequest, user: dict = Depends(require_
 def ai_ask(child_id: int, payload: AIAskRequest, user: dict = Depends(require_roles("parent"))) -> dict:
     ensure_child_access(child_id, user)
     result = answer_parent({"parent_question": payload.question})
-    audit(user, "local_assistant.ask", "child", child_id, {"rules": "parent-guidance-1"})
+    audit(user, "local_assistant.ask", "child", child_id, {"rules": "parent-guidance-3"})
     return {
         "answer": str(result["answer"])[:1600],
         "suggested_actions": [str(item)[:240] for item in result["suggested_actions"][:3]],

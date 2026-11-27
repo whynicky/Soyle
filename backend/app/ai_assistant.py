@@ -1,4 +1,4 @@
-"""Small local rule-based helper for parent-facing practice guidance.
+"""Local rule-based helper for parent-facing practice guidance.
 
 The module deliberately has no network client, model SDK or API key support.
 It provides predictable suggestions from a reviewed set of rules while the
@@ -7,12 +7,41 @@ adaptive planner handles exercise selection from recorded results.
 
 from __future__ import annotations
 
+import re
+
+from .parent_support_knowledge import (
+    AMBIGUOUS_ACTIONS,
+    AMBIGUOUS_ANSWER,
+    FALLBACK_ACTIONS,
+    FALLBACK_ANSWER,
+    TOPICS,
+)
+
 
 DISCLAIMER = "Локальный помощник не ставит диагноз и не заменяет врача или логопеда."
 SAFETY_NOTE = (
-    "При боли, проблемах с дыханием или глотанием, внезапной потере навыков "
-    "или выраженном ухудшении обратитесь к профильному специалисту."
+    "Помощник не оценивает ребёнка и не ставит диагноз. При внезапной потере "
+    "навыков, проблемах с дыханием или глотанием нужна срочная медицинская оценка; "
+    "по вопросам развития и речи обсудите ситуацию с педиатром и логопедом-дефектологом."
 )
+
+
+def _has_any(question: str, phrases: tuple[str, ...]) -> bool:
+    return any(phrase in question for phrase in phrases)
+
+
+def _topic_score(question: str, terms: tuple[tuple[str, int], ...]) -> int:
+    """Score distinct phrases and word stems, so inflected forms can match."""
+    words = set(re.findall(r"[a-zа-яәіңғүұқөһ0-9]+", question))
+    score = 0
+    for term, weight in terms:
+        if " " in term:
+            matched = term in question
+        else:
+            matched = any(word.startswith(term) for word in words)
+        if matched:
+            score += weight
+    return score
 
 
 def _generate_plan(context: dict) -> dict:
@@ -38,55 +67,53 @@ def _generate_plan(context: dict) -> dict:
 
 
 def _answer_parent(context: dict) -> dict:
-    """Return a reviewed local answer based on transparent keyword groups."""
-    question = str(context.get("parent_question", "")).casefold()
-    urgent = any(word in question for word in (
-        "боль", "болит", "дыш", "дыхани", "глот", "подав", "внезап", "потерял", "ухудш",
-        "ауырып", "ауырсын", "дем ал", "тыныс", "жұтын", "қақал", "кенет", "жоғалт", "нашарла",
-    ))
-    if urgent:
+    """Choose a response card with safety rules and weighted topic matching."""
+    question = str(context.get("parent_question", "")).casefold().replace("ё", "е")
+
+    def result(answer: str, actions: list[str], professional: bool = False) -> dict:
         return {
-            "answer": "По такому описанию домашнего алгоритма недостаточно: нужна индивидуальная оценка специалиста. Не продолжайте упражнение через боль или заметный дискомфорт.",
-            "suggested_actions": [
-                "Остановите упражнение и обеспечьте спокойную обстановку",
-                "Запишите, что произошло и когда появились признаки",
-                "Обратитесь к врачу или профильному специалисту",
-            ],
-            "needs_professional_help": True,
+            "answer": answer,
+            "suggested_actions": actions,
+            "needs_professional_help": professional,
             "safety_note": SAFETY_NOTE,
         }
-    if any(word in question for word in ("не хочет", "отказ", "стоп", "устал", "перерыв", "қаламай", "бас тарт", "тоқта", "шарша", "үзіліс")):
-        return {
-            "answer": "Отказ, «стоп» и просьба о перерыве — полноценные сообщения. Примите их сразу, завершите текущую попытку и вернитесь к практике позже без давления.",
-            "suggested_actions": [
-                "Подтвердите сообщение ребёнка спокойной короткой фразой",
-                "Уберите задание без требования повторить ответ",
-                "В следующий раз начните с более короткого знакомого шага",
-            ],
-            "needs_professional_help": False,
-            "safety_note": SAFETY_NOTE,
-        }
-    if any(word in question for word in ("aac", "карточ", "просьб", "попрос", "выбор", "сообщ", "өтініш", "сұра", "таңдау", "хабарлама")):
-        return {
-            "answer": "Сделайте нужные карточки видимыми и предложите не больше двух понятных вариантов. Жест, взгляд, карточка или слово могут быть приняты как доступный ответ.",
-            "suggested_actions": [
-                "Положите две подходящие карточки в пределах видимости",
-                "Один раз покажите пример без требования повторить",
-                "Подождите ответ не меньше пяти секунд",
-            ],
-            "needs_professional_help": False,
-            "safety_note": SAFETY_NOTE,
-        }
-    return {
-        "answer": "Начните с одного короткого знакомого задания и простого выбора. Дайте ребёнку время ответить, отмечайте нужную помощь и завершайте практику после усталости или отказа.",
-        "suggested_actions": [
-            "Уберите лишние отвлекающие предметы",
-            "Покажите два понятных варианта",
-            "Подождите ответ не меньше пяти секунд",
-        ],
-        "needs_professional_help": False,
-        "safety_note": SAFETY_NOTE,
-    }
+
+    # Safety rules always take priority over ordinary topic matching.
+    urgent = (
+        "задыха", "не дыш", "не может дыш", "трудно дыш", "не может глот", "не глотает",
+        "подавил", "поперх", "судорог", "обморок", "внезапно перестал", "внезапно пропал",
+        "потерял слова", "потеряла слова", "перестал говорить", "перестала говорить",
+        "утратил навы", "утратила навы", "резко ухудш", "кенеттен жоғалт", "сөйлеу қабілетінен айырылды",
+        "дем ала алмай", "жұтына алмай", "құрысу",
+    )
+    if _has_any(question, urgent):
+        return result(
+            "Внезапная потеря уже освоенных навыков или трудности с дыханием и глотанием требуют медицинской оценки; по переписке нельзя определить причину. Если ребёнку сейчас трудно дышать, он задыхается или теряет сознание, вызывайте местную экстренную помощь.",
+            ["Приостановите занятие и обеспечьте безопасность ребёнка", "Запишите, что изменилось и когда это началось", "Свяжитесь с врачом; при остром состоянии — с экстренной службой"],
+            True,
+        )
+    if _has_any(question, ("болит", "больно", "боль", "ауырады", "ауырсын")):
+        return result(
+            "Не продолжайте упражнение через боль или выраженный дискомфорт. Причину должен оценить медицинский специалист, особенно если боль повторяется или сопровождается другими симптомами.",
+            ["Остановите упражнение и успокойте обстановку", "Отметьте, где и когда ребёнок испытывает боль", "Обсудите повторяющиеся симптомы с педиатром"],
+            True,
+        )
+
+    if _has_any(question, ("больно", "болит", "боль", "ауырып", "ауырсын")):
+        return result("Не продолжайте упражнение через боль или выраженный дискомфорт. Причину должен оценить медицинский специалист, особенно если боль повторяется или сопровождается другими симптомами.", ["Остановите упражнение и успокойте обстановку", "Отметьте, где и когда ребёнок испытывает боль", "Обсудите повторяющиеся симптомы с педиатром"], True)
+
+    scored = sorted(
+        (( _topic_score(question, topic["terms"]), topic) for topic in TOPICS),
+        key=lambda item: item[0],
+        reverse=True,
+    )
+    best_score, best_topic = scored[0]
+    second_score, second_topic = scored[1]
+    if best_score < 2:
+        return result(FALLBACK_ANSWER, FALLBACK_ACTIONS)
+    if second_score >= 3 and best_score - second_score <= 1 and best_topic["id"] != second_topic["id"]:
+        return result(AMBIGUOUS_ANSWER, AMBIGUOUS_ACTIONS, best_topic["professional"] or second_topic["professional"])
+    return result(best_topic["answer"], best_topic["actions"], best_topic["professional"])
 
 
 def _localize_reply(result):
