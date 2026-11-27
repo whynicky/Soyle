@@ -99,11 +99,8 @@ def _answer_parent(context: dict) -> dict:
             True,
         )
 
-    if _has_any(question, ("больно", "болит", "боль", "ауырып", "ауырсын")):
-        return result("Не продолжайте упражнение через боль или выраженный дискомфорт. Причину должен оценить медицинский специалист, особенно если боль повторяется или сопровождается другими симптомами.", ["Остановите упражнение и успокойте обстановку", "Отметьте, где и когда ребёнок испытывает боль", "Обсудите повторяющиеся симптомы с педиатром"], True)
-
     scored = sorted(
-        (( _topic_score(question, topic["terms"]), topic) for topic in TOPICS),
+        ((_topic_score(question, topic["terms"]), topic) for topic in TOPICS),
         key=lambda item: item[0],
         reverse=True,
     )
