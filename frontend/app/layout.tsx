@@ -19,6 +19,7 @@ import "./family-refresh.css";
 import "./workspace.css";
 import "./specialist.css";
 import "./adult-workspace.css";
+import "./sources.css";
 import "./personal-materials.css";
 
 // Reset section anchors on a document reload of the landing page.
