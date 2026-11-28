@@ -1,5 +1,5 @@
 import { LocaleBootstrap } from "@/components/LanguagePicker";
-import Script from "next/script";
+import { LandingScrollReset } from "@/components/LandingScrollReset";
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import "./product.css";
@@ -22,22 +22,6 @@ import "./adult-workspace.css";
 import "./sources.css";
 import "./personal-materials.css";
 
-// Reset section anchors on a document reload of the landing page.
-const resetLandingScroll = `(() => {
-  if (location.pathname !== '/' || performance.getEntriesByType('navigation')[0]?.type !== 'reload') return;
-  const fragments = ['#main-content', '#about', '#journey', '#communication', '#situations', '#family', '#start'];
-  if (location.hash && !fragments.includes(location.hash)) return;
-  const restoration = history.scrollRestoration;
-  history.scrollRestoration = 'manual';
-  if (location.hash) history.replaceState(history.state, '', location.pathname + location.search);
-  const reset = () => requestAnimationFrame(() => {
-    window.scrollTo({ top: 0, behavior: 'instant' });
-    history.scrollRestoration = restoration;
-  });
-  if (document.readyState === 'complete') reset();
-  else window.addEventListener('pageshow', reset, { once: true });
-})();`;
-
 export const viewport: Viewport = { width: "device-width", initialScale: 1, viewportFit: "cover" };
 
 export const metadata: Metadata = {
@@ -52,7 +36,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
   return (
     <html lang="ru-RU" data-scroll-behavior="smooth">
       <body>
-        <Script id="reset-landing-scroll" strategy="beforeInteractive">{resetLandingScroll}</Script>
+        <LandingScrollReset />
         <LocaleBootstrap />
         {children}
       </body>

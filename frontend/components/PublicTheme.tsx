@@ -164,6 +164,12 @@ export function SiteThemeChoice() {
   return control && <ThemeChoice {...control}/>;
 }
 
+export function SiteThemeToggle() {
+  useLocale();
+  const control = useContext(SiteThemeContext);
+  return control && <PublicThemeToggle {...control}/>;
+}
+
 const themeIcons = { light: Sun, dark: Moon, system: Monitor };
 
 export function WorkspaceThemeChoice({ labeled = false }: { labeled?: boolean }) {
