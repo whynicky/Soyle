@@ -6,7 +6,7 @@ const landingFragments = new Set(["#main-content", "#about", "#journey", "#commu
 
 export function LandingScrollReset() {
   useEffect(() => {
-    if (location.pathname !== "/" || performance.getEntriesByType("navigation")[0]?.type !== "reload") return;
+    if (location.pathname !== "/" || (performance.getEntriesByType("navigation")[0] as PerformanceNavigationTiming | undefined)?.type !== "reload") return;
     if (location.hash && !landingFragments.has(location.hash)) return;
 
     const restoration = history.scrollRestoration;

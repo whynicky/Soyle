@@ -167,7 +167,7 @@ export function SiteThemeChoice() {
 export function SiteThemeToggle() {
   useLocale();
   const control = useContext(SiteThemeContext);
-  return control && <PublicThemeToggle {...control}/>;
+  return control && <PublicThemeToggle theme={control.theme} onChange={control.changeTheme}/>;
 }
 
 const themeIcons = { light: Sun, dark: Moon, system: Monitor };
